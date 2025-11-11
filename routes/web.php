@@ -5,6 +5,7 @@ use App\Http\Controllers\Agent\DashboardController as AgentDashboardController;
 use App\Http\Controllers\Agent\ProfileController as AgentProfileController;
 use App\Http\Controllers\Agent\TicketController as AgentTicketController;
 use App\Http\Controllers\Agent\TicketDetailController as AgentTicketDetailController;
+use App\Http\Controllers\Agent\WorkSessionController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\TeamLeader\DashboardController as TeamLeaderDashboardController;
 use Illuminate\Support\Facades\Route;
@@ -44,6 +45,17 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/agent/tickets/{id}/status', [AgentTicketDetailController::class, 'updateStatus'])
         ->middleware('role:agent')
         ->name('agent.ticket.status');
+    
+    // Agent Work Session routes
+    Route::get('/agent/work-session/status', [WorkSessionController::class, 'getStatus'])
+        ->middleware('role:agent')
+        ->name('agent.work-session.status');
+    Route::post('/agent/work-session/start', [WorkSessionController::class, 'start'])
+        ->middleware('role:agent')
+        ->name('agent.work-session.start');
+    Route::post('/agent/work-session/end', [WorkSessionController::class, 'end'])
+        ->middleware('role:agent')
+        ->name('agent.work-session.end');
     
     // Team Leader Dashboard
     Route::get('/team-leader/dashboard', [TeamLeaderDashboardController::class, 'index'])

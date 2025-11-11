@@ -13,10 +13,22 @@
         .header { background: #FFFFFF; padding: 16px 24px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: space-between; }
         .logo { font-size: 22px; font-weight: 700; background: linear-gradient(90deg,#0C1D25 0%,#1F4A5E 56%,#2D6D8B 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .header-right { display: flex; gap: 15px; align-items: center; }
-        .dark-mode-toggle { width: 50px; height: 26px; background: #E5E7EB; border-radius: 13px; position: relative; cursor: pointer; transition: 0.3s; }
-        .dark-mode-toggle::before { content: ''; position: absolute; width: 20px; height: 20px; border-radius: 50%; background: white; top: 3px; left: 3px; transition: 0.3s; }
-        .dark-mode-toggle.active { background: #DC2626; }
-        .dark-mode-toggle.active::before { left: 27px; }
+        .work-status-toggle { width: 50px; height: 26px; background: #E5E7EB; border-radius: 13px; position: relative; cursor: pointer; transition: 0.3s; }
+        .work-status-toggle::before { content: ''; position: absolute; width: 20px; height: 20px; border-radius: 50%; background: white; top: 3px; left: 3px; transition: 0.3s; }
+        .work-status-toggle.active { background: #10B981; }
+        .work-status-toggle.active::before { left: 27px; }
+        .work-duration { font-size: 13px; color: #374151; font-weight: 600; margin-right: 8px; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal.show { display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 12px; max-width: 400px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        .modal-title { font-size: 18px; font-weight: 600; color: #1F2A37; margin-bottom: 12px; }
+        .modal-text { font-size: 14px; color: #6B7280; margin-bottom: 24px; }
+        .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; }
+        .modal-btn { padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: 0.2s; }
+        .modal-btn-break { background: #F59E0B; color: white; }
+        .modal-btn-finish { background: #DC2626; color: white; }
+        .modal-btn-cancel { background: #F3F4F6; color: #1F2A37; border: 1px solid #D1D5DB; }
+        .modal-btn:hover { opacity: 0.9; }
         .user-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg,#1F4A5E 0%,#2D6D8B 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 15px; }
         .container { display: flex; height: calc(100vh - 70px); overflow: hidden; }
         .sidebar { width: 50px; background: #FFFFFF; padding: 15px 0; display: flex; flex-direction: column; align-items: center; gap: 25px; box-shadow: 2px 0 4px rgba(0,0,0,0.05); }
@@ -67,7 +79,8 @@
     <div class="header">
         <div class="logo">XENA</div>
         <div class="header-right">
-            <div class="dark-mode-toggle" onclick="this.classList.toggle('active')"></div>
+            <div class="work-duration" id="workDuration" style="display: none;">00:00</div>
+            <div class="work-status-toggle" id="workToggle" onclick="handleToggleClick()"></div>
             <div class="user-avatar">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</div>
         </div>
     </div>
@@ -211,5 +224,136 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Konfirmasi -->
+    <div class="modal" id="endModal">
+        <div class="modal-content">
+            <div class="modal-title">Akhiri Sesi Kerja</div>
+            <div class="modal-text">Apakah Anda ingin istirahat atau selesai bekerja?</div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Batal</button>
+                <button class="modal-btn modal-btn-break" onclick="endSession('break')">Istirahat</button>
+                <button class="modal-btn modal-btn-finish" onclick="endSession('finish')">Selesai</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let durationInterval = null;
+        let isActive = false;
+
+        // Check status saat halaman dimuat
+        async function checkWorkStatus() {
+            try {
+                const response = await fetch('{{ route("agent.work-session.status") }}');
+                const data = await response.json();
+                
+                if (data.active) {
+                    isActive = true;
+                    document.getElementById('workToggle').classList.add('active');
+                    document.getElementById('workDuration').style.display = 'block';
+                    document.getElementById('workDuration').textContent = data.duration;
+                    startDurationCounter();
+                } else {
+                    isActive = false;
+                    document.getElementById('workToggle').classList.remove('active');
+                    document.getElementById('workDuration').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error checking work status:', error);
+            }
+        }
+
+        function startDurationCounter() {
+            if (durationInterval) clearInterval(durationInterval);
+            
+            durationInterval = setInterval(async () => {
+                try {
+                    const response = await fetch('{{ route("agent.work-session.status") }}');
+                    const data = await response.json();
+                    
+                    if (data.active) {
+                        document.getElementById('workDuration').textContent = data.duration;
+                    } else {
+                        clearInterval(durationInterval);
+                    }
+                } catch (error) {
+                    console.error('Error updating duration:', error);
+                }
+            }, 60000); // Update setiap 1 menit
+        }
+
+        async function handleToggleClick() {
+            if (!isActive) {
+                // Mulai sesi kerja
+                try {
+                    const response = await fetch('{{ route("agent.work-session.start") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        isActive = true;
+                        document.getElementById('workToggle').classList.add('active');
+                        document.getElementById('workDuration').style.display = 'block';
+                        document.getElementById('workDuration').textContent = '00:00';
+                        startDurationCounter();
+                    } else {
+                        alert(data.message);
+                    }
+                } catch (error) {
+                    console.error('Error starting session:', error);
+                    alert('Gagal memulai sesi kerja');
+                }
+            } else {
+                // Tampilkan modal konfirmasi
+                document.getElementById('endModal').classList.add('show');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('endModal').classList.remove('show');
+        }
+
+        async function endSession(type) {
+            try {
+                const response = await fetch('{{ route("agent.work-session.end") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ end_type: type })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    isActive = false;
+                    document.getElementById('workToggle').classList.remove('active');
+                    document.getElementById('workDuration').style.display = 'none';
+                    if (durationInterval) clearInterval(durationInterval);
+                    closeModal();
+                    
+                    const hours = Math.floor(data.duration_minutes / 60);
+                    const minutes = data.duration_minutes % 60;
+                    alert(`Sesi ${type === 'break' ? 'istirahat' : 'selesai'}. Durasi kerja: ${hours} jam ${minutes} menit`);
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                console.error('Error ending session:', error);
+                alert('Gagal mengakhiri sesi kerja');
+            }
+        }
+
+        // Check status saat halaman dimuat
+        checkWorkStatus();
+    </script>
 </body>
 </html>
