@@ -1,56 +1,44 @@
 <x-guest-layout>
-    <!-- Page Title -->
-    <div class="text-center mb-8">
-        <h1 class="text-3xl font-semibold bg-gradient-to-r from-slate-800 via-slate-600 to-slate-500 bg-clip-text text-transparent">
-            Sign in
-        </h1>
-    </div>
-
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
-
-    <form method="POST" action="{{ route('login') }}">
-        @csrf
-
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+    <div class="px-16 py-16">
+        <!-- Page Title -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-semibold text-gray-900">
+                Sign <span class="text-blue-600">in</span>
+            </h1>
         </div>
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
+        <!-- Session Status -->
+        <x-auth-session-status class="mb-6" :status="session('status')" />
 
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
+        <form method="POST" action="{{ route('login') }}">
+            @csrf
 
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
-
-        <!-- Remember Me -->
-        <div class="block mt-6">
-            <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-slate-600 shadow-sm focus:ring-slate-500" name="remember">
-                <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
-            </label>
-        </div>
-
-        <div class="mt-6">
-            <x-primary-button>
-                {{ __('Log in') }}
-            </x-primary-button>
-        </div>
-
-        @if (Route::has('password.request'))
-            <div class="text-center mt-4">
-                <a class="text-sm text-slate-600 hover:text-slate-800 underline" href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
-                </a>
+            <!-- Email Address -->
+            <div class="mb-8 relative">
+                <div class="flex items-center relative">
+                    <div class="absolute -top-2.5 left-4 bg-white px-1.5 text-sm text-gray-500">Email / Username</div>
+                    <input id="email" class="w-full px-5 py-4 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500" 
+                        type="text" name="email" :value="old('email')" required autofocus autocomplete="username" />
+                </div>
+                <x-input-error :messages="$errors->get('email')" class="mt-2" />
             </div>
-        @endif
-    </form>
+
+            <!-- Password -->
+            <div class="mb-12 relative">
+                <div class="flex items-center relative">
+                    <div class="absolute -top-2.5 left-4 bg-white px-1.5 text-sm text-gray-500">Password</div>
+                    <input id="password" class="w-full px-5 py-4 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500" 
+                        type="password" name="password" required autocomplete="current-password" />
+                </div>
+                <x-input-error :messages="$errors->get('password')" class="mt-2" />
+            </div>
+
+            <!-- Login Button -->
+            <div class="flex justify-center">
+                <button type="submit" class="px-16 py-3 bg-blue-900 hover:bg-blue-800 text-white text-lg font-medium rounded-lg shadow-md transition duration-200">
+                    Sign in
+                </button>
+            </div>
+        </form>
+    </div>
 </x-guest-layout>
