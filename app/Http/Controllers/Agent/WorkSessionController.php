@@ -10,7 +10,7 @@ use Carbon\Carbon;
 
 class WorkSessionController extends Controller
 {
-    public function getStatus()
+    public function status()
     {
         $activeSession = AgentWorkSession::where('user_id', Auth::id())
             ->whereNull('end_time')

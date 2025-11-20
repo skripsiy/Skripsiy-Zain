@@ -1,191 +1,39 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XENA - Agent Dashboard</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: #F5F5F5;
-            min-height: 100vh;
-        }
-        .header {
-            background: #FFFFFF;
-            padding: 20px 40px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .logo {
-            font-size: 24px;
-            font-weight: 700;
-            background: linear-gradient(90deg, #0C1D25 0%, #1F4A5E 56%, #2D6D8B 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: 0.5px;
-        }
-        .header-right {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-        .time-filter {
-            display: flex;
-            gap: 15px;
-        }
-        .time-filter button {
-            padding: 8px 16px;
-            border: none;
-            background: transparent;
-            color: #666;
-            font-family: 'Poppins', sans-serif;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .time-filter button:hover,
-        .time-filter button.active {
-            color: #1F4A5E;
-            font-weight: 600;
-        }
-        .user-menu {
-            position: relative;
-        }
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #1F4A5E 0%, #2D6D8B 100%);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            font-size: 16px;
-        }
-        .user-dropdown {
-            position: absolute;
-            top: 50px;
-            right: 0;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            min-width: 200px;
-            display: none;
-            z-index: 1000;
-        }
-        .user-dropdown.show {
-            display: block;
-        }
-        .user-info {
-            padding: 15px;
-            border-bottom: 1px solid #E5E5E5;
-        }
-        .user-name {
-            font-weight: 600;
-            color: #333;
-            font-size: 14px;
-        }
-        .user-role {
-            font-size: 12px;
-            color: #666;
-            margin-top: 2px;
-        }
-        .logout-btn {
-            width: 100%;
-            padding: 12px 15px;
-            border: none;
-            background: transparent;
-            color: #D0021B;
-            font-family: 'Poppins', sans-serif;
-            font-size: 14px;
-            cursor: pointer;
-            text-align: left;
-            transition: all 0.2s;
-        }
-        .logout-btn:hover {
-            background: #FFF5F5;
-        }
-        .menu-btn {
-            width: 100%;
-            padding: 12px 15px;
-            border: none;
-            background: transparent;
-            color: #333;
-            font-family: 'Poppins', sans-serif;
-            font-size: 14px;
-            cursor: pointer;
-            text-align: left;
-            transition: all 0.2s;
-            text-decoration: none;
-            display: block;
-        }
-        .menu-btn:hover {
-            background: #F5F5F5;
-        }
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-        }
-        .container {
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
-        .sidebar {
-            width: 50px;
-            background: #FFFFFF;
-            padding: 15px 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 25px;
-            box-shadow: 2px 0 4px rgba(0,0,0,0.05);
-        }
-        .sidebar-icon {
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            color: #666;
-            transition: all 0.2s;
-            text-decoration: none;
-        }
-        .sidebar-icon:hover,
-        .sidebar-icon.active {
-            color: #1F4A5E;
-        }
-        .main-content {
-            flex: 1;
-            padding: 15px 15px 20px 15px; /* More padding at bottom */
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-            height: calc(100vh - 70px);
-            margin-left: 20px;
-        }
+<x-agent-layout>
+    <x-slot name="title">Agent Dashboard</x-slot>
+    
+    <x-slot name="headerContent">
+        <div class="time-filter">
+            <button class="active">Today</button>
+            <button>This Week</button>
+            <button>This Month</button>
+            <button>This Quarter</button>
+        </div>
+    </x-slot>
+    
+    <x-slot name="sidebar">
+        <a class="sidebar-icon active" href="{{ route('agent.dashboard') }}" title="Dashboard">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+            </svg>
+        </a>
+        <a class="sidebar-icon" href="{{ route('agent.tickets') }}" title="Tickets">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+            </svg>
+        </a>
+        <a class="sidebar-icon" href="{{ route('agent.profile') }}" title="My Profile">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
+        </a>
+    </x-slot>
+    
+    <x-slot name="customStyles">
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
-            margin-bottom: 15px; /* Increased bottom margin */
+            margin-bottom: 15px;
             flex-shrink: 0;
         }
         .stat-card {
@@ -225,7 +73,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
-            margin-bottom: 25px; /* Increased bottom margin */
+            margin-bottom: 25px;
             flex-shrink: 0;
             min-height: 280px;
         }
@@ -274,7 +122,7 @@
             display: flex;
             flex-direction: column;
             min-height: 300px;
-            margin: 10px 0 30px 0; /* More bottom margin */
+            margin: 10px 0 30px 0;
         }
         .table-header {
             display: flex;
@@ -296,19 +144,16 @@
             flex-wrap: wrap;
             justify-content: flex-end;
         }
-        
         @media (max-width: 768px) {
             .table-header {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 10px;
             }
-            
             .table-controls {
                 width: 100%;
                 justify-content: space-between;
             }
-            
             .date-filter {
                 flex: 1;
             }
@@ -325,7 +170,6 @@
             transition: all 0.2s ease;
             min-width: 260px;
         }
-        
         .date-filter:focus-within {
             border-color: #4a90e2;
             box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
@@ -379,24 +223,20 @@
             border: 1px solid #f0f0f0;
             border-radius: 8px;
             margin: 10px 0 20px 0;
-            padding-bottom: 10px; /* Add padding at bottom */
+            padding-bottom: 10px;
         }
-        
         .table-wrapper::-webkit-scrollbar {
             width: 6px;
             height: 6px;
         }
-        
         .table-wrapper::-webkit-scrollbar-track {
             background: #f1f1f1;
             border-radius: 3px;
         }
-        
         .table-wrapper::-webkit-scrollbar-thumb {
             background: #c1c1c1;
             border-radius: 3px;
         }
-        
         .table-wrapper::-webkit-scrollbar-thumb:hover {
             background: #a8a8a8;
         }
@@ -404,7 +244,7 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 12px;
-            min-width: 800px; /* Ensure table has minimum width */
+            min-width: 800px;
         }
         thead {
             background: #1F4A5E;
@@ -427,7 +267,6 @@
             z-index: 10;
             white-space: nowrap;
         }
-        
         td {
             padding: 12px 15px;
             border-bottom: 1px solid #f0f0f0;
@@ -442,264 +281,211 @@
             height: 120px;
             margin: 0 auto;
         }
-    </style>
-</head>
-<body>
-    <!-- Header -->
-    <div class="header">
-        <div class="logo">XENA</div>
-        <div class="header-right">
-            <div class="time-filter">
-                <button class="active">Today</button>
-                <button>This Week</button>
-                <button>This Month</button>
-                <button>This Quarter</button>
+    </x-slot>
+    
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <!-- Today Stats -->
+        <div class="stat-card">
+            <h3>Today Stats</h3>
+            <div class="stat-item">
+                <span class="stat-label">WO Available</span>
+                <span class="stat-value">: 20</span>
             </div>
-            <div class="user-menu">
-                <div class="user-avatar" onclick="toggleDropdown()">
-                    {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+            <div class="stat-item">
+                <span class="stat-label">Consume</span>
+                <span class="stat-value blue">: 25</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">ODS</span>
+                <span class="stat-value green">: 25</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Closed</span>
+                <span class="stat-value red">: 10</span>
+            </div>
+            <div class="today-stats-chart">
+                <canvas id="todayStatsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Average Handling Time -->
+        <div class="stat-card">
+            <h3>Average Handling Time</h3>
+            <div class="stat-number">0.00</div>
+            <div style="margin-top: 20px;">
+                <div class="stat-item">
+                    <span class="stat-label">All Consume</span>
                 </div>
-                <div class="user-dropdown" id="userDropdown">
-                    <div class="user-info">
-                        <div class="user-name">{{ Auth::user()->name }}</div>
-                        <div class="user-role">{{ ucfirst(str_replace('_', ' ', Auth::user()->role)) }}</div>
-                    </div>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="logout-btn">🚪 Logout</button>
-                    </form>
+                <div class="stat-number">0.00</div>
+            </div>
+            <div style="margin-top: 20px;">
+                <div class="stat-item">
+                    <span class="stat-label">AHT Last ticket</span>
                 </div>
+                <div class="stat-number">0.00</div>
+            </div>
+        </div>
+
+        <!-- Total AUX/Online -->
+        <div class="stat-card">
+            <h3>Total AUX/Online</h3>
+            <div class="stat-item">
+                <span class="stat-label">Online Time</span>
+            </div>
+            <div class="stat-number">0.00</div>
+            <div style="margin-top: 20px;">
+                <div class="stat-item">
+                    <span class="stat-label">AUX Time</span>
+                </div>
+                <div class="stat-number">0.00</div>
+            </div>
+        </div>
+
+        <!-- Quality Operation Analytic -->
+        <div class="stat-card">
+            <h3>Quality Operation Analytic</h3>
+            <div class="stat-item">
+                <span class="stat-label">Ticket Consume</span>
+            </div>
+            <div class="stat-number">0.00</div>
+            <div style="margin-top: 20px;">
+                <div class="stat-item">
+                    <span class="stat-label">Ticket Closed</span>
+                </div>
+                <div class="stat-number">0.00</div>
             </div>
         </div>
     </div>
 
-    <div class="container">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <a class="sidebar-icon active" href="{{ route('agent.dashboard') }}" title="Dashboard">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-                </svg>
-            </a>
-            <a class="sidebar-icon" href="{{ route('agent.tickets') }}" title="Tickets">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-                </svg>
-            </a>
-            <a class="sidebar-icon" href="{{ route('agent.profile') }}" title="My Profile">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                </svg>
-            </a>
+    <!-- Charts Section -->
+    <div class="chart-section">
+        <!-- Grafik -->
+        <div class="chart-card">
+            <h3>Grafik</h3>
+            <div class="chart-wrapper">
+                <canvas id="grafikChart"></canvas>
+            </div>
+            <div class="chart-legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #4A90E2;"></div>
+                    <span>Consume</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #7ED321;"></div>
+                    <span>ODS</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #D0021B;"></div>
+                    <span>Closed</span>
+                </div>
+            </div>
         </div>
 
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Stats Grid -->
-            <div class="stats-grid">
-                <!-- Today Stats -->
-                <div class="stat-card">
-                    <h3>Today Stats</h3>
-                    <div class="stat-item">
-                        <span class="stat-label">WO Available</span>
-                        <span class="stat-value">: 20</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Consume</span>
-                        <span class="stat-value blue">: 25</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">ODS</span>
-                        <span class="stat-value green">: 25</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Closed</span>
-                        <span class="stat-value red">: 10</span>
-                    </div>
-                    <div class="today-stats-chart">
-                        <canvas id="todayStatsChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Average Handling Time -->
-                <div class="stat-card">
-                    <h3>Average Handling Time</h3>
-                    <div class="stat-number">0.00</div>
-                    <div style="margin-top: 20px;">
-                        <div class="stat-item">
-                            <span class="stat-label">All Consume</span>
-                        </div>
-                        <div class="stat-number">0.00</div>
-                    </div>
-                    <div style="margin-top: 20px;">
-                        <div class="stat-item">
-                            <span class="stat-label">AHT Last ticket</span>
-                        </div>
-                        <div class="stat-number">0.00</div>
-                    </div>
-                </div>
-
-                <!-- Total AUX/Online -->
-                <div class="stat-card">
-                    <h3>Total AUX/Online</h3>
-                    <div class="stat-item">
-                        <span class="stat-label">Online Time</span>
-                    </div>
-                    <div class="stat-number">0.00</div>
-                    <div style="margin-top: 20px;">
-                        <div class="stat-item">
-                            <span class="stat-label">AUX Time</span>
-                        </div>
-                        <div class="stat-number">0.00</div>
-                    </div>
-                </div>
-
-                <!-- Quality Operation Analytic -->
-                <div class="stat-card">
-                    <h3>Quality Operation Analytic</h3>
-                    <div class="stat-item">
-                        <span class="stat-label">Ticket Consume</span>
-                    </div>
-                    <div class="stat-number">0.00</div>
-                    <div style="margin-top: 20px;">
-                        <div class="stat-item">
-                            <span class="stat-label">Ticket Closed</span>
-                        </div>
-                        <div class="stat-number">0.00</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Charts Section -->
-            <div class="chart-section">
-                <!-- Grafik -->
-                <div class="chart-card">
-                    <h3>Grafik</h3>
-                    <div class="chart-wrapper">
-                        <canvas id="grafikChart"></canvas>
-                    </div>
-                    <div class="chart-legend">
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #4A90E2;"></div>
-                            <span>Consume</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #7ED321;"></div>
-                            <span>ODS</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #D0021B;"></div>
-                            <span>Closed</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Traffic Hourly -->
-                <div class="chart-card">
-                    <h3>Traffic Hourly</h3>
-                    <div class="chart-wrapper">
-                        <canvas id="trafficChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Table -->
-            <div class="table-card">
-                <div class="table-header">
-                    <div class="table-title">Ticket Report</div>
-                    <div class="table-controls">
-                        <div class="date-filter">
-                            <span>📅</span>
-                            <input type="date" id="startDate" value="">
-                            <span>-</span>
-                            <input type="date" id="endDate" value="">
-                        </div>
-                        <button class="calendar-btn" onclick="filterByDate()">
-                            <span>🔍</span>
-                            <span>Filter</span>
-                        </button>
-                        <button class="download-btn" onclick="downloadReport()">
-                            <span>💾</span>
-                            <span>Download</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="table-wrapper">
-                    <table id="ticketTable">
-                        <thead>
-                            <tr>
-                                <th>Ticket Code</th>
-                                <th>KIP / SYMPTOMP</th>
-                                <th>Quality / Agent Name</th>
-                                <th>Date</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="ticketTableBody">
-                            <tr>
-                                <td>IN166714226</td>
-                                <td>GAGAL REDEEM POINT</td>
-                                <td>Reca</td>
-                                <td>2025-11-01</td>
-                                <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
-                            </tr>
-                            <tr>
-                                <td>IN166714227</td>
-                                <td>TIDAK BISA LOGIN</td>
-                                <td>Viona</td>
-                                <td>2025-11-01</td>
-                                <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
-                            </tr>
-                            <tr>
-                                <td>IN166714228</td>
-                                <td>ERROR PEMBAYARAN</td>
-                                <td>Angga</td>
-                                <td>2025-11-02</td>
-                                <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
-                            </tr>
-                            <tr>
-                                <td>IN166714229</td>
-                                <td>LUPA PASSWORD</td>
-                                <td>Yugo</td>
-                                <td>2025-11-02</td>
-                                <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
-                            </tr>
-                            <tr>
-                                <td>IN166714230</td>
-                                <td>APLIKASI LEMOT</td>
-                                <td>Budi</td>
-                                <td>2025-11-03</td>
-                                <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
-                            </tr>
-                            <tr>
-                                <td>IN166714231</td>
-                                <td>GAGAL TRANSAKSI</td>
-                                <td>Siti</td>
-                                <td>2025-11-03</td>
-                                <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
-                            </tr>
-                            <tr>
-                                <td>IN166714232</td>
-                                <td>NOTIFIKASI TIDAK MASUK</td>
-                                <td>Reca</td>
-                                <td>2025-11-03</td>
-                                <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
-                            </tr>
-                            <tr>
-                                <td>IN166714233</td>
-                                <td>DATA TIDAK SINKRON</td>
-                                <td>Viona</td>
-                                <td>2025-11-03</td>
-                                <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+        <!-- Traffic Hourly -->
+        <div class="chart-card">
+            <h3>Traffic Hourly</h3>
+            <div class="chart-wrapper">
+                <canvas id="trafficChart"></canvas>
             </div>
         </div>
     </div>
 
-    <script>
+    <!-- Table -->
+    <div class="table-card">
+        <div class="table-header">
+            <div class="table-title">Ticket Report</div>
+            <div class="table-controls">
+                <div class="date-filter">
+                    <span>📅</span>
+                    <input type="date" id="startDate" value="">
+                    <span>-</span>
+                    <input type="date" id="endDate" value="">
+                </div>
+                <button class="calendar-btn" onclick="filterByDate()">
+                    <span>🔍</span>
+                    <span>Filter</span>
+                </button>
+                <button class="download-btn" onclick="downloadReport()">
+                    <span>💾</span>
+                    <span>Download</span>
+                </button>
+            </div>
+        </div>
+        <div class="table-wrapper">
+            <table id="ticketTable">
+                <thead>
+                    <tr>
+                        <th>Ticket Code</th>
+                        <th>KIP / SYMPTOMP</th>
+                        <th>Quality / Agent Name</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="ticketTableBody">
+                    <tr>
+                        <td>IN166714226</td>
+                        <td>GAGAL REDEEM POINT</td>
+                        <td>Reca</td>
+                        <td>2025-11-01</td>
+                        <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
+                    </tr>
+                    <tr>
+                        <td>IN166714227</td>
+                        <td>TIDAK BISA LOGIN</td>
+                        <td>Viona</td>
+                        <td>2025-11-01</td>
+                        <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
+                    </tr>
+                    <tr>
+                        <td>IN166714228</td>
+                        <td>ERROR PEMBAYARAN</td>
+                        <td>Angga</td>
+                        <td>2025-11-02</td>
+                        <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
+                    </tr>
+                    <tr>
+                        <td>IN166714229</td>
+                        <td>LUPA PASSWORD</td>
+                        <td>Yugo</td>
+                        <td>2025-11-02</td>
+                        <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
+                    </tr>
+                    <tr>
+                        <td>IN166714230</td>
+                        <td>APLIKASI LEMOT</td>
+                        <td>Budi</td>
+                        <td>2025-11-03</td>
+                        <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
+                    </tr>
+                    <tr>
+                        <td>IN166714231</td>
+                        <td>GAGAL TRANSAKSI</td>
+                        <td>Siti</td>
+                        <td>2025-11-03</td>
+                        <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
+                    </tr>
+                    <tr>
+                        <td>IN166714232</td>
+                        <td>NOTIFIKASI TIDAK MASUK</td>
+                        <td>Reca</td>
+                        <td>2025-11-03</td>
+                        <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
+                    </tr>
+                    <tr>
+                        <td>IN166714233</td>
+                        <td>DATA TIDAK SINKRON</td>
+                        <td>Viona</td>
+                        <td>2025-11-03</td>
+                        <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <x-slot name="additionalScripts">
         // Today Stats Pie Chart
         const todayCtx = document.getElementById('todayStatsChart').getContext('2d');
         new Chart(todayCtx, {
@@ -809,28 +595,12 @@
             }
         });
 
-        // Toggle user dropdown
-        function toggleDropdown() {
-            const dropdown = document.getElementById('userDropdown');
-            dropdown.classList.toggle('show');
-        }
-
-        // Close dropdown when clicking outside
-        window.onclick = function(event) {
-            if (!event.target.matches('.user-avatar')) {
-                const dropdown = document.getElementById('userDropdown');
-                if (dropdown.classList.contains('show')) {
-                    dropdown.classList.remove('show');
-                }
-            }
-        }
-
         // Set default dates (today)
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('startDate').value = today;
         document.getElementById('endDate').value = today;
 
-        // All ticket data (in real app, this would come from backend)
+        // All ticket data
         const allTickets = [
             { code: 'IN166714226', symptomp: 'GAGAL REDEEM POINT', agent: 'Reca', date: '2025-11-01', status: 'Closed' },
             { code: 'IN166714227', symptomp: 'TIDAK BISA LOGIN', agent: 'Viona', date: '2025-11-01', status: 'Closed' },
@@ -898,7 +668,6 @@
                 return;
             }
 
-            // Filter tickets based on date range
             const filteredTickets = allTickets.filter(ticket => {
                 return ticket.date >= startDate && ticket.date <= endDate;
             });
@@ -908,14 +677,12 @@
                 return;
             }
 
-            // Create CSV content
             let csvContent = "Ticket Code,KIP/SYMPTOMP,Quality/Agent Name,Date,Status\n";
             
             filteredTickets.forEach(ticket => {
                 csvContent += `${ticket.code},${ticket.symptomp},${ticket.agent},${ticket.date},${ticket.status}\n`;
             });
 
-            // Create blob and download
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             const url = URL.createObjectURL(blob);
@@ -929,9 +696,7 @@
             link.click();
             document.body.removeChild(link);
 
-            // Show success message
             alert(`Report berhasil di-download: ${filename}`);
         }
-    </script>
-</body>
-</html>
+    </x-slot>
+</x-agent-layout>

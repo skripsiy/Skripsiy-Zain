@@ -19,6 +19,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Register custom Blade components
+        \Illuminate\Support\Facades\Blade::component('layouts.agent', 'agent-layout');
     }
 }
