@@ -186,6 +186,10 @@
         <div class="logo">XENA</div>
         <div class="header-right">
             {{ $headerContent ?? '' }}
+            
+            <!-- Notification Bell -->
+            <x-notification-bell />
+            
             <div class="user-menu">
                 <div class="user-avatar" onclick="toggleDropdown()">
                     {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}

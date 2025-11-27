@@ -26,6 +26,17 @@ Route::get('/dashboard', function () {
 // Admin Routes
 Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
+    
+    // User Management Routes
+    Route::get('/users', [App\Http\Controllers\Admin\UserController::class, 'index'])->name('users.index');
+    Route::post('/users', [App\Http\Controllers\Admin\UserController::class, 'store'])->name('users.store');
+    Route::patch('/users/{user}/role', [App\Http\Controllers\Admin\UserController::class, 'updateRole'])->name('users.updateRole');
+    Route::patch('/users/{user}/status', [App\Http\Controllers\Admin\UserController::class, 'updateStatus'])->name('users.updateStatus');
+    Route::delete('/users/{user}', [App\Http\Controllers\Admin\UserController::class, 'destroy'])->name('users.destroy');
+    
+    // Reports Routes
+    Route::get('/reports', [App\Http\Controllers\Admin\ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/user/{user}', [App\Http\Controllers\Admin\ReportController::class, 'getUserTickets'])->name('reports.user');
 });
 
 // Agent Routes
@@ -48,6 +59,13 @@ Route::middleware(['auth', 'verified'])->prefix('agent')->name('agent.')->group(
 // Team Leader Routes
 Route::middleware(['auth', 'verified'])->prefix('team-leader')->name('team-leader.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\TeamLeader\DashboardController::class, 'index'])->name('dashboard');
+});
+
+// Notification Routes (for all authenticated users)
+Route::middleware('auth')->group(function () {
+    Route::get('/notifications/unread', [App\Http\Controllers\NotificationController::class, 'getUnreadNotifications']);
+    Route::get('/notifications/count', [App\Http\Controllers\NotificationController::class, 'getCount']);
+    Route::post('/notifications/mark-read', [App\Http\Controllers\NotificationController::class, 'markAsRead']);
 });
 
 Route::middleware('auth')->group(function () {

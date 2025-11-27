@@ -2,9 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Models\Ticket;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\Ticket;
+use App\Models\User;
+use Carbon\Carbon;
 
 class TicketSeeder extends Seeder
 {
@@ -13,131 +14,111 @@ class TicketSeeder extends Seeder
      */
     public function run(): void
     {
+        $agent = User::where('email', 'agent@xena.com')->first();
+        $teamLeader = User::where('email', 'teamleader@xena.com')->first();
+        
+        if (!$agent || !$teamLeader) {
+            echo "Users not found. Please run UserSeeder first.\n";
+            return;
+        }
+
+        // Create tickets for agent
         $tickets = [
             [
-                'datereport' => now()->toDateString(),
-                'jenisTicket' => 'Internet',
+                'datereport' => Carbon::now()->subDays(5),
+                'jenisTicket' => 'GANGGUAN INTERNET',
                 'notelpCust' => '081234567890',
                 'namacust' => 'John Doe',
-                'reportedpriority' => 'Super Emergency',
-                'datesolved' => now()->toDateString(),
-                'THT' => now()->toDateTimeString(),
+                'detailticket' => 'Internet tidak bisa connect',
                 'status' => 'QUEUED',
-                'regional' => 'Regional 1 - Sumatera',
-                'witel' => 'Medan',
-                'lapul' => 1,
-                'gaul' => 0,
-                'condition' => 'Closed',
+                'assignby' => $agent->email,
+                'regional' => 'JABAR',
+                'witel' => 'BANDUNG',
             ],
             [
-                'datereport' => now()->toDateString(),
-                'jenisTicket' => 'Internet',
+                'datereport' => Carbon::now()->subDays(4),
+                'jenisTicket' => 'GANGGUAN TELEPON',
                 'notelpCust' => '081234567891',
                 'namacust' => 'Jane Smith',
-                'reportedpriority' => 'Very High',
-                'datesolved' => null,
-                'THT' => now()->toDateTimeString(),
+                'detailticket' => 'Telepon tidak bisa digunakan',
                 'status' => 'QUEUED',
-                'regional' => 'Regional 2 - Jawa',
-                'witel' => 'Surabaya',
-                'lapul' => 0,
-                'gaul' => 0,
-                'condition' => 'Open',
+                'assignby' => $agent->email,
+                'regional' => 'JABAR',
+                'witel' => 'BANDUNG',
             ],
             [
-                'datereport' => now()->toDateString(),
-                'jenisTicket' => 'Telephone',
+                'datereport' => Carbon::now()->subDays(3),
+                'jenisTicket' => 'GANGGUAN TV',
                 'notelpCust' => '081234567892',
                 'namacust' => 'Bob Johnson',
-                'reportedpriority' => 'Medium',
-                'datesolved' => null,
-                'THT' => now()->toDateTimeString(),
-                'status' => 'QUEUED',
-                'regional' => 'Regional 3 - Kalimantan & Sulawesi',
-                'witel' => 'Balikpapan',
-                'lapul' => 0,
-                'gaul' => 0,
-                'condition' => 'Closed',
+                'detailticket' => 'TV tidak ada sinyal',
+                'status' => 'IN PROGRESS',
+                'assignby' => $agent->email,
+                'regional' => 'JABAR',
+                'witel' => 'BANDUNG',
             ],
             [
-                'datereport' => now()->toDateString(),
-                'jenisTicket' => 'Internet',
+                'datereport' => Carbon::now()->subDays(2),
+                'jenisTicket' => 'GANGGUAN INTERNET',
                 'notelpCust' => '081234567893',
                 'namacust' => 'Alice Brown',
-                'reportedpriority' => 'Low',
-                'datesolved' => null,
-                'THT' => now()->toDateTimeString(),
-                'status' => 'QUEUED',
-                'regional' => 'Regional 4 - Maluku & Papua',
-                'witel' => 'Jayapura',
-                'lapul' => 0,
-                'gaul' => 0,
-                'condition' => 'In Progress',
+                'detailticket' => 'Kecepatan internet lambat',
+                'status' => 'SOLVED',
+                'assignby' => $agent->email,
+                'solvedby' => $agent->email,
+                'datesolved' => Carbon::now()->subDays(1),
+                'regional' => 'JABAR',
+                'witel' => 'BANDUNG',
             ],
             [
-                'datereport' => now()->toDateString(),
-                'jenisTicket' => 'Internet',
+                'datereport' => Carbon::now()->subDays(1),
+                'jenisTicket' => 'GANGGUAN TELEPON',
                 'notelpCust' => '081234567894',
                 'namacust' => 'Charlie Wilson',
-                'reportedpriority' => 'Super Emergency',
-                'datesolved' => null,
-                'THT' => now()->toDateTimeString(),
-                'status' => 'QUEUED',
-                'regional' => 'Regional 1 - Sumatera',
-                'witel' => 'Palembang',
-                'lapul' => 1,
-                'gaul' => 0,
-                'condition' => 'Open',
-            ],
-            [
-                'datereport' => now()->toDateString(),
-                'jenisTicket' => 'Internet',
-                'notelpCust' => '081234567895',
-                'namacust' => 'Diana Prince',
-                'reportedpriority' => 'Very High',
-                'datesolved' => now()->toDateString(),
-                'THT' => now()->toDateTimeString(),
-                'status' => 'QUEUED',
-                'regional' => 'Regional 2 - Jawa',
-                'witel' => 'Bandung',
-                'lapul' => 0,
-                'gaul' => 0,
-                'condition' => 'Closed',
-            ],
-            [
-                'datereport' => now()->toDateString(),
-                'jenisTicket' => 'Telephone',
-                'notelpCust' => '081234567896',
-                'namacust' => 'Edward Norton',
-                'reportedpriority' => 'Medium',
-                'datesolved' => null,
-                'THT' => now()->toDateTimeString(),
-                'status' => 'QUEUED',
-                'regional' => 'Regional 3 - Kalimantan & Sulawesi',
-                'witel' => 'Makassar',
-                'lapul' => 0,
-                'gaul' => 0,
-                'condition' => 'Closed',
-            ],
-            [
-                'datereport' => now()->toDateString(),
-                'jenisTicket' => 'Internet',
-                'notelpCust' => '081234567897',
-                'namacust' => 'Fiona Apple',
-                'reportedpriority' => 'Low',
-                'datesolved' => null,
-                'THT' => now()->toDateTimeString(),
-                'status' => 'QUEUED',
-                'regional' => 'Regional 4 - Maluku & Papua',
-                'witel' => 'Ambon',
-                'lapul' => 0,
-                'gaul' => 0,
-                'condition' => 'In Progress',
+                'detailticket' => 'Tidak bisa telepon keluar',
+                'status' => 'SOLVED',
+                'assignby' => $agent->email,
+                'solvedby' => $agent->email,
+                'datesolved' => Carbon::now(),
+                'regional' => 'JABAR',
+                'witel' => 'BANDUNG',
             ],
         ];
 
-        foreach ($tickets as $ticket) {
-            Ticket::create($ticket);
+        // Create tickets for team leader
+        $teamLeaderTickets = [
+            [
+                'datereport' => Carbon::now()->subDays(3),
+                'jenisTicket' => 'GANGGUAN INTERNET',
+                'notelpCust' => '081234567895',
+                'namacust' => 'David Lee',
+                'detailticket' => 'Internet putus-putus',
+                'status' => 'QUEUED',
+                'assignby' => $teamLeader->email,
+                'regional' => 'JABAR',
+                'witel' => 'BANDUNG',
+            ],
+            [
+                'datereport' => Carbon::now()->subDays(2),
+                'jenisTicket' => 'GANGGUAN TV',
+                'notelpCust' => '081234567896',
+                'namacust' => 'Eva Martinez',
+                'detailticket' => 'Channel TV tidak lengkap',
+                'status' => 'IN PROGRESS',
+                'assignby' => $teamLeader->email,
+                'regional' => 'JABAR',
+                'witel' => 'BANDUNG',
+            ],
+        ];
+
+        foreach ($tickets as $ticketData) {
+            Ticket::create($ticketData);
         }
+
+        foreach ($teamLeaderTickets as $ticketData) {
+            Ticket::create($ticketData);
+        }
+
+        echo "Tickets seeded successfully!\n";
     }
 }
