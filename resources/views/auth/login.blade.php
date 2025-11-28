@@ -49,21 +49,25 @@
 
         /* Header */
         .header {
-            background: white;
-            padding: 1.5rem 3rem;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            background: #FFFFFF;
+            padding: 20px 40px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             position: relative;
             z-index: 10;
-        }
-
-        .logo {
             display: flex;
+            justify-content: space-between;
             align-items: center;
         }
 
-        .logo img {
-            height: 26px;
-            width: auto;
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #0C1D25 0%, #1F4A5E 56%, #2D6D8B 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 0.5px;
+            display: block;
         }
 
         /* Main container */
@@ -80,13 +84,13 @@
         /* Login card */
         .login-card {
             background: white;
-            border-radius: 1.5rem;
-            padding: 3.5rem 4rem;
+            border-radius: 1rem;
+            padding: 2.5rem 2rem;
             box-shadow: 
-                0 30px 90px rgba(0, 0, 0, 0.5),
+                0 20px 60px rgba(0, 0, 0, 0.4),
                 0 0 0 1px rgba(255, 255, 255, 0.1);
             width: 100%;
-            max-width: 480px;
+            max-width: 400px;
             position: relative;
             animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
             transform-origin: center;
@@ -106,11 +110,11 @@
         /* Title */
         .title {
             text-align: center;
-            margin-bottom: 2.5rem;
+            margin-bottom: 1.5rem;
         }
 
         .title h1 {
-            font-size: 2rem;
+            font-size: 1.5rem;
             font-weight: 600;
             color: #1a202c;
             margin: 0;
@@ -118,7 +122,7 @@
 
         /* Form */
         .form-group {
-            margin-bottom: 1.75rem;
+            margin-bottom: 1.25rem;
             position: relative;
         }
 
@@ -128,10 +132,10 @@
 
         .form-input {
             width: 100%;
-            padding: 1rem 1.25rem;
-            font-size: 1rem;
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
             border: 2px solid #e2e8f0;
-            border-radius: 0.75rem;
+            border-radius: 0.5rem;
             outline: none;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             background: #f8fafc;
@@ -142,8 +146,8 @@
         .form-input:focus {
             border-color: #4a5568;
             background: white;
-            box-shadow: 0 0 0 6px rgba(102, 126, 234, 0.1);
-            transform: translateY(-2px);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            transform: translateY(-1px);
         }
 
         .form-input:hover:not(:focus) {
@@ -152,10 +156,10 @@
 
         .form-label {
             position: absolute;
-            left: 1.25rem;
+            left: 1rem;
             top: 50%;
             transform: translateY(-50%);
-            font-size: 1rem;
+            font-size: 0.9rem;
             color: #718096;
             pointer-events: none;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -166,8 +170,8 @@
         .form-input:focus ~ .form-label,
         .form-input:not(:placeholder-shown) ~ .form-label {
             top: -0.5rem;
-            left: 1rem;
-            font-size: 0.8125rem;
+            left: 0.75rem;
+            font-size: 0.75rem;
             color: #4a5568;
             font-weight: 600;
             background: white;
@@ -181,8 +185,8 @@
         /* Error messages */
         .error-message {
             color: #e53e3e;
-            font-size: 0.875rem;
-            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
             display: block;
             animation: shake 0.3s;
         }
@@ -196,17 +200,17 @@
         /* Button */
         .btn-login {
             width: 100%;
-            padding: 1rem 2rem;
-            font-size: 1.0625rem;
+            padding: 0.75rem 1.5rem;
+            font-size: 0.95rem;
             font-weight: 600;
             color: white;
             background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
             border: none;
-            border-radius: 0.75rem;
+            border-radius: 0.5rem;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);
-            margin-top: 1rem;
+            margin-top: 0.5rem;
             position: relative;
             overflow: hidden;
         }
@@ -313,9 +317,7 @@
 <body>
     <!-- Header -->
     <div class="header">
-        <div class="logo">
-            <img src="/images/logoXENA.png" alt="XENA Logo">
-        </div>
+        <div class="logo">XENA</div>
     </div>
 
     <!-- Main Container -->
