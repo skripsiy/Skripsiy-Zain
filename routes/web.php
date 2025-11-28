@@ -59,8 +59,12 @@ Route::middleware(['auth', 'verified'])->prefix('agent')->name('agent.')->group(
 // Team Leader Routes
 Route::middleware(['auth', 'verified'])->prefix('team-leader')->name('team-leader.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\TeamLeader\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/tickets', [App\Http\Controllers\TeamLeader\TicketController::class, 'index'])->name('tickets');
     Route::get('/assign', [App\Http\Controllers\TeamLeader\AssignController::class, 'index'])->name('assign');
     Route::post('/assign/{ticket}', [App\Http\Controllers\TeamLeader\AssignController::class, 'assign'])->name('assign.ticket');
+    Route::get('/profile', [App\Http\Controllers\TeamLeader\ProfileController::class, 'show'])->name('profile');
+    Route::patch('/profile', [App\Http\Controllers\TeamLeader\ProfileController::class, 'update'])->name('profile.update');
+    Route::patch('/profile/password', [App\Http\Controllers\TeamLeader\ProfileController::class, 'updatePassword'])->name('profile.password');
 });
 
 // Notification Routes (for all authenticated users)
