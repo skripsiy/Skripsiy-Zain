@@ -266,7 +266,7 @@
                 </thead>
                 <tbody>
                     @forelse($tickets as $ticket)
-                    <tr style="cursor: pointer;">
+                    <tr ondblclick="window.location='{{ route('team-leader.ticket.detail', $ticket->idTicket) }}'" style="cursor: pointer;">
                         <td><strong>TK{{ str_pad($ticket->idTicket, 6, '0', STR_PAD_LEFT) }}</strong></td>
                         <td>{{ $ticket->namacust ?? '-' }}</td>
                         <td>{{ $ticket->reportedpriority ?? '-' }}</td>

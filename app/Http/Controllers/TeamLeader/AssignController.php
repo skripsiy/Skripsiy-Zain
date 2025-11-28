@@ -44,6 +44,9 @@ class AssignController extends Controller
             'assignby' => $agent->name,
             'status' => 'ASSIGNED'
         ]);
+
+        // Broadcast event to the assigned agent
+        event(new \App\Events\TicketAssigned($ticket, $agent->id));
         
         return redirect()->back()->with('success', 'Ticket successfully assigned to ' . $agent->name);
     }

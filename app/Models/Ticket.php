@@ -4,8 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+
 class Ticket extends Model
 {
+    use LogsActivity;
+
     protected $primaryKey = 'idTicket';
     
     protected $fillable = [
@@ -23,4 +28,12 @@ class Ticket extends Model
         'datesolved' => 'date',
         'THT' => 'datetime',
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
 }

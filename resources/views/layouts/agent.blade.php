@@ -239,5 +239,92 @@
         
         {{ $additionalScripts ?? '' }}
     </script>
+
+    <!-- Toast Container -->
+    <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>
+
+    <script type="module">
+        // Toast Function
+        window.showToast = function(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            // Style based on type
+            let bgColor = '#1F4A5E';
+            let icon = '🔔';
+            
+            if (type === 'success') { bgColor = '#10B981'; icon = '✅'; }
+            if (type === 'error') { bgColor = '#EF4444'; icon = '❌'; }
+            if (type === 'warning') { bgColor = '#F59E0B'; icon = '⚠️'; }
+            
+            toast.style.cssText = `
+                background: ${bgColor};
+                color: white;
+                padding: 16px 24px;
+                border-radius: 8px;
+                margin-bottom: 10px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                font-family: 'Poppins', sans-serif;
+                font-size: 14px;
+                min-width: 300px;
+                transform: translateX(120%);
+                transition: transform 0.3s ease-out;
+            `;
+            
+            toast.innerHTML = `
+                <span style="font-size: 18px;">${icon}</span>
+                <span>${message}</span>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                toast.style.transform = 'translateX(120%)';
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 5000);
+        }
+
+        // Listen for events
+        setTimeout(() => {
+            if (window.Echo) {
+                console.log('Echo is initialized, starting listeners...');
+                
+                // Agent Listener
+                @if(auth()->check() && auth()->user()->role === 'agent')
+                    window.Echo.private('agent.{{ auth()->id() }}')
+                        .listen('TicketAssigned', (e) => {
+                            console.log('Ticket Assigned:', e);
+                            window.showToast(e.message, 'success');
+                            // Optional: Reload page or update UI if on dashboard
+                            if (window.location.pathname.includes('dashboard') || window.location.pathname.includes('tickets')) {
+                                setTimeout(() => window.location.reload(), 2000);
+                            }
+                        });
+                @endif
+
+                // Team Leader Listener
+                @if(auth()->check() && auth()->user()->role === 'team-leader')
+                    window.Echo.private('team-leader')
+                        .listen('TicketDispatched', (e) => {
+                            console.log('Ticket Dispatched:', e);
+                            window.showToast(e.message, 'info');
+                        });
+                @endif
+            } else {
+                console.error('Echo is not initialized');
+            }
+        }, 1000); // Wait for Echo to initialize
+    </script>
 </body>
 </html>

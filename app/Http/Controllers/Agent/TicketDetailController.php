@@ -11,7 +11,11 @@ class TicketDetailController extends Controller
     public function show($id)
     {
         $ticket = Ticket::findOrFail($id);
-        return view('agent.ticket-detail', compact('ticket'));
+        
+        // Check if current agent is assigned to this ticket
+        $canEdit = ($ticket->assignby === auth()->user()->name);
+        
+        return view('agent.ticket-detail', compact('ticket', 'canEdit'));
     }
 
     public function update(Request $request, $id)
@@ -57,6 +61,7 @@ class TicketDetailController extends Controller
                 break;
             case 'dispatch':
                 $ticket->update(['condition' => 'Closed', 'datesolved' => now()]);
+                event(new \App\Events\TicketDispatched($ticket, auth()->user()->name));
                 break;
         }
         
