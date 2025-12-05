@@ -354,35 +354,30 @@
     
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-icon">🗄️</div>
             <div class="stat-info">
                 <div class="stat-label">Tickets</div>
                 <div class="stat-value">{{ $totalTickets }}</div>
             </div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon">✅</div>
             <div class="stat-info">
                 <div class="stat-label">Consumed</div>
                 <div class="stat-value">{{ $consumedTickets }}</div>
             </div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon">📄</div>
             <div class="stat-info">
                 <div class="stat-label">Submitted</div>
                 <div class="stat-value">{{ $submittedTickets }}</div>
             </div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon">🔒</div>
             <div class="stat-info">
                 <div class="stat-label">Closed</div>
                 <div class="stat-value">{{ $closedTickets }}</div>
             </div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon">👤</div>
             <div class="stat-info">
                 <div class="stat-label">AHT</div>
                 <div class="stat-value">0.0</div>
@@ -529,10 +524,13 @@
         }
 
         async function handleToggleClick() {
+            // Temporarily disabled - akan diupdate dengan sistem baru
+            alert('Fitur time tracking sedang dalam perbaikan');
+            /*
             if (!isActive) {
                 // Mulai sesi kerja
                 try {
-                    const response = await fetch('{{ route("agent.work-session.start") }}', {
+                    const response = await fetch('{{ route("agent.work-session.toggle-online") }}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -559,6 +557,7 @@
                 // Tampilkan modal konfirmasi
                 document.getElementById('endModal').classList.add('show');
             }
+            */
         }
 
         function closeModal() {

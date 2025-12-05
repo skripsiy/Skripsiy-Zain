@@ -76,6 +76,7 @@
             margin-bottom: 25px;
             flex-shrink: 0;
             min-height: 280px;
+            overflow-x: hidden;
         }
         .chart-card {
             background: #FFFFFF;
@@ -85,6 +86,7 @@
             display: flex;
             flex-direction: column;
             height: 100%;
+            overflow: hidden;
         }
         .chart-card h3 {
             font-size: 14px;
@@ -96,6 +98,8 @@
             flex: 1;
             position: relative;
             min-height: 0;
+            max-width: 100%;
+            overflow: hidden;
         }
         .chart-legend {
             display: flex;
@@ -144,11 +148,17 @@
             flex-wrap: wrap;
             justify-content: flex-end;
         }
+        
         @media (max-width: 768px) {
+            .chart-section {
+                grid-template-columns: 1fr;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
             .table-header {
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 10px;
             }
             .table-controls {
                 width: 100%;
@@ -156,6 +166,7 @@
             }
             .date-filter {
                 flex: 1;
+                min-width: auto;
             }
         }
         .date-filter {
@@ -281,6 +292,131 @@
             height: 120px;
             margin: 0 auto;
         }
+        
+        /* Time Tracking Styles */
+        .time-tracking-card {
+            position: relative;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .status-badge.offline {
+            background: #E5E7EB;
+            color: #6B7280;
+        }
+        .status-badge.online {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+        .status-badge.aux {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+        .toggle-btn {
+            width: 100%;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #1F4A5E 0%, #2D6D8B 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(31, 74, 94, 0.3);
+        }
+        .toggle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(31, 74, 94, 0.4);
+        }
+        .toggle-btn.offline {
+            background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+        .toggle-btn.offline:hover {
+            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+        }
+        .toggle-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        .timer-section {
+            background: #F9FAFB;
+            border-radius: 8px;
+            padding:  15px;
+            margin: 15px 0;
+        }
+        .timer-item {
+            margin-bottom: 12px;
+        }
+        .timer-item:last-child {
+            margin-bottom: 0;
+        }
+        .timer-label {
+            font-size: 11px;
+            color: #6B7280;
+            font-weight: 500;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .timer-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1F4A5E;
+            font-family: 'Courier New', monospace;
+        }
+        .aux-remaining {
+            font-size: 10px;
+            color: #059669;
+            margin-top: 2px;
+            font-weight: 600;
+        }
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .aux-btn, .end-shift-btn {
+            padding: 10px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Poppins', sans-serif;
+        }
+        .aux-btn {
+            background: #F59E0B;
+            color: white;
+        }
+        .aux-btn:hover:not(:disabled) {
+            background: #D97706;
+        }
+        .aux-btn.active {
+            background: #10B981;
+        }
+        .aux-btn.active:hover:not(:disabled) {
+            background: #059669;
+        }
+        .end-shift-btn {
+            background: #DC2626;
+            color: white;
+        }
+        .end-shift-btn:hover:not(:disabled) {
+            background: #B91C1C;
+        }
+        .aux-btn:disabled, .end-shift-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
     </x-slot>
     
     <!-- Stats Grid -->
@@ -327,18 +463,41 @@
             </div>
         </div>
 
-        <!-- Total AUX/Online -->
-        <div class="stat-card">
-            <h3>Total AUX/Online</h3>
-            <div class="stat-item">
-                <span class="stat-label">Online Time</span>
+        <!-- Time Tracking Control -->
+        <div class="stat-card time-tracking-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3>Work Session</h3>
+                <span class="status-badge" id="statusBadge">Offline</span>
             </div>
-            <div class="stat-number">0.00</div>
-            <div style="margin-top: 20px;">
-                <div class="stat-item">
-                    <span class="stat-label">AUX Time</span>
+            
+            <!-- Toggle Button -->
+            <div style="text-align: center; margin: 20px 0;">
+                <button class="toggle-btn" id="toggleBtn" onclick="toggleOnline()">
+                    <span id="toggleText">Start Shift</span>
+                </button>
+            </div>
+            
+            <!-- Timers -->
+            <div class="timer-section">
+                <div class="timer-item">
+                    <span class="timer-label">Online Time</span>
+                    <div class="timer-value" id="onlineTimer">00:00:00</div>
                 </div>
-                <div class="stat-number">0.00</div>
+                <div class="timer-item">
+                    <span class="timer-label">AUX Time</span>
+                    <div class="timer-value" id="auxTimer">00:00:00</div>
+                    <div class="aux-remaining" id="auxRemaining">Available: 01:00:00</div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="aux-btn" id="auxBtn" onclick="handleAuxButton()" disabled>
+                    <span id="auxBtnText">Take Break</span>
+                </button>
+                <button class="end-shift-btn" id="endShiftBtn" onclick="endShift()" disabled>
+                    End Shift
+                </button>
             </div>
         </div>
 
@@ -698,5 +857,247 @@
 
             alert(`Report berhasil di-download: ${filename}`);
         }
+
+        // ========== TIME TRACKING SYSTEM ==========
+        let currentStatus = 'offline';
+        let onlineStartTime = null;
+        let auxStartTime = null;
+        let totalOnlineSeconds = 0;
+        let totalAuxSeconds = 0;
+        let auxRemainingSeconds = 3600; // 1 hour
+        let timerInterval = null;
+
+        // Fetch and update work session status
+        async function fetchWorkStatus() {
+            try {
+                const response = await fetch('{{ route("agent.work-session.status") }}');
+                const data = await response.json();
+                
+                currentStatus = data.status;
+                totalOnlineSeconds = data.total_online_seconds || 0;
+                totalAuxSeconds = data.total_aux_seconds || 0;
+                auxRemainingSeconds = data.aux_remaining_seconds || 3600;
+                
+                if (data.current_session_start) {
+                    if (currentStatus === 'online') {
+                        onlineStartTime = new Date(data.current_session_start);
+                        auxStartTime = null;
+                    } else if (currentStatus === 'aux') {
+                        auxStartTime = new Date(data.current_session_start);
+                        onlineStartTime = null;
+                    }
+                } else {
+                    onlineStartTime = null;
+                    auxStartTime = null;
+                }
+                
+                updateUI();
+            } catch (error) {
+                console.error('Error fetching work status:', error);
+            }
+        }
+
+        // Update all UI elements based on current status
+        function updateUI() {
+            const statusBadge = document.getElementById('statusBadge');
+            const toggleBtn = document.getElementById('toggleBtn');
+            const toggleText = document.getElementById('toggleText');
+            const auxBtn = document.getElementById('auxBtn');
+            const auxBtnText = document.getElementById('auxBtnText');
+            const endShiftBtn = document.getElementById('endShiftBtn');
+
+            // Remove all status classes
+            statusBadge.classList.remove('offline', 'online', 'aux');
+            toggleBtn.classList.remove('offline');
+            auxBtn.classList.remove('active');
+
+            if (currentStatus === 'offline') {
+                statusBadge.textContent = 'Offline';
+                statusBadge.classList.add('offline');
+                toggleText.textContent = 'Start Shift';
+                toggleBtn.disabled = false;
+                auxBtn.disabled = true;
+                auxBtnText.textContent = 'Take Break';
+                endShiftBtn.disabled = true;
+            } else if (currentStatus === 'online') {
+                statusBadge.textContent = 'Online';
+                statusBadge.classList.add('online');
+                toggleText.textContent = 'Start Shift';
+                toggleBtn.disabled = true; // Disabled when already online
+                auxBtn.disabled = auxRemainingSeconds <= 0;
+                auxBtnText.textContent = 'Take Break';
+                endShiftBtn.disabled = false;
+            } else if (currentStatus === 'aux') {
+                statusBadge.textContent = 'On Break';
+                statusBadge.classList.add('aux');
+                toggleText.textContent = 'Start Shift';
+                toggleBtn.disabled = true; // Disabled when on break
+                auxBtn.disabled = false;
+                auxBtn.classList.add('active');
+                auxBtnText.textContent = 'End Break';
+                endShiftBtn.disabled = true;
+            }
+
+            updateTimers();
+        }
+
+        // Update timer displays
+        function updateTimers() {
+            const now = new Date();
+            
+            // Calculate online time
+            let currentOnline = totalOnlineSeconds;
+            if (currentStatus === 'online' && onlineStartTime) {
+                currentOnline += Math.floor((now - onlineStartTime) / 1000);
+            }
+            document.getElementById('onlineTimer').textContent = formatTime(currentOnline);
+
+            // Calculate aux time
+            let currentAux = totalAuxSeconds;
+            let remaining = auxRemainingSeconds;
+            if (currentStatus === 'aux' && auxStartTime) {
+                const elapsed = Math.floor((now - auxStartTime) / 1000);
+                currentAux += elapsed;
+                remaining = Math.max(0, auxRemainingSeconds - elapsed);
+            }
+            document.getElementById('auxTimer').textContent = formatTime(currentAux);
+            document.getElementById('auxRemaining').textContent = `Available: ${formatTime(remaining)}`;
+
+            // Warn if AUX time about to end
+            if (currentStatus === 'aux' && remaining <= 60 && remaining > 0) {
+                document.getElementById('auxRemaining').style.color = '#DC2626';
+            } else if (remaining === 0 && currentStatus === 'aux') {
+                alert('Waktu istirahat Anda sudah habis! Silakan kembali bekerja.');
+                handleAuxButton(); // Auto end break
+            }
+        }
+
+        // Format seconds to HH:MM:SS
+        function formatTime(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        // Toggle online/offline
+        async function toggleOnline() {
+            try {
+                const response = await fetch('{{ route("agent.work-session.toggle-online") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.showToast(data.message, 'success');
+                    await fetchWorkStatus();
+                } else {
+                    window.showToast(data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error toggling online:', error);
+                window.showToast('Gagal mengubah status', 'error');
+            }
+        }
+
+        // Handle AUX button (start or end break)
+        async function handleAuxButton() {
+            if (currentStatus === 'aux') {
+                // End break
+                try {
+                    const response = await fetch('{{ route("agent.work-session.end-aux") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        }
+                    });
+
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        window.showToast(data.message, 'success');
+                        await fetchWorkStatus();
+                    } else {
+                        window.showToast(data.message, 'error');
+                    }
+                } catch (error) {
+                    console.error('Error ending break:', error);
+                    window.showToast('Gagal mengakhiri istirahat', 'error');
+                }
+            } else {
+                // Start break
+                try {
+                    const response = await fetch('{{ route("agent.work-session.start-aux") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        }
+                    });
+
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        window.showToast(data.message, 'success');
+                        await fetchWorkStatus();
+                    } else {
+                        window.showToast(data.message, 'warning');
+                    }
+                } catch (error) {
+                    console.error('Error starting break:', error);
+                    window.showToast('Gagal memulai istirahat', 'error');
+                }
+            }
+        }
+
+        // End shift
+        async function endShift() {
+            if (!confirm('Apakah Anda yakin ingin mengakhiri shift hari ini?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('{{ route("agent.work-session.end-shift") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.showToast(data.message, 'success');
+                    await fetchWorkStatus();
+                } else {
+                    window.showToast(data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Error ending shift:', error);
+                window.showToast('Gagal mengakhiri shift', 'error');
+            }
+        }
+
+        // Initialize and start timer
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            
+            // Update timer every second for smooth counting
+            timerInterval = setInterval(updateTimers, 1000);
+            
+            // Fetch status from server every 5 seconds
+            setInterval(fetchWorkStatus, 5000);
+        }
+
+        // Initialize on page load
+        fetchWorkStatus();
+        startTimer();
     </x-slot>
 </x-agent-layout>

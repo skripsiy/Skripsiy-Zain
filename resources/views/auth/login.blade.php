@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign in - XENA</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -13,7 +13,7 @@
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: #1a202c;
             min-height: 100vh;
             display: flex;
@@ -85,12 +85,12 @@
         .login-card {
             background: white;
             border-radius: 1rem;
-            padding: 2.5rem 2rem;
+            padding: 3rem 2.75rem;
             box-shadow: 
                 0 20px 60px rgba(0, 0, 0, 0.4),
                 0 0 0 1px rgba(255, 255, 255, 0.1);
             width: 100%;
-            max-width: 400px;
+            max-width: 460px;
             position: relative;
             animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
             transform-origin: center;
@@ -114,10 +114,18 @@
         }
 
         .title h1 {
-            font-size: 1.5rem;
+            font-size: 2rem;
             font-weight: 600;
-            color: #1a202c;
             margin: 0;
+            line-height: 1.2;
+        }
+
+        .title h1 .sign-text {
+            color: #1a202c;
+        }
+
+        .title h1 .in-text {
+            color: #1e40af;
         }
 
         /* Form */
@@ -126,60 +134,41 @@
             position: relative;
         }
 
-        .input-wrapper {
+        /* Fieldset style for label */
+        .input-fieldset {
+            border: 2px solid #1a202c;
+            border-radius: 0.75rem;
+            padding: 0;
+            margin: 0;
             position: relative;
+        }
+
+        .input-legend {
+            font-size: 0.875rem;
+            color: #1a202c;
+            font-weight: 500;
+            padding: 0 0.5rem;
+            margin-left: 0.75rem;
         }
 
         .form-input {
             width: 100%;
             padding: 0.75rem 1rem;
-            font-size: 0.9rem;
-            border: 2px solid #e2e8f0;
-            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            border: none;
             outline: none;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            background: #f8fafc;
-            color: #1a202c;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .form-input:focus {
-            border-color: #4a5568;
-            background: white;
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-            transform: translateY(-1px);
-        }
-
-        .form-input:hover:not(:focus) {
-            border-color: #cbd5e0;
-        }
-
-        .form-label {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 0.9rem;
-            color: #718096;
-            pointer-events: none;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             background: transparent;
-            padding: 0 0.25rem;
+            color: #1a202c;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 400;
         }
 
-        .form-input:focus ~ .form-label,
-        .form-input:not(:placeholder-shown) ~ .form-label {
-            top: -0.5rem;
-            left: 0.75rem;
-            font-size: 0.75rem;
-            color: #4a5568;
-            font-weight: 600;
-            background: white;
-            padding: 0 0.5rem;
+        .form-input::placeholder {
+            color: transparent;
         }
 
-        .form-input:not(:focus):not(:placeholder-shown) ~ .form-label {
-            color: #4a5568;
+        .input-fieldset:focus-within {
+            border-color: #1e40af;
         }
 
         /* Error messages */
@@ -198,42 +187,29 @@
         }
 
         /* Button */
+        .btn-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 1.5rem;
+        }
+
         .btn-login {
-            width: 100%;
-            padding: 0.75rem 1.5rem;
-            font-size: 0.95rem;
+            padding: 0.75rem 2.5rem;
+            font-size: 1rem;
             font-weight: 600;
             color: white;
-            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            background: #1e3a8a;
             border: none;
             border-radius: 0.5rem;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);
-            margin-top: 0.5rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-login::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .btn-login:hover::before {
-            left: 100%;
         }
 
         .btn-login:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 20px rgba(30, 58, 138, 0.4);
-            background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+            background: #1e40af;
         }
 
         .btn-login:active {
@@ -324,7 +300,7 @@
     <div class="container">
         <div class="login-card">
             <div class="title">
-                <h1>Sign in</h1>
+                <h1><span class="sign-text">Sign </span><span class="in-text">in</span></h1>
             </div>
 
             <!-- Session Status -->
@@ -339,7 +315,8 @@
 
                 <!-- Email / Username -->
                 <div class="form-group">
-                    <div class="input-wrapper">
+                    <fieldset class="input-fieldset">
+                        <legend class="input-legend">Email / Username</legend>
                         <input 
                             id="email" 
                             class="form-input" 
@@ -348,11 +325,9 @@
                             value="{{ old('email') }}" 
                             required 
                             autofocus 
-                            autocomplete="username" 
-                            placeholder=" "
+                            autocomplete="username"
                         />
-                        <label for="email" class="form-label">Email / Username</label>
-                    </div>
+                    </fieldset>
                     @error('email')
                         <span class="error-message">{{ $message }}</span>
                     @enderror
@@ -360,27 +335,28 @@
 
                 <!-- Password -->
                 <div class="form-group">
-                    <div class="input-wrapper">
+                    <fieldset class="input-fieldset">
+                        <legend class="input-legend">Password</legend>
                         <input 
                             id="password" 
                             class="form-input" 
                             type="password" 
                             name="password" 
                             required 
-                            autocomplete="current-password" 
-                            placeholder=" "
+                            autocomplete="current-password"
                         />
-                        <label for="password" class="form-label">Password</label>
-                    </div>
+                    </fieldset>
                     @error('password')
                         <span class="error-message">{{ $message }}</span>
                     @enderror
                 </div>
 
                 <!-- Login Button -->
-                <button type="submit" class="btn-login" id="loginBtn">
-                    Login
-                </button>
+                <div class="btn-container">
+                    <button type="submit" class="btn-login" id="loginBtn">
+                        Login
+                    </button>
+                </div>
             </form>
         </div>
     </div>

@@ -8,15 +8,21 @@ class AgentWorkSession extends Model
 {
     protected $fillable = [
         'user_id',
-        'start_time',
-        'end_time',
-        'end_type',
-        'duration_minutes'
+        'shift_start',
+        'shift_end',
+        'total_online_seconds',
+        'total_aux_seconds',
+        'aux_remaining_seconds',
+        'status',
+        'current_session_start',
+        'work_date'
     ];
 
     protected $casts = [
-        'start_time' => 'datetime',
-        'end_time' => 'datetime',
+        'shift_start' => 'datetime',
+        'shift_end' => 'datetime',
+        'current_session_start' => 'datetime',
+        'work_date' => 'date',
     ];
 
     public function user()

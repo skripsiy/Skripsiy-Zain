@@ -10,7 +10,7 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -251,11 +251,10 @@
             
             // Style based on type
             let bgColor = '#1F4A5E';
-            let icon = '🔔';
             
-            if (type === 'success') { bgColor = '#10B981'; icon = '✅'; }
-            if (type === 'error') { bgColor = '#EF4444'; icon = '❌'; }
-            if (type === 'warning') { bgColor = '#F59E0B'; icon = '⚠️'; }
+            if (type === 'success') { bgColor = '#10B981'; }
+            if (type === 'error') { bgColor = '#EF4444'; }
+            if (type === 'warning') { bgColor = '#F59E0B'; }
             
             toast.style.cssText = `
                 background: ${bgColor};
@@ -275,7 +274,6 @@
             `;
             
             toast.innerHTML = `
-                <span style="font-size: 18px;">${icon}</span>
                 <span>${message}</span>
             `;
             

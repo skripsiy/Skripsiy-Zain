@@ -50,10 +50,12 @@ Route::middleware(['auth', 'verified'])->prefix('agent')->name('agent.')->group(
     Route::patch('/profile', [App\Http\Controllers\Agent\ProfileController::class, 'update'])->name('profile.update');
     Route::patch('/profile/password', [App\Http\Controllers\Agent\ProfileController::class, 'updatePassword'])->name('profile.password');
     
-    // Work Session Routes
+    // Work Session Routes for Time Tracking
     Route::get('/work-session/status', [App\Http\Controllers\Agent\WorkSessionController::class, 'status'])->name('work-session.status');
-    Route::post('/work-session/start', [App\Http\Controllers\Agent\WorkSessionController::class, 'start'])->name('work-session.start');
-    Route::post('/work-session/end', [App\Http\Controllers\Agent\WorkSessionController::class, 'end'])->name('work-session.end');
+    Route::post('/work-session/toggle-online', [App\Http\Controllers\Agent\WorkSessionController::class, 'toggleOnline'])->name('work-session.toggle-online');
+    Route::post('/work-session/start-aux', [App\Http\Controllers\Agent\WorkSessionController::class, 'startAux'])->name('work-session.start-aux');
+    Route::post('/work-session/end-aux', [App\Http\Controllers\Agent\WorkSessionController::class, 'endAux'])->name('work-session.end-aux');
+    Route::post('/work-session/end-shift', [App\Http\Controllers\Agent\WorkSessionController::class, 'endShift'])->name('work-session.end-shift');
 });
 
 // Team Leader Routes
