@@ -204,28 +204,46 @@
     
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-icon">🗄️</div>
+            <div class="stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                </svg>
+            </div>
             <div class="stat-info">
                 <div class="stat-label">Total Tickets</div>
                 <div class="stat-value">{{ $tickets->total() }}</div>
             </div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon">⏳</div>
+            <div class="stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+            </div>
             <div class="stat-info">
                 <div class="stat-label">Queued</div>
                 <div class="stat-value">{{ $tickets->where('status', 'QUEUED')->count() }}</div>
             </div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon">✅</div>
+            <div class="stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+            </div>
             <div class="stat-info">
                 <div class="stat-label">Assigned</div>
                 <div class="stat-value">{{ $tickets->where('status', 'ASSIGNED')->count() }}</div>
             </div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon">🔒</div>
+            <div class="stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+            </div>
             <div class="stat-info">
                 <div class="stat-label">Closed</div>
                 <div class="stat-value">{{ $tickets->where('condition', 'Closed')->count() }}</div>

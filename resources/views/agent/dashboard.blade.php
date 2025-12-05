@@ -871,6 +871,12 @@
         async function fetchWorkStatus() {
             try {
                 const response = await fetch('{{ route("agent.work-session.status") }}');
+                
+                // Silent fail jika response tidak OK 
+                if (!response.ok) {
+                    return; // Tidak perlu log error untuk status check
+                }
+                
                 const data = await response.json();
                 
                 currentStatus = data.status;
@@ -893,7 +899,7 @@
                 
                 updateUI();
             } catch (error) {
-                console.error('Error fetching work status:', error);
+                // Silent - error biasa saat belum ada session
             }
         }
 

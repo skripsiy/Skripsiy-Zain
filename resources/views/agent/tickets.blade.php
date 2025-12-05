@@ -1,12 +1,6 @@
 <x-agent-layout>
     <x-slot name="title">Ticket Management</x-slot>
     
-    <x-slot name="headerContent">
-        <div class="work-duration" id="workDuration" style="display: none;">00:00</div>
-        <div class="work-status-toggle" id="workToggle" onclick="handleToggleClick()"></div>
-        <div class="user-avatar-header">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</div>
-    </x-slot>
-    
     <x-slot name="sidebar">
         <a class="sidebar-icon" href="{{ route('agent.dashboard') }}" title="Dashboard">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
@@ -26,38 +20,6 @@
     </x-slot>
     
     <x-slot name="customStyles">
-        .work-status-toggle {
-            width: 50px;
-            height: 26px;
-            background: #E5E7EB;
-            border-radius: 13px;
-            position: relative;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .work-status-toggle::before {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: white;
-            top: 3px;
-            left: 3px;
-            transition: 0.3s;
-        }
-        .work-status-toggle.active {
-            background: #10B981;
-        }
-        .work-status-toggle.active::before {
-            left: 27px;
-        }
-        .work-duration {
-            font-size: 13px;
-            color: #374151;
-            font-weight: 600;
-            margin-right: 8px;
-        }
         .user-avatar-header {
             width: 38px;
             height: 38px;
@@ -345,39 +307,117 @@
             background: #1F4A5E;
             color: white;
             border-color: #1F4A5E;
-        }
         .pagination-btns button:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+        }
+        
+        /* Responsive Design untuk User-Friendly */
+        @media (max-width: 1400px) {
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        @media (max-width: 992px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .search-box {
+                width: 100%;
+            }
+            
+            .search-input {
+                width: 100%;
+            }
+            
+            table {
+                font-size: 11px;
+            }
+            
+            th, td {
+                padding: 8px 6px;
+            }
+        }
+        
+        /* Prevent Horizontal Scroll */
+        .content-card {
+            overflow: hidden;
+        }
+        
+        .table-wrapper {
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
     </x-slot>
     
     <div class="stats-grid">
         <div class="stat-card">
+            <div class="stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                </svg>
+            </div>
             <div class="stat-info">
                 <div class="stat-label">Tickets</div>
                 <div class="stat-value">{{ $totalTickets }}</div>
             </div>
         </div>
         <div class="stat-card">
+            <div class="stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+            </div>
             <div class="stat-info">
                 <div class="stat-label">Consumed</div>
                 <div class="stat-value">{{ $consumedTickets }}</div>
             </div>
         </div>
         <div class="stat-card">
+            <div class="stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+            </div>
             <div class="stat-info">
                 <div class="stat-label">Submitted</div>
                 <div class="stat-value">{{ $submittedTickets }}</div>
             </div>
         </div>
         <div class="stat-card">
+            <div class="stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+            </div>
             <div class="stat-info">
                 <div class="stat-label">Closed</div>
                 <div class="stat-value">{{ $closedTickets }}</div>
             </div>
         </div>
         <div class="stat-card">
+            <div class="stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+            </div>
             <div class="stat-info">
                 <div class="stat-label">AHT</div>
                 <div class="stat-value">0.0</div>
@@ -392,7 +432,12 @@
                 <form method="GET" action="{{ route('agent.tickets') }}" class="search-box">
                     <input type="hidden" name="view" value="{{ $view }}">
                     <input type="text" name="search" class="search-input" placeholder="Search" value="{{ request('search') }}">
-                    <button type="submit" class="search-btn">🔍</button>
+                    <button type="submit" class="search-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                    </button>
                 </form>
                 <a href="{{ route('agent.tickets', ['view' => 'active']) }}" class="btn {{ $view == 'active' ? 'btn-primary' : 'btn-secondary' }}">Active Ticket</a>
                 <a href="{{ route('agent.tickets', ['view' => 'today']) }}" class="btn {{ $view == 'today' ? 'btn-primary' : 'btn-secondary' }}">Today Logs</a>
@@ -479,13 +524,14 @@
     </div>
     
     <x-slot name="additionalScripts">
+        /* Work session functionality removed from tickets page - now only in dashboard
         let durationInterval = null;
         let isActive = false;
 
         // Check status saat halaman dimuat
         async function checkWorkStatus() {
             try {
-                const response = await fetch('{{ route("agent.work-session.status") }}');
+                const response = await fetch('/agent/work-session/status-REMOVED');
                 const data = await response.json();
                 
                 if (data.active) {
@@ -509,7 +555,7 @@
             
             durationInterval = setInterval(async () => {
                 try {
-                    const response = await fetch('{{ route("agent.work-session.status") }}');
+                    const response = await fetch('/agent/work-session/status-REMOVED');
                     const data = await response.json();
                     
                     if (data.active) {
@@ -530,7 +576,7 @@
             if (!isActive) {
                 // Mulai sesi kerja
                 try {
-                    const response = await fetch('{{ route("agent.work-session.toggle-online") }}', {
+                    const response = await fetch('/agent/work-session/toggle-online-REMOVED', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -560,13 +606,14 @@
             */
         }
 
+        /* Removed - Work session now only in dashboard
         function closeModal() {
             document.getElementById('endModal').classList.remove('show');
         }
 
         async function endSession(type) {
             try {
-                const response = await fetch('{{ route("agent.work-session.end") }}', {
+                const response = await fetch('/agent/work-session/end-REMOVED', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -595,8 +642,10 @@
                 alert('Gagal mengakhiri sesi kerja');
             }
         }
+        */
 
         // Check status saat halaman dimuat
         checkWorkStatus();
+        */
     </x-slot>
 </x-agent-layout>
