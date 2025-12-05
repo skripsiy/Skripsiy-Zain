@@ -37,6 +37,9 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     // Reports Routes
     Route::get('/reports', [App\Http\Controllers\Admin\ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/user/{user}', [App\Http\Controllers\Admin\ReportController::class, 'getUserTickets'])->name('reports.user');
+    
+    // Settings Routes
+    Route::get('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
 });
 
 // Agent Routes
