@@ -372,7 +372,7 @@
                             <td>{{ $ticket->namacust ?? 'N/A' }}</td>
                             <td>
                                 <span class="status-badge" style="background: #FFEBEE; color: #C62828;">
-                                    🔴 {{ strtoupper($ticket->reportedpriority ?? 'EMERGENCY') }}
+                                    {{ strtoupper($ticket->reportedpriority ?? 'EMERGENCY') }}
                                 </span>
                             </td>
                             <td>{{ Str::limit($ticket->detailticket ?? 'No description', 40) }}</td>
@@ -404,7 +404,7 @@
                     @empty
                         <tr>
                             <td colspan="8" style="text-align: center; padding: 40px; color: #999;">
-                                ✓ No super emergency tickets in queue - All clear!
+                                No super emergency tickets in queue - All clear!
                             </td>
                         </tr>
                     @endforelse
