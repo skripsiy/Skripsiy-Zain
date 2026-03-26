@@ -36,4 +36,21 @@ class Ticket extends Model
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
+
+    /**
+     * Get the user who assigned this ticket
+     */
+    public function assignedBy()
+    {
+        return $this->belongsTo(User::class, 'assignby', 'email');
+    }
+
+    /**
+     * Get the user who solved this ticket
+     */
+    public function solvedBy()
+    {
+        return $this->belongsTo(User::class, 'solvedby', 'email');
+    }
 }
+

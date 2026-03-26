@@ -91,7 +91,12 @@ Aplikasi ini dikembangkan menggunakan framework Laravel 12 dengan Tailwind CSS u
   - Status tiket
   - Priority
   - Regional/Witel
-- ✅ Export laporan ke Excel
+- ✅ **Export laporan ke Excel** dengan fitur:
+  - Download all user reports (overview performa semua user)
+  - Download all tickets dengan filter
+  - Download tiket per user (assigned/solved/inbox)
+  - File Excel dengan styling professional
+  - Format: `.xlsx` dengan auto-sized columns
 - ✅ View detail tiket dari laporan
 - ✅ User performance report
 
@@ -260,14 +265,29 @@ REPL untuk Laravel:
   - Model testing
   - Quick data manipulation
 
+#### 7. **maatwebsite/excel** (v3.1)
+Package untuk export/import Excel:
+- **Kegunaan**: Export dan import data dalam format Excel
+- **Fitur**:
+  - Export data ke Excel (.xlsx, .xls, .csv)
+  - Import data dari Excel
+  - Custom styling dan formatting
+  - Memory efficient untuk large datasets
+  - Support untuk multiple sheets
+- **Implementasi**: 
+  - Export user reports
+  - Export all tickets dengan filters
+  - Export user-specific tickets (assigned/solved/inbox)
+
+
 ### Development Packages
 
-#### 7. **fakerphp/faker** (v1.23)
+#### 8. **fakerphp/faker** (v1.23)
 Generate data dummy:
 - **Kegunaan**: Seeding database dengan data testing
 - **Implementasi**: UserSeeder dan TicketSeeder
 
-#### 8. **laravel/pail** (v1.2.2)
+#### 9. **laravel/pail** (v1.2.2)
 Log viewer untuk development:
 - **Kegunaan**: View dan filter application logs secara real-time
 - **Fitur**:
@@ -275,21 +295,21 @@ Log viewer untuk development:
   - Filter by level/type
   - Colored output
 
-#### 9. **laravel/pint** (v1.24)
+#### 10. **laravel/pint** (v1.24)
 Code formatter untuk PHP:
 - **Kegunaan**: Maintain code style consistency
 - **Fitur**:
   - PSR-12 styling
   - Auto-fix code style issues
 
-#### 10. **laravel/sail** (v1.41)
+#### 11. **laravel/sail** (v1.41)
 Docker environment untuk Laravel:
 - **Kegunaan**: Development environment menggunakan Docker
 - **Fitur**:
   - Pre-configured services
   - Database, Redis, Mailhog
 
-#### 11. **phpunit/phpunit** (v11.5.3)
+#### 12. **phpunit/phpunit** (v11.5.3)
 Testing framework:
 - **Kegunaan**: Unit testing dan feature testing
 - **Fitur**:

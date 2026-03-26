@@ -10,6 +10,14 @@
                 </svg>
                 <input type="text" id="searchInput" placeholder="Search users...">
             </div>
+            <a href="{{ route('admin.reports.export.users') }}" class="download-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Export Excel
+            </a>
         </div>
     </x-slot>
     
@@ -64,6 +72,32 @@
             outline: none;
             border-color: #2C5F7C;
             box-shadow: 0 0 0 3px rgba(44, 95, 124, 0.1);
+        }
+        
+        .download-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #2C5F7C 0%, #1F4A5E 100%);
+            color: white;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(44, 95, 124, 0.3);
+            background: linear-gradient(135deg, #1F4A5E 0%, #2C5F7C 100%);
+        }
+        
+        .download-btn svg {
+            flex-shrink: 0;
         }
         
         .users-grid {
@@ -215,6 +249,61 @@
             font-weight: 700;
             color: #1F4A5E;
         }
+        
+        .modal-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .download-btn.small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        .export-dropdown {
+            position: relative;
+        }
+        
+        .export-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            min-width: 200px;
+            z-index: 1000;
+            overflow: hidden;
+        }
+        
+        .export-dropdown-menu.active {
+            display: block;
+            animation: fadeIn 0.2s ease;
+        }
+        
+        .export-option {
+            display: block;
+            padding: 10px 16px;
+            color: #374151;
+            text-decoration: none;
+            font-size: 13px;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid #E5E7EB;
+        }
+        
+        .export-option:last-child {
+            border-bottom: none;
+        }
+        
+        .export-option:hover {
+            background: #F3F4F6;
+            color: #2C5F7C;
+            padding-left: 20px;
+        }
+        
         .close-modal {
             background: none;
             border: none;
@@ -419,7 +508,24 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title" id="modalUserName">User Details</h2>
-                <button class="close-modal" onclick="closeUserDetails()">&times;</button>
+                <div class="modal-actions">
+                    <div class="export-dropdown">
+                        <button class="download-btn small" onclick="toggleExportDropdown()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Export
+                        </button>
+                        <div class="export-dropdown-menu" id="exportDropdown">
+                            <a href="#" class="export-option" data-type="assigned">Export Assigned Tickets</a>
+                            <a href="#" class="export-option" data-type="solved">Export Solved Tickets</a>
+                            <a href="#" class="export-option" data-type="inbox">Export Inbox Tickets</a>
+                        </div>
+                    </div>
+                    <button class="close-modal" onclick="closeUserDetails()">&times;</button>
+                </div>
             </div>
             
             <div id="modalContent">
@@ -539,9 +645,47 @@
         // Close modal when clicking outside
         window.onclick = function(event) {
             const modal = document.getElementById('userDetailsModal');
+            const dropdown = document.getElementById('exportDropdown');
+            
             if (event.target === modal) {
                 closeUserDetails();
             }
+            
+            // Close dropdown when clicking outside
+            if (!event.target.closest('.export-dropdown')) {
+                if (dropdown) dropdown.classList.remove('active');
+            }
         }
+        
+        // Current user ID for export
+        let currentUserId = null;
+        
+        // Store user ID when viewing details
+        const originalViewUserDetails = viewUserDetails;
+        viewUserDetails = async function(userId) {
+            currentUserId = userId;
+            await originalViewUserDetails(userId);
+        }
+        
+        // Toggle export dropdown
+        function toggleExportDropdown() {
+            event.stopPropagation();
+            const dropdown = document.getElementById('exportDropdown');
+            dropdown.classList.toggle('active');
+        }
+        
+        // Handle export option click
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.export-option').forEach(option => {
+                option.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const type = this.getAttribute('data-type');
+                    if (currentUserId) {
+                        window.location.href = `/admin/reports/export/user-tickets/${currentUserId}?type=${type}`;
+                    }
+                    document.getElementById('exportDropdown').classList.remove('active');
+                });
+            });
+        });
     </x-slot>
 </x-agent-layout>

@@ -5,8 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Ticket;
+use App\Exports\TicketsExport;
+use App\Exports\UserReportsExport;
+use App\Exports\UserTicketsExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ReportController extends Controller
 {
@@ -70,4 +74,50 @@ class ReportController extends Controller
             'inbox_tickets' => $inboxTickets,
         ]);
     }
+
+    /**
+     * Export all user reports to Excel
+     */
+    public function exportUserReports()
+    {
+        return Excel::download(
+            new UserReportsExport(),
+            'user_reports_' . now()->format('Y-m-d_His') . '.xlsx'
+        );
+    }
+
+    /**
+     * Export all tickets to Excel
+     */
+    public function exportAllTickets(Request $request)
+    {
+        $filters = $request->only([
+            'user_id',
+            'status',
+            'priority',
+            'regional',
+            'witel',
+            'date_from',
+            'date_to'
+        ]);
+
+        return Excel::download(
+            new TicketsExport($filters),
+            'all_tickets_' . now()->format('Y-m-d_His') . '.xlsx'
+        );
+    }
+
+    /**
+     * Export specific user's tickets to Excel
+     */
+    public function exportUserTickets(User $user, Request $request)
+    {
+        $type = $request->get('type', 'assigned'); // 'assigned', 'solved', or 'inbox'
+
+        return Excel::download(
+            new UserTicketsExport($user, $type),
+            $user->name . '_' . $type . '_tickets_' . now()->format('Y-m-d_His') . '.xlsx'
+        );
+    }
 }
+

@@ -38,6 +38,11 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     Route::get('/reports', [App\Http\Controllers\Admin\ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/user/{user}', [App\Http\Controllers\Admin\ReportController::class, 'getUserTickets'])->name('reports.user');
     
+    // Excel Export Routes
+    Route::get('/reports/export/users', [App\Http\Controllers\Admin\ReportController::class, 'exportUserReports'])->name('reports.export.users');
+    Route::get('/reports/export/tickets', [App\Http\Controllers\Admin\ReportController::class, 'exportAllTickets'])->name('reports.export.tickets');
+    Route::get('/reports/export/user-tickets/{user}', [App\Http\Controllers\Admin\ReportController::class, 'exportUserTickets'])->name('reports.export.user-tickets');
+    
     // Settings Routes
     Route::get('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
 });
