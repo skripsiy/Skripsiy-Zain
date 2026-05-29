@@ -47,6 +47,7 @@ class DashboardController extends Controller
         $woAvailable = $tickets->count();
         $consume = $tickets->where('condition', 'In Progress')->count();
         $closed = $tickets->where('condition', 'Closed')->count();
+        $dispatched = $tickets->whereIn('condition', ['Dispatched', 'DISPATCHED'])->count();
         $ods = $tickets->where('condition', 'Closed')->count(); // Assuming ODS is similar to Closed for now
 
         $stats = [
@@ -54,6 +55,7 @@ class DashboardController extends Controller
             'consume' => $consume,
             'ods' => $ods,
             'closed' => $closed,
+            'dispatched' => $dispatched,
         ];
 
         // Prepare Chart Data
@@ -61,6 +63,7 @@ class DashboardController extends Controller
         $barChartConsume = [];
         $barChartOds = [];
         $barChartClosed = [];
+        $barChartDispatched = [];
         $lineChartLabels = [];
         $lineChartData = [];
 
@@ -78,10 +81,12 @@ class DashboardController extends Controller
                 $barChartConsume[] = $dayTickets->where('condition', 'In Progress')->count();
                 $barChartClosed[] = $dayTickets->where('condition', 'Closed')->count();
                 $barChartOds[] = $dayTickets->where('condition', 'Closed')->count();
+                $barChartDispatched[] = $dayTickets->whereIn('condition', ['Dispatched', 'DISPATCHED'])->count();
             } else {
                 $barChartConsume[] = 0;
                 $barChartClosed[] = 0;
                 $barChartOds[] = 0;
+                $barChartDispatched[] = 0;
             }
         }
 
@@ -101,6 +106,7 @@ class DashboardController extends Controller
             'barConsume' => $barChartConsume,
             'barOds' => $barChartOds,
             'barClosed' => $barChartClosed,
+            'barDispatched' => $barChartDispatched,
             'lineLabels' => $lineChartLabels,
             'lineData' => $lineChartData,
         ];

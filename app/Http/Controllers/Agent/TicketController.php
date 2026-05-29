@@ -47,7 +47,7 @@ class TicketController extends Controller
                       ->whereDate('datereport', today());
             } else {
                 // Active Ticket: tickets with Open or In Progress condition
-                $query->whereIn('condition', ['Open', 'In Progress', 'QUEUED', 'ASSIGNED'])
+                $query->whereIn('condition', ['Open', 'In Progress', 'QUEUED', 'ASSIGNED', 'Dispatched', 'DISPATCHED'])
                       ->orWhereNull('condition');
             }
         }
@@ -73,6 +73,10 @@ class TicketController extends Controller
               ->orWhere('solvedby', $agentEmail);
         })->where('condition', 'Closed')->count();
 
-        return view('agent.tickets', compact('tickets', 'totalTickets', 'consumedTickets', 'submittedTickets', 'closedTickets', 'view'));
+        $dispatchedTickets = Ticket::where('assignby', $agentName)
+            ->whereIn('condition', ['Dispatched', 'DISPATCHED'])
+            ->count();
+
+        return view('agent.tickets', compact('tickets', 'totalTickets', 'consumedTickets', 'submittedTickets', 'closedTickets', 'dispatchedTickets', 'view'));
     }
 }

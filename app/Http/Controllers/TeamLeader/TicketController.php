@@ -37,6 +37,9 @@ class TicketController extends Controller
         $queuedTickets = (clone $query)->where('status', 'QUEUED')->count();
         $assignedTickets = (clone $query)->where('status', 'ASSIGNED')->count();
         $closedTickets = (clone $query)->where('condition', 'Closed')->count();
+        $dispatchedTickets = (clone $query)->whereIn('condition', ['Dispatched', 'DISPATCHED'])
+            ->orWhereIn('status', ['DISPATCHED', 'Dispatched'])
+            ->count();
 
         // 4. Get Paginated Tickets
         $tickets = $query->orderBy('created_at', 'desc')
@@ -46,7 +49,7 @@ class TicketController extends Controller
         $tickets->appends($request->all());
 
         return view('team-leader.tickets', compact(
-            'tickets', 'timeFilter', 'totalTickets', 'queuedTickets', 'assignedTickets', 'closedTickets'
+            'tickets', 'timeFilter', 'totalTickets', 'queuedTickets', 'assignedTickets', 'closedTickets', 'dispatchedTickets'
         ));
     }
 }

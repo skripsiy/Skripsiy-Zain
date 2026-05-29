@@ -74,8 +74,8 @@ class TicketDetailController extends Controller
                 
             case 'dispatch':
                 $ticket->update([
-                    'condition' => 'In Progress',
-                    'status' => 'DISPATCHED'
+                    'status' => 'DISPATCHED',
+                    'condition' => 'Dispatched'
                 ]);
                 event(new \App\Events\TicketDispatched($ticket, auth()->user()->name));
                 $message = 'Ticket has been dispatched successfully!';

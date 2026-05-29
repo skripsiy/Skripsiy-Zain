@@ -421,29 +421,33 @@
     
     <!-- Stats Grid -->
     <div class="stats-grid">
-        <!-- Today Stats -->
-        <div class="stat-card">
-            <h3>Today Stats</h3>
-            <div class="stat-item">
-                <span class="stat-label">WO Available</span>
-                <span class="stat-value">: {{ $stats['wo_available'] }}</span>
+            <!-- Today Stats -->
+            <div class="stat-card">
+                <h3>Today Stats</h3>
+                <div class="stat-item">
+                    <span class="stat-label">WO Available</span>
+                    <span class="stat-value">: {{ $stats['wo_available'] }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Consume</span>
+                    <span class="stat-value blue">: {{ $stats['consume'] }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">ODS</span>
+                    <span class="stat-value green">: {{ $stats['ods'] }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Dispatched</span>
+                    <span class="stat-value orange" style="color: #FF9800;">: {{ $stats['dispatched'] }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Closed</span>
+                    <span class="stat-value red">: {{ $stats['closed'] }}</span>
+                </div>
+                <div class="today-stats-chart">
+                    <canvas id="todayStatsChart"></canvas>
+                </div>
             </div>
-            <div class="stat-item">
-                <span class="stat-label">Consume</span>
-                <span class="stat-value blue">: {{ $stats['consume'] }}</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">ODS</span>
-                <span class="stat-value green">: {{ $stats['ods'] }}</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Closed</span>
-                <span class="stat-value red">: {{ $stats['closed'] }}</span>
-            </div>
-            <div class="today-stats-chart">
-                <canvas id="todayStatsChart"></canvas>
-            </div>
-        </div>
 
         <!-- Average Handling Time -->
         <div class="stat-card">
@@ -535,6 +539,10 @@
                     <span>ODS</span>
                 </div>
                 <div class="legend-item">
+                    <div class="legend-color" style="background: #FF9800;"></div>
+                    <span>Dispatched</span>
+                </div>
+                <div class="legend-item">
                     <div class="legend-color" style="background: #D0021B;"></div>
                     <span>Closed</span>
                 </div>
@@ -606,10 +614,10 @@
         new Chart(todayCtx, {
             type: 'doughnut',
             data: {
-                labels: ['WO Available', 'Consume', 'ODS', 'Closed'],
+                labels: ['WO Available', 'Consume', 'ODS', 'Dispatched', 'Closed'],
                 datasets: [{
-                    data: [{{ $stats['wo_available'] }}, {{ $stats['consume'] }}, {{ $stats['ods'] }}, {{ $stats['closed'] }}],
-                    backgroundColor: ['#000000', '#4A90E2', '#7ED321', '#D0021B'],
+                    data: [{{ $stats['wo_available'] }}, {{ $stats['consume'] }}, {{ $stats['ods'] }}, {{ $stats['dispatched'] }}, {{ $stats['closed'] }}],
+                    backgroundColor: ['#000000', '#4A90E2', '#7ED321', '#FF9800', '#D0021B'],
                     borderWidth: 0
                 }]
             },
@@ -642,6 +650,12 @@
                         label: 'ODS',
                         data: {!! json_encode($chartData['barOds']) !!},
                         backgroundColor: '#7ED321',
+                        stack: 'Stack 0'
+                    },
+                    {
+                        label: 'Dispatched',
+                        data: {!! json_encode($chartData['barDispatched']) !!},
+                        backgroundColor: '#FF9800',
                         stack: 'Stack 0'
                     },
                     {

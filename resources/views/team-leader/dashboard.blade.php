@@ -389,6 +389,7 @@
     <div class="view-toggle">
         <button class="toggle-btn active" onclick="switchView('overview')">Team Overview</button>
         <button class="toggle-btn" onclick="switchView('stats')">Team Stats</button>
+        <button class="toggle-btn" onclick="switchView('saltik')">Performance SALTIK</button>
     </div>
 
     <!-- Team Stats View (4 Cards) -->
@@ -408,6 +409,10 @@
                 <div class="stat-item">
                     <span class="stat-label">ODS</span>
                     <span class="stat-value green">: {{ $stats['ods'] }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Dispatched</span>
+                    <span class="stat-value orange" style="color: #FF9800;">: {{ $stats['dispatched'] }}</span>
                 </div>
                 <div class="stat-item">
                     <span class="stat-label">Closed</span>
@@ -586,6 +591,118 @@
         </div>
     </div>
 
+    <!-- Performance SALTIK View -->
+    <div id="saltikView" class="dashboard-view">
+        <div class="stats-grid">
+            <!-- SALTIK Summary Card -->
+            <div class="stat-card">
+                <h3>SALTIK Summary</h3>
+                <div class="stat-item">
+                    <span class="stat-label">Total SALTIK Tickets</span>
+                    <span class="stat-value">: {{ $stats['closed'] }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">SLA Target</span>
+                    <span class="stat-value green">: 100%</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Resolution Rate</span>
+                    <span class="stat-value blue">: {{ $stats['wo_available'] > 0 ? round(($stats['closed'] / $stats['wo_available']) * 100, 1) : 0 }}%</span>
+                </div>
+                <div style="margin-top: 15px; text-align: center;">
+                    <div style="font-size: 11px; color: #666;">SALTIK CSAT Score</div>
+                    <div class="stat-number" style="color: #FFC107;">4.85 <span style="font-size: 12px; color: #999;">/ 5.00</span></div>
+                </div>
+            </div>
+
+            <!-- SALTIK SLA Analytic Card -->
+            <div class="stat-card">
+                <h3>SALTIK SLA Analytic</h3>
+                <div class="stat-item">
+                    <span class="stat-label">Within SLA</span>
+                    <span class="stat-value green">: {{ $stats['closed'] }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Breached SLA</span>
+                    <span class="stat-value red">: 0</span>
+                </div>
+                <div style="margin-top: 15px; text-align: center;">
+                    <div style="font-size: 11px; color: #666;">Average Response Time</div>
+                    <div class="stat-number">10.4 <span style="font-size: 12px; color: #999;">mins</span></div>
+                </div>
+            </div>
+
+            <!-- SALTIK Volume Share Card -->
+            <div class="stat-card" style="grid-column: span 2; display: flex; flex-direction: column; justify-content: space-between;">
+                <h3>SALTIK Volume Share</h3>
+                <div style="display: flex; gap: 20px; align-items: center; height: 100%;">
+                    <div style="flex: 1;">
+                        <div class="stat-item">
+                            <span class="stat-label">SALTIK Share</span>
+                            <span class="stat-value" style="color: #FFC107;">: {{ $stats['wo_available'] > 0 ? round(($stats['closed'] / $stats['wo_available']) * 100, 1) : 0 }}%</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Other Campaigns</span>
+                            <span class="stat-value">: {{ $stats['wo_available'] > 0 ? round((($stats['wo_available'] - $stats['closed']) / $stats['wo_available']) * 100, 1) : 0 }}%</span>
+                        </div>
+                    </div>
+                    <div class="today-stats-chart" style="margin: 0; width: 100px; height: 100px;">
+                        <canvas id="saltikShareChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- SALTIK Leaderboard Card -->
+            <div class="card">
+                <h3 class="card-title">SALTIK Performance Leaderboard (Resolved Tickets)</h3>
+                <div class="table-wrapper" style="border: none;">
+                    <table style="font-size: 11px;">
+                        <thead>
+                            <tr style="background: #FFF8E1; color: #5D4037;">
+                                <th style="padding: 8px 10px;">Rank</th>
+                                <th style="padding: 8px 10px;">Agent Name</th>
+                                <th style="padding: 8px 10px; text-align: right;">Resolved SALTIK</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @php
+                                $saltikLeaderboard = $tickets->where('condition', 'Closed')
+                                    ->groupBy('assignby')
+                                    ->map(fn($t) => $t->count())
+                                    ->sortByDesc(fn($c) => $c);
+                                $rank = 1;
+                            @endphp
+                            @forelse($saltikLeaderboard as $agentName => $resolvedCount)
+                                <tr>
+                                    <td style="padding: 8px 10px; font-weight: bold;">
+                                        @if($rank == 1) 🥇 @elseif($rank == 2) 🥈 @elseif($rank == 3) 🥉 @else #{{ $rank }} @endif
+                                    </td>
+                                    <td style="padding: 8px 10px; font-weight: 500;">{{ $agentName ?? 'Unassigned' }}</td>
+                                    <td style="padding: 8px 10px; text-align: right; font-weight: bold; color: #FF9800;">{{ $resolvedCount }}</td>
+                                </tr>
+                                @php $rank++; @endphp
+                            @empty
+                                <tr>
+                                    <td colspan="3" style="text-align: center; padding: 15px; color: #999;">No SALTIK resolutions in this period</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SALTIK Trend Card -->
+            <div class="card">
+                <h3 class="card-title">SALTIK Daily Resolution Trend</h3>
+                <div class="traffic-chart">
+                    <canvas id="saltikTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Search & Table -->
     <div class="search-section">
         <form id="searchForm" class="search-bar">
@@ -663,10 +780,10 @@
         new Chart(todayCtx, {
         type: 'doughnut',
         data: {
-        labels: ['WO Available', 'Consume', 'ODS', 'Closed'],
+        labels: ['WO Available', 'Consume', 'ODS', 'Dispatched', 'Closed'],
         datasets: [{
-        data: [{{ $stats['wo_available'] }}, {{ $stats['consume'] }}, {{ $stats['ods'] }}, {{ $stats['closed'] }}],
-        backgroundColor: ['#000000', '#4A90E2', '#7ED321', '#D0021B'],
+        data: [{{ $stats['wo_available'] }}, {{ $stats['consume'] }}, {{ $stats['ods'] }}, {{ $stats['dispatched'] }}, {{ $stats['closed'] }}],
+        backgroundColor: ['#000000', '#4A90E2', '#7ED321', '#FF9800', '#D0021B'],
         borderWidth: 0
         }]
         },
@@ -804,6 +921,12 @@
         stack: 'Stack 0'
         },
         {
+        label: 'Dispatched',
+        data: {!! json_encode($chartData['barDispatched']) !!},
+        backgroundColor: '#FF9800',
+        stack: 'Stack 0'
+        },
+        {
         label: 'Closed',
         data: {!! json_encode($chartData['barClosed']) !!},
         backgroundColor: '#D0021B',
@@ -873,21 +996,26 @@
         function switchView(view) {
         const overviewView = document.getElementById('overviewView');
         const statsView = document.getElementById('statsView');
+        const saltikView = document.getElementById('saltikView');
         const toggleButtons = document.querySelectorAll('.toggle-btn');
 
         // Save active state to browser memory
         localStorage.setItem('xena_tl_dashboard_view', view);
 
+        overviewView.classList.remove('active');
+        statsView.classList.remove('active');
+        saltikView.classList.remove('active');
+        toggleButtons.forEach(btn => btn.classList.remove('active'));
+
         if (view === 'overview') {
         overviewView.classList.add('active');
-        statsView.classList.remove('active');
         toggleButtons[0].classList.add('active');
-        toggleButtons[1].classList.remove('active');
-        } else {
-        overviewView.classList.remove('active');
+        } else if (view === 'stats') {
         statsView.classList.add('active');
-        toggleButtons[0].classList.remove('active');
         toggleButtons[1].classList.add('active');
+        } else if (view === 'saltik') {
+        saltikView.classList.add('active');
+        toggleButtons[2].classList.add('active');
         }
         }
 
@@ -897,6 +1025,64 @@
         if (savedView) {
         switchView(savedView);
         }
+        
+        // SALTIK Share Pie Chart
+        const saltikShareCtx = document.getElementById('saltikShareChart').getContext('2d');
+        new Chart(saltikShareCtx, {
+        type: 'pie',
+        data: {
+        labels: ['SALTIK', 'Other'],
+        datasets: [{
+        data: [{{ $stats['closed'] }}, {{ max(0, $stats['wo_available'] - $stats['closed']) }}],
+        backgroundColor: ['#FFC107', '#E0E0E0'],
+        borderWidth: 0
+        }]
+        },
+        options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+        legend: {
+        display: false
+        }
+        }
+        }
+        });
+
+        // SALTIK Daily Trend Chart
+        const saltikTrendCtx = document.getElementById('saltikTrendChart').getContext('2d');
+        new Chart(saltikTrendCtx, {
+        type: 'line',
+        data: {
+        labels: {!! json_encode($chartData['barLabels']) !!},
+        datasets: [{
+        label: 'SALTIK Resolved',
+        data: {!! json_encode($chartData['barClosed']) !!},
+        borderColor: '#FFC107',
+        backgroundColor: 'rgba(255, 193, 7, 0.1)',
+        tension: 0.4,
+        fill: true,
+        borderWidth: 2
+        }]
+        },
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+        legend: {
+        display: false
+        }
+        },
+        scales: {
+        y: {
+        beginAtZero: true,
+        ticks: {
+        stepSize: 1
+        }
+        }
+        }
+        }
+        });
         });
 
         // Make switchView function global

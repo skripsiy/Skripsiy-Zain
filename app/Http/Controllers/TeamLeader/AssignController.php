@@ -43,7 +43,8 @@ class AssignController extends Controller
 
         $ticket->update([
             'assignby' => $agent->name,
-            'status' => 'ASSIGNED'
+            'status' => 'ASSIGNED',
+            'condition' => 'ASSIGNED'
         ]);
 
         // Broadcast event to the assigned agent

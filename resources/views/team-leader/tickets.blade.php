@@ -240,6 +240,19 @@
         <div class="stat-card">
             <div class="stat-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label">Dispatched</div>
+                <div class="stat-value">{{ $dispatchedTickets }}</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                 </svg>
@@ -294,6 +307,8 @@
                                 <span class="status-badge status-queued">QUEUED</span>
                             @elseif($ticket->status == 'ASSIGNED')
                                 <span class="status-badge status-assigned">ASSIGNED</span>
+                            @elseif($ticket->status == 'DISPATCHED')
+                                <span class="status-badge" style="background: #FFE0B2; color: #E65100;">DISPATCHED</span>
                             @else
                                 <span class="status-badge">{{ $ticket->status }}</span>
                             @endif
@@ -304,6 +319,8 @@
                         <td>
                             @if($ticket->condition == 'Closed')
                                 <span class="status-badge status-closed">Closed</span>
+                            @elseif($ticket->condition == 'Dispatched')
+                                <span class="status-badge" style="background: #E3F2FD; color: #0D47A1;">Dispatched</span>
                             @else
                                 {{ $ticket->condition ?? 'Open' }}
                             @endif

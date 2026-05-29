@@ -99,7 +99,7 @@
         }
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(6, 1fr);
             gap: 12px;
             margin-bottom: 16px;
         }
@@ -415,6 +415,19 @@
             <div class="stat-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label">Dispatched</div>
+                <div class="stat-value">{{ $dispatchedTickets }}</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
                     <polyline points="12 6 12 12 16 14"></polyline>
                 </svg>
             </div>
@@ -482,7 +495,7 @@
                         <td>{{ $ticket->lapul }}</td>
                         <td>{{ $ticket->gaul }}</td>
                         <td>
-                            <span class="@if($ticket->condition == 'Closed') condition-closed @elseif($ticket->condition == 'EXPIRED') condition-expired @elseif($ticket->condition == 'In Progress') condition-progress @else condition-open @endif">
+                            <span class="@if($ticket->condition == 'Closed') condition-closed @elseif($ticket->condition == 'EXPIRED') condition-expired @elseif($ticket->condition == 'In Progress') condition-progress @elseif($ticket->condition == 'Dispatched') condition-progress @else condition-open @endif">
                                 {{ $ticket->condition ?? 'Open' }}
                             </span>
                         </td>
