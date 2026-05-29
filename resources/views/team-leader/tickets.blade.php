@@ -3,9 +3,9 @@
     
     <x-slot name="headerContent">
         <div class="time-filter">
-            <button class="active">All Tickets</button>
-            <button>Today</button>
-            <button>This Week</button>
+            <button onclick="window.location.href='{{ request()->fullUrlWithQuery(['time_filter' => 'all']) }}'" class="{{ $timeFilter == 'all' ? 'active' : '' }}">All Tickets</button>
+            <button onclick="window.location.href='{{ request()->fullUrlWithQuery(['time_filter' => 'today']) }}'" class="{{ $timeFilter == 'today' ? 'active' : '' }}">Today</button>
+            <button onclick="window.location.href='{{ request()->fullUrlWithQuery(['time_filter' => 'week']) }}'" class="{{ $timeFilter == 'week' ? 'active' : '' }}">This Week</button>
         </div>
     </x-slot>
     
@@ -211,7 +211,7 @@
             </div>
             <div class="stat-info">
                 <div class="stat-label">Total Tickets</div>
-                <div class="stat-value">{{ $tickets->total() }}</div>
+                <div class="stat-value">{{ $totalTickets }}</div>
             </div>
         </div>
         <div class="stat-card">
@@ -223,7 +223,7 @@
             </div>
             <div class="stat-info">
                 <div class="stat-label">Queued</div>
-                <div class="stat-value">{{ $tickets->where('status', 'QUEUED')->count() }}</div>
+                <div class="stat-value">{{ $queuedTickets }}</div>
             </div>
         </div>
         <div class="stat-card">
@@ -234,7 +234,7 @@
             </div>
             <div class="stat-info">
                 <div class="stat-label">Assigned</div>
-                <div class="stat-value">{{ $tickets->where('status', 'ASSIGNED')->count() }}</div>
+                <div class="stat-value">{{ $assignedTickets }}</div>
             </div>
         </div>
         <div class="stat-card">
@@ -246,7 +246,7 @@
             </div>
             <div class="stat-info">
                 <div class="stat-label">Closed</div>
-                <div class="stat-value">{{ $tickets->where('condition', 'Closed')->count() }}</div>
+                <div class="stat-value">{{ $closedTickets }}</div>
             </div>
         </div>
     </div>
@@ -333,13 +333,6 @@
     </div>
     
     <x-slot name="additionalScripts">
-        // Time filter functionality
-        const timeButtons = document.querySelectorAll('.time-filter button');
-        timeButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                timeButtons.forEach(btn => btn.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
+        // Time filter functionality is now handled server-side
     </x-slot>
 </x-agent-layout>

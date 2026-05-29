@@ -331,6 +331,12 @@
         </div>
     @endif
     
+    @if(session('error'))
+        <div class="alert alert-error" style="background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5;">
+            {{ session('error') }}
+        </div>
+    @endif
+    
     <div class="table-card">
         <div class="table-wrapper">
             <table id="usersTable">

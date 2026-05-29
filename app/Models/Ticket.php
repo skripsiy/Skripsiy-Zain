@@ -20,7 +20,7 @@ class Ticket extends Model
         'validateClose', 'reasonnoODS', 'eksalasiTicket', 'eksalasiVia',
         'PIC', 'contact', 'responBE', 'description', 'reportedpriority',
         'datesolved', 'THT', 'status', 'regional', 'witel', 'condition',
-        'assignby', 'solvedby', 'escalationStatus'
+        'assignby', 'solvedby', 'escalationStatus', 'resolved_by_agent', 'hasil_pengecekan'
     ];
 
     protected $casts = [

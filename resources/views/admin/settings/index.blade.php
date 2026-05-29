@@ -67,29 +67,43 @@
         }
         .toggle-switch {
             position: relative;
+            display: inline-block;
             width: 50px;
             height: 26px;
-            background: #E5E7EB;
-            border-radius: 13px;
-            cursor: pointer;
-            transition: 0.3s;
         }
-        .toggle-switch.active {
-            background: #10B981;
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
         }
-        .toggle-switch::before {
-            content: '';
+        .slider {
             position: absolute;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: white;
-            top: 3px;
-            left: 3px;
-            transition: 0.3s;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #E5E7EB;
+            transition: .4s;
+            border-radius: 26px;
         }
-        .toggle-switch.active::before {
-            left: 27px;
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        input:checked + .slider {
+            background-color: #10B981;
+        }
+        input:checked + .slider:before {
+            transform: translateX(24px);
         }
         .btn-save {
             background: linear-gradient(135deg, #1F4A5E 0%, #2D6D8B 100%);
@@ -107,6 +121,18 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 16px rgba(31, 74, 94, 0.4);
         }
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .alert-success {
+            background: #D1FAE5;
+            color: #065F46;
+            border: 1px solid #A7F3D0;
+        }
         @media (max-width: 768px) {
             .settings-grid {
                 grid-template-columns: 1fr;
@@ -114,7 +140,15 @@
         }
     </x-slot>
     
-    <div class="settings-grid">
+    @if(session('success'))
+        <div class="alert alert-success">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    <form action="{{ route('admin.settings.update') }}" method="POST">
+        @csrf
+        <div class="settings-grid">
         <div class="settings-card">
             <h3>General Settings</h3>
             <div class="setting-item">
@@ -122,21 +156,30 @@
                     <div class="setting-label">Auto-assign Tickets</div>
                     <div class="setting-description">Automatically assign incoming tickets to available agents</div>
                 </div>
-                <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
+                <label class="toggle-switch">
+                    <input type="checkbox" name="auto_assign_tickets" {{ ($settings['auto_assign_tickets'] ?? '1') == '1' ? 'checked' : '' }}>
+                    <span class="slider"></span>
+                </label>
             </div>
             <div class="setting-item">
                 <div>
                     <div class="setting-label">Email Notifications</div>
                     <div class="setting-description">Send email notifications for new tickets</div>
                 </div>
-                <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
+                <label class="toggle-switch">
+                    <input type="checkbox" name="email_notifications" {{ ($settings['email_notifications'] ?? '1') == '1' ? 'checked' : '' }}>
+                    <span class="slider"></span>
+                </label>
             </div>
             <div class="setting-item">
                 <div>
                     <div class="setting-label">Maintenance Mode</div>
                     <div class="setting-description">Put the system in maintenance mode</div>
                 </div>
-                <div class="toggle-switch" onclick="this.classList.toggle('active')"></div>
+                <label class="toggle-switch">
+                    <input type="checkbox" name="maintenance_mode" {{ ($settings['maintenance_mode'] ?? '0') == '1' ? 'checked' : '' }}>
+                    <span class="slider"></span>
+                </label>
             </div>
         </div>
 
@@ -147,21 +190,30 @@
                     <div class="setting-label">Push Notifications</div>
                     <div class="setting-description">Enable browser push notifications</div>
                 </div>
-                <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
+                <label class="toggle-switch">
+                    <input type="checkbox" name="push_notifications" {{ ($settings['push_notifications'] ?? '1') == '1' ? 'checked' : '' }}>
+                    <span class="slider"></span>
+                </label>
             </div>
             <div class="setting-item">
                 <div>
                     <div class="setting-label">Sound Alerts</div>
                     <div class="setting-description">Play sound for new notifications</div>
                 </div>
-                <div class="toggle-switch" onclick="this.classList.toggle('active')"></div>
+                <label class="toggle-switch">
+                    <input type="checkbox" name="sound_alerts" {{ ($settings['sound_alerts'] ?? '0') == '1' ? 'checked' : '' }}>
+                    <span class="slider"></span>
+                </label>
             </div>
             <div class="setting-item">
                 <div>
                     <div class="setting-label">Desktop Notifications</div>
                     <div class="setting-description">Show desktop notifications</div>
                 </div>
-                <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
+                <label class="toggle-switch">
+                    <input type="checkbox" name="desktop_notifications" {{ ($settings['desktop_notifications'] ?? '1') == '1' ? 'checked' : '' }}>
+                    <span class="slider"></span>
+                </label>
             </div>
         </div>
 
@@ -172,21 +224,30 @@
                     <div class="setting-label">Two-Factor Authentication</div>
                     <div class="setting-description">Require 2FA for admin accounts</div>
                 </div>
-                <div class="toggle-switch" onclick="this.classList.toggle('active')"></div>
+                <label class="toggle-switch">
+                    <input type="checkbox" name="two_factor_auth" {{ ($settings['two_factor_auth'] ?? '0') == '1' ? 'checked' : '' }}>
+                    <span class="slider"></span>
+                </label>
             </div>
             <div class="setting-item">
                 <div>
                     <div class="setting-label">Session Timeout</div>
                     <div class="setting-description">Auto logout after 30 minutes of inactivity</div>
                 </div>
-                <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
+                <label class="toggle-switch">
+                    <input type="checkbox" name="session_timeout" {{ ($settings['session_timeout'] ?? '1') == '1' ? 'checked' : '' }}>
+                    <span class="slider"></span>
+                </label>
             </div>
             <div class="setting-item">
                 <div>
                     <div class="setting-label">IP Whitelist</div>
                     <div class="setting-description">Restrict access to specific IP addresses</div>
                 </div>
-                <div class="toggle-switch" onclick="this.classList.toggle('active')"></div>
+                <label class="toggle-switch">
+                    <input type="checkbox" name="ip_whitelist" {{ ($settings['ip_whitelist'] ?? '0') == '1' ? 'checked' : '' }}>
+                    <span class="slider"></span>
+                </label>
             </div>
         </div>
 
@@ -214,12 +275,19 @@
     </div>
 
     <div style="text-align: center; margin-top: 30px;">
-        <button class="btn-save" onclick="saveSettings()">Save All Settings</button>
+        <button type="submit" class="btn-save">Save All Settings</button>
     </div>
+    </form>
 
     <x-slot name="additionalScripts">
-        function saveSettings() {
-            window.showToast('Settings saved successfully!', 'success');
-        }
+        // Auto-hide success message
+        setTimeout(() => {
+            const alert = document.querySelector('.alert-success');
+            if (alert) {
+                alert.style.transition = 'opacity 0.5s ease';
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            }
+        }, 3000);
     </x-slot>
 </x-agent-layout>

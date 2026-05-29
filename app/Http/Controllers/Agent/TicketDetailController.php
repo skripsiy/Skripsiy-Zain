@@ -15,12 +15,19 @@ class TicketDetailController extends Controller
         // Check if current agent is assigned to this ticket
         $canEdit = ($ticket->assignby === auth()->user()->name);
         
-        return view('agent.ticket-detail', compact('ticket', 'canEdit'));
+        $activities = $ticket->activities()->latest()->get();
+        
+        return view('agent.ticket-detail', compact('ticket', 'canEdit', 'activities'));
     }
 
     public function update(Request $request, $id)
     {
         $ticket = Ticket::findOrFail($id);
+        
+        // Prevent edit if not assigned to this agent
+        if ($ticket->assignby !== auth()->user()->name) {
+            return redirect()->route('agent.ticket.detail', $id)->with('error', 'Akses ditolak: Anda tidak dapat mengedit tiket yang tidak di-assign ke Anda.');
+        }
         
         $validated = $request->validate([
             'resume' => 'nullable|string',
@@ -37,6 +44,8 @@ class TicketDetailController extends Controller
             'contact' => 'nullable|string',
             'responBE' => 'nullable|string',
             'description' => 'nullable|string',
+            'resolved_by_agent' => 'nullable|string',
+            'hasil_pengecekan' => 'nullable|string',
         ]);
         
         $ticket->update($validated);
@@ -47,6 +56,12 @@ class TicketDetailController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $ticket = Ticket::findOrFail($id);
+        
+        // Prevent status update if not assigned to this agent
+        if ($ticket->assignby !== auth()->user()->name) {
+            return redirect()->route('agent.ticket.detail', $id)->with('error', 'Akses ditolak: Anda tidak dapat mengubah status tiket yang tidak di-assign ke Anda.');
+        }
+
         $action = $request->input('action');
         
         switch ($action) {

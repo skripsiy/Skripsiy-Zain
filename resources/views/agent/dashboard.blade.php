@@ -3,10 +3,10 @@
     
     <x-slot name="headerContent">
         <div class="time-filter">
-            <button class="active">Today</button>
-            <button>This Week</button>
-            <button>This Month</button>
-            <button>This Quarter</button>
+            <button onclick="window.location.href='?time_filter=today'" class="{{ $timeFilter === 'today' ? 'active' : '' }}">Today</button>
+            <button onclick="window.location.href='?time_filter=week'" class="{{ $timeFilter === 'week' ? 'active' : '' }}">This Week</button>
+            <button onclick="window.location.href='?time_filter=month'" class="{{ $timeFilter === 'month' ? 'active' : '' }}">This Month</button>
+            <button onclick="window.location.href='?time_filter=quarter'" class="{{ $timeFilter === 'quarter' ? 'active' : '' }}">This Quarter</button>
         </div>
     </x-slot>
     
@@ -426,19 +426,19 @@
             <h3>Today Stats</h3>
             <div class="stat-item">
                 <span class="stat-label">WO Available</span>
-                <span class="stat-value">: 20</span>
+                <span class="stat-value">: {{ $stats['wo_available'] }}</span>
             </div>
             <div class="stat-item">
                 <span class="stat-label">Consume</span>
-                <span class="stat-value blue">: 25</span>
+                <span class="stat-value blue">: {{ $stats['consume'] }}</span>
             </div>
             <div class="stat-item">
                 <span class="stat-label">ODS</span>
-                <span class="stat-value green">: 25</span>
+                <span class="stat-value green">: {{ $stats['ods'] }}</span>
             </div>
             <div class="stat-item">
                 <span class="stat-label">Closed</span>
-                <span class="stat-value red">: 10</span>
+                <span class="stat-value red">: {{ $stats['closed'] }}</span>
             </div>
             <div class="today-stats-chart">
                 <canvas id="todayStatsChart"></canvas>
@@ -583,76 +583,32 @@
                     </tr>
                 </thead>
                 <tbody id="ticketTableBody">
+                    @forelse($tickets->take(10) as $ticket)
                     <tr>
-                        <td>IN166714226</td>
-                        <td>GAGAL REDEEM POINT</td>
-                        <td>Reca</td>
-                        <td>2025-11-01</td>
-                        <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
+                        <td>IN{{ str_pad($ticket->idTicket, 8, '0', STR_PAD_LEFT) }}</td>
+                        <td>{{ $ticket->topic ?? '-' }}</td>
+                        <td>{{ $ticket->assignby ?? '-' }}</td>
+                        <td>{{ $ticket->created_at->format('Y-m-d') }}</td>
+                        <td><span style="color: {{ $ticket->condition == 'Closed' ? '#7ED321' : '#4A90E2' }}; font-weight: 600;">{{ $ticket->condition }}</span></td>
                     </tr>
+                    @empty
                     <tr>
-                        <td>IN166714227</td>
-                        <td>TIDAK BISA LOGIN</td>
-                        <td>Viona</td>
-                        <td>2025-11-01</td>
-                        <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
+                        <td colspan="5" style="text-align: center; padding: 20px; color: #999;">Tidak ada data untuk periode yang dipilih</td>
                     </tr>
-                    <tr>
-                        <td>IN166714228</td>
-                        <td>ERROR PEMBAYARAN</td>
-                        <td>Angga</td>
-                        <td>2025-11-02</td>
-                        <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
-                    </tr>
-                    <tr>
-                        <td>IN166714229</td>
-                        <td>LUPA PASSWORD</td>
-                        <td>Yugo</td>
-                        <td>2025-11-02</td>
-                        <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
-                    </tr>
-                    <tr>
-                        <td>IN166714230</td>
-                        <td>APLIKASI LEMOT</td>
-                        <td>Budi</td>
-                        <td>2025-11-03</td>
-                        <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
-                    </tr>
-                    <tr>
-                        <td>IN166714231</td>
-                        <td>GAGAL TRANSAKSI</td>
-                        <td>Siti</td>
-                        <td>2025-11-03</td>
-                        <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
-                    </tr>
-                    <tr>
-                        <td>IN166714232</td>
-                        <td>NOTIFIKASI TIDAK MASUK</td>
-                        <td>Reca</td>
-                        <td>2025-11-03</td>
-                        <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
-                    </tr>
-                    <tr>
-                        <td>IN166714233</td>
-                        <td>DATA TIDAK SINKRON</td>
-                        <td>Viona</td>
-                        <td>2025-11-03</td>
-                        <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
-                    </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
     </div>
     
     <x-slot name="additionalScripts">
-        // Today Stats Pie Chart
         const todayCtx = document.getElementById('todayStatsChart').getContext('2d');
         new Chart(todayCtx, {
             type: 'doughnut',
             data: {
                 labels: ['WO Available', 'Consume', 'ODS', 'Closed'],
                 datasets: [{
-                    data: [20, 25, 25, 10],
+                    data: [{{ $stats['wo_available'] }}, {{ $stats['consume'] }}, {{ $stats['ods'] }}, {{ $stats['closed'] }}],
                     backgroundColor: ['#000000', '#4A90E2', '#7ED321', '#D0021B'],
                     borderWidth: 0
                 }]
@@ -674,23 +630,23 @@
         new Chart(grafikCtx, {
             type: 'bar',
             data: {
-                labels: ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '...'],
+                labels: {!! json_encode($chartData['barLabels']) !!},
                 datasets: [
                     {
                         label: 'Consume',
-                        data: [40, 60, 40, 30, 20, 40, 45, 70, 75, 75, 0],
+                        data: {!! json_encode($chartData['barConsume']) !!},
                         backgroundColor: '#4A90E2',
                         stack: 'Stack 0'
                     },
                     {
                         label: 'ODS',
-                        data: [20, 0, 40, 20, 30, 0, 20, 10, 10, 10, 0],
+                        data: {!! json_encode($chartData['barOds']) !!},
                         backgroundColor: '#7ED321',
                         stack: 'Stack 0'
                     },
                     {
                         label: 'Closed',
-                        data: [15, 25, 0, 10, 5, 25, 0, 10, 5, 5, 0],
+                        data: {!! json_encode($chartData['barClosed']) !!},
                         backgroundColor: '#D0021B',
                         stack: 'Stack 0'
                     }
@@ -725,9 +681,9 @@
         new Chart(trafficCtx, {
             type: 'line',
             data: {
-                labels: ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09'],
+                labels: {!! json_encode($chartData['lineLabels']) !!},
                 datasets: [{
-                    data: [5, 3, 6, 4, 3, 8, 9, 7, 5, 6],
+                    data: {!! json_encode($chartData['lineData']) !!},
                     borderColor: '#7ED321',
                     backgroundColor: 'transparent',
                     tension: 0.4,
@@ -759,19 +715,7 @@
         document.getElementById('startDate').value = today;
         document.getElementById('endDate').value = today;
 
-        // All ticket data
-        const allTickets = [
-            { code: 'IN166714226', symptomp: 'GAGAL REDEEM POINT', agent: 'Reca', date: '2025-11-01', status: 'Closed' },
-            { code: 'IN166714227', symptomp: 'TIDAK BISA LOGIN', agent: 'Viona', date: '2025-11-01', status: 'Closed' },
-            { code: 'IN166714228', symptomp: 'ERROR PEMBAYARAN', agent: 'Angga', date: '2025-11-02', status: 'Closed' },
-            { code: 'IN166714229', symptomp: 'LUPA PASSWORD', agent: 'Yugo', date: '2025-11-02', status: 'Closed' },
-            { code: 'IN166714230', symptomp: 'APLIKASI LEMOT', agent: 'Budi', date: '2025-11-03', status: 'Closed' },
-            { code: 'IN166714231', symptomp: 'GAGAL TRANSAKSI', agent: 'Siti', date: '2025-11-03', status: 'Closed' },
-            { code: 'IN166714232', symptomp: 'NOTIFIKASI TIDAK MASUK', agent: 'Reca', date: '2025-11-03', status: 'Closed' },
-            { code: 'IN166714233', symptomp: 'DATA TIDAK SINKRON', agent: 'Viona', date: '2025-11-03', status: 'Closed' }
-        ];
-
-        // Filter tickets by date range
+        // Filter tickets by date range via AJAX (only updates Ticket Report table)
         function filterByDate() {
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
@@ -786,11 +730,18 @@
                 return;
             }
 
-            const filteredTickets = allTickets.filter(ticket => {
-                return ticket.date >= startDate && ticket.date <= endDate;
-            });
+            const tbody = document.getElementById('ticketTableBody');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: #999;">Memuat data...</td></tr>';
 
-            updateTable(filteredTickets);
+            fetch(`{{ route('agent.dashboard.filter-tickets') }}?start_date=${startDate}&end_date=${endDate}`)
+                .then(response => response.json())
+                .then(tickets => {
+                    updateTable(tickets);
+                })
+                .catch(error => {
+                    console.error('Error filtering tickets:', error);
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: #D0021B;">Gagal memuat data. Silakan coba lagi.</td></tr>';
+                });
         }
 
         // Update table with filtered data
@@ -804,13 +755,14 @@
             }
 
             tickets.forEach(ticket => {
+                const statusColor = ticket.status === 'Closed' ? '#7ED321' : (ticket.status === 'In Progress' ? '#4A90E2' : '#FF9800');
                 const row = `
                     <tr>
                         <td>${ticket.code}</td>
                         <td>${ticket.symptomp}</td>
                         <td>${ticket.agent}</td>
                         <td>${ticket.date}</td>
-                        <td><span style="color: #7ED321; font-weight: 600;">${ticket.status}</span></td>
+                        <td><span style="color: ${statusColor}; font-weight: 600;">${ticket.status}</span></td>
                     </tr>
                 `;
                 tbody.innerHTML += row;
@@ -827,35 +779,39 @@
                 return;
             }
 
-            const filteredTickets = allTickets.filter(ticket => {
-                return ticket.date >= startDate && ticket.date <= endDate;
-            });
+            fetch(`{{ route('agent.dashboard.filter-tickets') }}?start_date=${startDate}&end_date=${endDate}`)
+                .then(response => response.json())
+                .then(filteredTickets => {
+                    if (filteredTickets.length === 0) {
+                        alert('Tidak ada data untuk di-download pada periode yang dipilih');
+                        return;
+                    }
 
-            if (filteredTickets.length === 0) {
-                alert('Tidak ada data untuk di-download pada periode yang dipilih');
-                return;
-            }
+                    let csvContent = "Ticket Code,KIP/SYMPTOMP,Quality/Agent Name,Date,Status\n";
+                    
+                    filteredTickets.forEach(ticket => {
+                        csvContent += `${ticket.code},${ticket.symptomp},${ticket.agent},${ticket.date},${ticket.status}\n`;
+                    });
 
-            let csvContent = "Ticket Code,KIP/SYMPTOMP,Quality/Agent Name,Date,Status\n";
-            
-            filteredTickets.forEach(ticket => {
-                csvContent += `${ticket.code},${ticket.symptomp},${ticket.agent},${ticket.date},${ticket.status}\n`;
-            });
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    const url = URL.createObjectURL(blob);
+                    
+                    const filename = `Ticket_Report_${startDate}_to_${endDate}.csv`;
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', filename);
+                    link.style.visibility = 'hidden';
+                    
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
 
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            
-            const filename = `Ticket_Report_${startDate}_to_${endDate}.csv`;
-            link.setAttribute('href', url);
-            link.setAttribute('download', filename);
-            link.style.visibility = 'hidden';
-            
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-
-            alert(`Report berhasil di-download: ${filename}`);
+                    alert(`Report berhasil di-download: ${filename}`);
+                })
+                .catch(error => {
+                    console.error('Error downloading report:', error);
+                    alert('Gagal mengambil data untuk download. Silakan coba lagi.');
+                });
         }
 
         // ========== TIME TRACKING SYSTEM ==========

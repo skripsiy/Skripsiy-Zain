@@ -2,12 +2,12 @@
     <x-slot name="title">Admin Dashboard</x-slot>
     
     <x-slot name="headerContent">
-        <div class="time-filter">
-            <button class="active">Today</button>
-            <button>This Week</button>
-            <button>This Month</button>
-            <button>This Quarter</button>
-        </div>
+        <form method="GET" action="{{ route('admin.dashboard') }}" class="time-filter">
+            <button type="submit" name="time_filter" value="today" class="{{ $timeFilter == 'today' ? 'active' : '' }}">Today</button>
+            <button type="submit" name="time_filter" value="week" class="{{ $timeFilter == 'week' ? 'active' : '' }}">This Week</button>
+            <button type="submit" name="time_filter" value="month" class="{{ $timeFilter == 'month' ? 'active' : '' }}">This Month</button>
+            <button type="submit" name="time_filter" value="quarter" class="{{ $timeFilter == 'quarter' ? 'active' : '' }}">This Quarter</button>
+        </form>
     </x-slot>
     
     <x-slot name="sidebar">
@@ -197,19 +197,19 @@
             <h3>Today Stats</h3>
             <div class="stat-item">
                 <span class="stat-label">WO Available</span>
-                <span class="stat-value">: 20</span>
+                <span class="stat-value">{{ $stats['wo_available'] }}</span>
             </div>
             <div class="stat-item">
                 <span class="stat-label">Consume</span>
-                <span class="stat-value blue">: 25</span>
+                <span class="stat-value blue">{{ $stats['consume'] }}</span>
             </div>
             <div class="stat-item">
                 <span class="stat-label">ODS</span>
-                <span class="stat-value green">: 25</span>
+                <span class="stat-value green">{{ $stats['ods'] }}</span>
             </div>
             <div class="stat-item">
                 <span class="stat-label">Closed</span>
-                <span class="stat-value red">: 10</span>
+                <span class="stat-value red">{{ $stats['closed'] }}</span>
             </div>
             <div class="today-stats-chart">
                 <canvas id="todayStatsChart"></canvas>
@@ -315,34 +315,23 @@
                     </tr>
                 </thead>
                 <tbody>
+                    @foreach($tickets as $ticket)
                     <tr>
-                        <td>IN166714226</td>
-                        <td>GAGAL REDEEM POINT</td>
-                        <td>Reca</td>
-                        <td>2025-11-01</td>
-                        <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
+                        <td>{{ $ticket->idTicket }}</td>
+                        <td>{{ $ticket->topic ?? $ticket->detailticket ?? '-' }}</td>
+                        <td>{{ $ticket->solvedby ?? $ticket->assignby ?? '-' }}</td>
+                        <td>{{ $ticket->created_at->format('Y-m-d') }}</td>
+                        <td>
+                            @if($ticket->condition == 'Closed')
+                            <span style="color: #7ED321; font-weight: 600;">Closed</span>
+                            @elseif($ticket->condition == 'In Progress')
+                            <span style="color: #4A90E2; font-weight: 600;">In Progress</span>
+                            @else
+                            <span style="color: #FF9800; font-weight: 600;">{{ $ticket->condition ?? 'QUEUED' }}</span>
+                            @endif
+                        </td>
                     </tr>
-                    <tr>
-                        <td>IN166714227</td>
-                        <td>TIDAK BISA LOGIN</td>
-                        <td>Viona</td>
-                        <td>2025-11-01</td>
-                        <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
-                    </tr>
-                    <tr>
-                        <td>IN166714228</td>
-                        <td>ERROR PEMBAYARAN</td>
-                        <td>Angga</td>
-                        <td>2025-11-02</td>
-                        <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
-                    </tr>
-                    <tr>
-                        <td>IN166714229</td>
-                        <td>LUPA PASSWORD</td>
-                        <td>Yugo</td>
-                        <td>2025-11-02</td>
-                        <td><span style="color: #7ED321; font-weight: 600;">Closed</span></td>
-                    </tr>
+                    @endforeach
                 </tbody>
             </table>
         </div>
@@ -356,7 +345,7 @@
             data: {
                 labels: ['WO Available', 'Consume', 'ODS', 'Closed'],
                 datasets: [{
-                    data: [20, 25, 25, 10],
+                    data: [{{ $stats['wo_available'] }}, {{ $stats['consume'] }}, {{ $stats['ods'] }}, {{ $stats['closed'] }}],
                     backgroundColor: ['#000000', '#4A90E2', '#7ED321', '#D0021B'],
                     borderWidth: 0
                 }]
@@ -378,23 +367,23 @@
         new Chart(grafikCtx, {
             type: 'bar',
             data: {
-                labels: ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10'],
+                labels: {!! json_encode($chartData['barLabels']) !!},
                 datasets: [
                     {
                         label: 'Consume',
-                        data: [40, 60, 40, 30, 20, 40, 45, 70, 75, 75],
+                        data: {!! json_encode($chartData['barConsume']) !!},
                         backgroundColor: '#4A90E2',
                         stack: 'Stack 0'
                     },
                     {
                         label: 'ODS',
-                        data: [20, 0, 40, 20, 30, 0, 20, 10, 10, 10],
+                        data: {!! json_encode($chartData['barOds']) !!},
                         backgroundColor: '#7ED321',
                         stack: 'Stack 0'
                     },
                     {
                         label: 'Closed',
-                        data: [15, 25, 0, 10, 5, 25, 0, 10, 5, 5],
+                        data: {!! json_encode($chartData['barClosed']) !!},
                         backgroundColor: '#D0021B',
                         stack: 'Stack 0'
                     }
@@ -417,8 +406,7 @@
                     },
                     y: {
                         stacked: true,
-                        beginAtZero: true,
-                        max: 110
+                        beginAtZero: true
                     }
                 }
             }
@@ -429,9 +417,9 @@
         new Chart(trafficCtx, {
             type: 'line',
             data: {
-                labels: ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09'],
+                labels: {!! json_encode($chartData['lineLabels']) !!},
                 datasets: [{
-                    data: [5, 3, 6, 4, 3, 8, 9, 7, 5, 6],
+                    data: {!! json_encode($chartData['lineData']) !!},
                     borderColor: '#7ED321',
                     backgroundColor: 'transparent',
                     tension: 0.4,
@@ -448,11 +436,7 @@
                 },
                 scales: {
                     y: {
-                        beginAtZero: true,
-                        max: 9,
-                        ticks: {
-                            stepSize: 2
-                        }
+                        beginAtZero: true
                     }
                 }
             }

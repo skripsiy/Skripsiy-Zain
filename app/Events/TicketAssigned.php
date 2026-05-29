@@ -42,10 +42,14 @@ class TicketAssigned implements ShouldBroadcast
     public function broadcastWith(): array
     {
         return [
-            'message' => 'New ticket assigned: TK' . str_pad($this->ticket->idTicket, 6, '0', STR_PAD_LEFT),
+            'id' => $this->ticket->idTicket,
+            'type' => 'ticket_assigned',
+            'title' => 'New Ticket Assigned',
+            'message' => "You have been assigned a new ticket: {$this->ticket->idTicket}",
             'ticket_id' => $this->ticket->idTicket,
-            'priority' => $this->ticket->reportedpriority,
-            'type' => 'assigned'
+            'customer_name' => $this->ticket->namacust,
+            'ticket_type' => $this->ticket->jenisTicket,
+            'created_at' => now()->toIso8601String(),
         ];
     }
 }

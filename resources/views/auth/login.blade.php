@@ -357,6 +357,13 @@
                         Login
                     </button>
                 </div>
+
+                <!-- Forgot Password Link -->
+                <div style="text-align: center; margin-top: 1rem;">
+                    <a href="{{ route('password.request') }}" style="font-size: 0.875rem; color: #4b5563; text-decoration: none; font-weight: 500; transition: color 0.2s;" onmouseover="this.style.color='#1e40af'" onmouseout="this.style.color='#4b5563'">
+                        Forgot Password?
+                    </a>
+                </div>
             </form>
         </div>
     </div>

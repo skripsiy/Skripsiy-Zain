@@ -230,12 +230,14 @@
 <script>
     let notificationDropdownOpen = false;
     let notificationCheckInterval;
-    
+    let userId = {{ auth()->id() }};
+    let userRole = '{{ auth()->user()->role }}';
+
     // Toggle notification dropdown
     function toggleNotifications() {
         const dropdown = document.getElementById('notificationDropdown');
         notificationDropdownOpen = !notificationDropdownOpen;
-        
+
         if (notificationDropdownOpen) {
             dropdown.classList.add('active');
             loadNotifications();
@@ -243,16 +245,16 @@
             dropdown.classList.remove('active');
         }
     }
-    
+
     // Load notifications
     async function loadNotifications() {
         const listContainer = document.getElementById('notificationList');
         listContainer.innerHTML = '<div class="notification-loading"><p>Loading notifications...</p></div>';
-        
+
         try {
             const response = await fetch('/notifications/unread');
             const data = await response.json();
-            
+
             if (data.notifications.length === 0) {
                 listContainer.innerHTML = `
                     <div class="notification-empty">
@@ -288,21 +290,21 @@
             console.error('Error loading notifications:', error);
         }
     }
-    
+
     // Update notification badge
     async function updateNotificationBadge() {
         try {
             const response = await fetch('/notifications/count');
             const data = await response.json();
-            
+
             const badge = document.getElementById('notificationBadge');
             const bell = document.getElementById('notificationBell');
-            
+
             if (data.count > 0) {
                 badge.textContent = data.count > 99 ? '99+' : data.count;
                 badge.style.display = 'flex';
                 bell.classList.add('has-notifications');
-                
+
                 // Play notification sound (optional)
                 // playNotificationSound();
             } else {
@@ -313,7 +315,143 @@
             console.error('Error updating notification badge:', error);
         }
     }
-    
+
+    // Add new notification to the dropdown
+    function addNewNotification(notification) {
+        const listContainer = document.getElementById('notificationList');
+
+        // Remove empty state if exists
+        const emptyState = listContainer.querySelector('.notification-empty');
+        if (emptyState) {
+            emptyState.remove();
+        }
+
+        // Add new notification at the top
+        const newNotifHtml = `
+            <div class="notification-item unread" onclick="viewTicket(${notification.ticket_id})">
+                <div class="notification-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-title">${notification.title}</div>
+                    <div class="notification-message">${notification.message} - ${notification.ticket_type || 'N/A'}</div>
+                    <div class="notification-time">${notification.created_at || 'Just now'}</div>
+                </div>
+            </div>
+        `;
+
+        // Insert at the beginning
+        listContainer.insertAdjacentHTML('afterbegin', newNotifHtml);
+
+        // Update badge
+        const badge = document.getElementById('notificationBadge');
+        const bell = document.getElementById('notificationBell');
+        let currentCount = parseInt(badge.textContent) || 0;
+        currentCount++;
+        badge.textContent = currentCount > 99 ? '99+' : currentCount;
+        badge.style.display = 'flex';
+        bell.classList.add('has-notifications');
+
+        // Show toast notification
+        showToastNotification(notification);
+    }
+
+    // Show toast notification
+    function showToastNotification(notification) {
+        const toast = document.createElement('div');
+        toast.className = 'toast-notification';
+        toast.innerHTML = `
+            <div class="toast-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+            </div>
+            <div class="toast-content">
+                <div class="toast-title">${notification.title}</div>
+                <div class="toast-message">${notification.message}</div>
+            </div>
+        `;
+
+        // Add toast styles if not exists
+        if (!document.getElementById('toast-styles')) {
+            const style = document.createElement('style');
+            style.id = 'toast-styles';
+            style.textContent = `
+                .toast-notification {
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: white;
+                    border-radius: 12px;
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 16px 20px;
+                    z-index: 10000;
+                    animation: slideInRight 0.3s ease;
+                    cursor: pointer;
+                    max-width: 350px;
+                }
+                @keyframes slideInRight {
+                    from {
+                        opacity: 0;
+                        transform: translateX(100px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateX(0);
+                    }
+                }
+                .toast-icon {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    background: linear-gradient(135deg, #2C5F7C 0%, #1F4A5E 100%);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                    flex-shrink: 0;
+                }
+                .toast-content {
+                    flex: 1;
+                }
+                .toast-title {
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: #1F4A5E;
+                }
+                .toast-message {
+                    font-size: 12px;
+                    color: #666;
+                    margin-top: 2px;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        document.body.appendChild(toast);
+
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            toast.style.animation = 'slideOutRight 0.3s ease forwards';
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
+
+        // Click to view ticket
+        toast.addEventListener('click', () => {
+            viewTicket(notification.ticket_id);
+        });
+    }
+
     // Mark all as read
     async function markAllAsRead() {
         try {
@@ -324,20 +462,20 @@
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                 }
             });
-            
+
             updateNotificationBadge();
             loadNotifications();
         } catch (error) {
             console.error('Error marking notifications as read:', error);
         }
     }
-    
+
     // View ticket
     function viewTicket(ticketId) {
         // Redirect to ticket detail page
         window.location.href = `/agent/tickets/${ticketId}`;
     }
-    
+
     // Close dropdown when clicking outside
     document.addEventListener('click', function(event) {
         const container = document.querySelector('.notification-container');
@@ -345,18 +483,40 @@
             toggleNotifications();
         }
     });
-    
-    // Check for new notifications every 30 seconds
+
+    // Real-time notifications with Laravel Reverb
+    function initReverbNotifications() {
+        if (typeof Echo !== 'undefined') {
+            // Listen for private channel based on user role
+            const channelName = userRole === 'agent' ? `agent.${userId}` : `${userRole}.${userId}`;
+
+            console.log('Listening on channel:', channelName);
+
+            Echo.private(channelName)
+                .listen('.ticket.assigned', (e) => {
+                    console.log('Real-time notification received:', e);
+                    addNewNotification(e);
+                })
+                .listen('TicketAssigned', (e) => {
+                    console.log('TicketAssigned event received:', e);
+                    addNewNotification(e);
+                });
+        }
+    }
+
+    // Start polling as fallback
     function startNotificationPolling() {
         updateNotificationBadge(); // Initial check
-        notificationCheckInterval = setInterval(updateNotificationBadge, 30000); // Check every 30 seconds
+        // Check every 30 seconds as fallback
+        notificationCheckInterval = setInterval(updateNotificationBadge, 30000);
     }
-    
-    // Start polling when page loads
+
+    // Start when page loads
     document.addEventListener('DOMContentLoaded', function() {
         startNotificationPolling();
+        initReverbNotifications();
     });
-    
+
     // Clean up interval when page unloads
     window.addEventListener('beforeunload', function() {
         if (notificationCheckInterval) {

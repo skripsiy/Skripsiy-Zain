@@ -45,11 +45,13 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     
     // Settings Routes
     Route::get('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
+    Route::post('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
 });
 
 // Agent Routes
 Route::middleware(['auth', 'verified'])->prefix('agent')->name('agent.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\Agent\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/filter-tickets', [App\Http\Controllers\Agent\DashboardController::class, 'filterTickets'])->name('dashboard.filter-tickets');
     Route::get('/tickets', [App\Http\Controllers\Agent\TicketController::class, 'index'])->name('tickets');
     Route::get('/tickets/{id}', [App\Http\Controllers\Agent\TicketDetailController::class, 'show'])->name('ticket.detail');
     Route::post('/tickets/{id}/update', [App\Http\Controllers\Agent\TicketDetailController::class, 'update'])->name('ticket.update');
