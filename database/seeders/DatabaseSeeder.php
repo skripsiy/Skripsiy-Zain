@@ -15,7 +15,8 @@ class DatabaseSeeder extends Seeder
         // Call other seeders
         $this->call([
             UserSeeder::class,
-            TicketSeeder::class,
+            DivisionUsersSeeder::class,
+            DemoTicketsSeeder::class,
         ]);
     }
 }

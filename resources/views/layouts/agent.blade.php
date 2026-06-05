@@ -294,8 +294,11 @@
         }
 
         // Listen for events
-        setTimeout(() => {
+        let checkCount = 0;
+        const checkInterval = setInterval(() => {
+            checkCount++;
             if (window.Echo) {
+                clearInterval(checkInterval);
                 console.log('Echo is initialized, starting listeners...');
                 
                 // Agent Listener
@@ -319,10 +322,11 @@
                             window.showToast(e.message, 'info');
                         });
                 @endif
-            } else {
-                console.error('Echo is not initialized');
+            } else if (checkCount > 100) {
+                clearInterval(checkInterval);
+                console.error('Echo is not initialized after 10 seconds');
             }
-        }, 1000); // Wait for Echo to initialize
+        }, 100);
     </script>
 </body>
 </html>

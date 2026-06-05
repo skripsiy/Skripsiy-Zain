@@ -17,17 +17,29 @@ class DashboardController extends Controller
         $now = \Carbon\Carbon::now();
         switch ($timeFilter) {
             case 'week':
-                $query->where('created_at', '>=', $now->startOfWeek());
+                $query->where(function($q) use ($now) {
+                    $q->where('created_at', '>=', $now->copy()->startOfWeek())
+                      ->orWhere('updated_at', '>=', $now->copy()->startOfWeek());
+                });
                 break;
             case 'month':
-                $query->where('created_at', '>=', $now->startOfMonth());
+                $query->where(function($q) use ($now) {
+                    $q->where('created_at', '>=', $now->copy()->startOfMonth())
+                      ->orWhere('updated_at', '>=', $now->copy()->startOfMonth());
+                });
                 break;
             case 'quarter':
-                $query->where('created_at', '>=', $now->startOfQuarter());
+                $query->where(function($q) use ($now) {
+                    $q->where('created_at', '>=', $now->copy()->startOfQuarter())
+                      ->orWhere('updated_at', '>=', $now->copy()->startOfQuarter());
+                });
                 break;
             case 'today':
             default:
-                $query->whereDate('created_at', $now->today());
+                $query->where(function($q) use ($now) {
+                    $q->whereDate('created_at', $now->today())
+                      ->orWhereDate('updated_at', $now->today());
+                });
                 break;
         }
 
@@ -35,9 +47,9 @@ class DashboardController extends Controller
 
         $woAvailable = $tickets->count();
         $consume = $tickets->where('condition', 'In Progress')->count();
-        $closed = $tickets->where('condition', 'Closed')->count();
+        $closed = $tickets->whereIn('condition', ['Closed', 'Saltik'])->count();
         $dispatched = $tickets->whereIn('condition', ['Dispatched', 'DISPATCHED'])->count();
-        $ods = $tickets->where('condition', 'Closed')->count(); // Assuming ODS is similar to Closed for now
+        $ods = $tickets->whereIn('condition', ['Closed', 'Saltik'])->count();
 
         $stats = [
             'wo_available' => $woAvailable,
@@ -68,8 +80,8 @@ class DashboardController extends Controller
             if (isset($groupedByDay[$dayLabel])) {
                 $dayTickets = $groupedByDay[$dayLabel];
                 $barChartConsume[] = $dayTickets->where('condition', 'In Progress')->count();
-                $barChartClosed[] = $dayTickets->where('condition', 'Closed')->count();
-                $barChartOds[] = $dayTickets->where('condition', 'Closed')->count();
+                $barChartClosed[] = $dayTickets->whereIn('condition', ['Closed', 'Saltik'])->count();
+                $barChartOds[] = $dayTickets->whereIn('condition', ['Closed', 'Saltik'])->count();
                 $barChartDispatched[] = $dayTickets->whereIn('condition', ['Dispatched', 'DISPATCHED'])->count();
             } else {
                 $barChartConsume[] = 0;
@@ -115,10 +127,15 @@ class DashboardController extends Controller
         $query = \App\Models\Ticket::where('assignby', $agentName);
 
         if ($startDate && $endDate) {
-            $query->whereBetween('created_at', [
-                \Carbon\Carbon::parse($startDate)->startOfDay(),
-                \Carbon\Carbon::parse($endDate)->endOfDay()
-            ]);
+            $query->where(function($q) use ($startDate, $endDate) {
+                $q->whereBetween('created_at', [
+                    \Carbon\Carbon::parse($startDate)->startOfDay(),
+                    \Carbon\Carbon::parse($endDate)->endOfDay()
+                ])->orWhereBetween('updated_at', [
+                    \Carbon\Carbon::parse($startDate)->startOfDay(),
+                    \Carbon\Carbon::parse($endDate)->endOfDay()
+                ]);
+            });
         }
 
         $tickets = $query->orderBy('created_at', 'desc')->get();

@@ -85,4 +85,20 @@ class User extends Authenticatable
     {
         return $this->role === 'agent';
     }
+
+    /**
+     * Ambil divisi dari kolom campaign (area, besfixed, saltik)
+     */
+    public function getDivision(): string
+    {
+        return strtolower($this->campaign ?? 'besfixed');
+    }
+
+    /**
+     * Relationship ke work sessions
+     */
+    public function workSessions()
+    {
+        return $this->hasMany(AgentWorkSession::class);
+    }
 }

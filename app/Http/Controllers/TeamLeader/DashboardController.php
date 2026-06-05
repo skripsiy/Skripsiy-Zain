@@ -48,7 +48,8 @@ class DashboardController extends Controller
         $consume = $tickets->where('condition', 'In Progress')->count();
         $closed = $tickets->where('condition', 'Closed')->count();
         $dispatched = $tickets->whereIn('condition', ['Dispatched', 'DISPATCHED'])->count();
-        $ods = $tickets->where('condition', 'Closed')->count(); // Assuming ODS is similar to Closed for now
+        $saltik = $tickets->where('condition', 'Saltik')->count();
+        $ods = $closed;
 
         $stats = [
             'wo_available' => $woAvailable,
@@ -56,6 +57,7 @@ class DashboardController extends Controller
             'ods' => $ods,
             'closed' => $closed,
             'dispatched' => $dispatched,
+            'saltik' => $saltik,
         ];
 
         // Prepare Chart Data
@@ -64,6 +66,7 @@ class DashboardController extends Controller
         $barChartOds = [];
         $barChartClosed = [];
         $barChartDispatched = [];
+        $barChartSaltik = [];
         $lineChartLabels = [];
         $lineChartData = [];
 
@@ -82,11 +85,13 @@ class DashboardController extends Controller
                 $barChartClosed[] = $dayTickets->where('condition', 'Closed')->count();
                 $barChartOds[] = $dayTickets->where('condition', 'Closed')->count();
                 $barChartDispatched[] = $dayTickets->whereIn('condition', ['Dispatched', 'DISPATCHED'])->count();
+                $barChartSaltik[] = $dayTickets->where('condition', 'Saltik')->count();
             } else {
                 $barChartConsume[] = 0;
                 $barChartClosed[] = 0;
                 $barChartOds[] = 0;
                 $barChartDispatched[] = 0;
+                $barChartSaltik[] = 0;
             }
         }
 
@@ -107,6 +112,7 @@ class DashboardController extends Controller
             'barOds' => $barChartOds,
             'barClosed' => $barChartClosed,
             'barDispatched' => $barChartDispatched,
+            'barSaltik' => $barChartSaltik,
             'lineLabels' => $lineChartLabels,
             'lineData' => $lineChartData,
         ];

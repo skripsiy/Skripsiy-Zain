@@ -840,7 +840,16 @@
         // Fetch and update work session status
         async function fetchWorkStatus() {
             try {
-                const response = await fetch('{{ route("agent.work-session.status") }}');
+                const response = await fetch('{{ route("agent.work-session.status") }}', {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (response.status === 401) {
+                    window.location.href = '{{ route("login") }}';
+                    return;
+                }
                 
                 // Silent fail jika response tidak OK 
                 if (!response.ok) {

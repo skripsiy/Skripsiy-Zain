@@ -12,21 +12,55 @@ class TicketDetailController extends Controller
     {
         $ticket = Ticket::findOrFail($id);
         
-        // Check if current agent is assigned to this ticket and it's not closed/dispatched
-        $canEdit = ($ticket->assignby === auth()->user()->name && !in_array($ticket->condition, ['Closed', 'Dispatched', 'DISPATCHED']));
+        // Mark notifications for this ticket as read
+        if (auth()->check()) {
+            auth()->user()->unreadNotifications()
+                ->where(function($query) use ($id) {
+                    $query->where('data->ticket_id', $id)
+                          ->orWhere('data->id', $id);
+                })
+                ->get()
+                ->markAsRead();
+        }
+        
+        // Check if current agent is assigned to this ticket and it's not closed/dispatched/saltik
+        $canEdit = ($ticket->assignby === auth()->user()->name && !in_array($ticket->condition, ['Closed', 'Dispatched', 'DISPATCHED', 'Saltik']));
         
         $activities = $ticket->activities()->latest()->get();
         
         return view('agent.ticket-detail', compact('ticket', 'canEdit', 'activities'));
     }
 
+    public function showV2($id)
+    {
+        $ticket = Ticket::findOrFail($id);
+        
+        // Mark notifications for this ticket as read
+        if (auth()->check()) {
+            auth()->user()->unreadNotifications()
+                ->where(function($query) use ($id) {
+                    $query->where('data->ticket_id', $id)
+                          ->orWhere('data->id', $id);
+                })
+                ->get()
+                ->markAsRead();
+        }
+        
+        // Check if current agent is assigned to this ticket and it's not closed/dispatched/saltik
+        $canEdit = ($ticket->assignby === auth()->user()->name && !in_array($ticket->condition, ['Closed', 'Dispatched', 'DISPATCHED', 'Saltik']));
+        
+        $activities = $ticket->activities()->latest()->get();
+        
+        return view('agent.ticket-detail-v2', compact('ticket', 'canEdit', 'activities'));
+    }
+
     public function update(Request $request, $id)
     {
         $ticket = Ticket::findOrFail($id);
         
-        // Prevent edit if not assigned to this agent or if ticket is closed/dispatched
-        if ($ticket->assignby !== auth()->user()->name || in_array($ticket->condition, ['Closed', 'Dispatched', 'DISPATCHED'])) {
-            return redirect()->route('agent.ticket.detail', $id)->with('error', 'Akses ditolak: Anda tidak dapat mengedit tiket yang tidak di-assign ke Anda atau sudah ditutup/dispatched.');
+        // Prevent edit if not assigned to this agent or if ticket is closed/dispatched/saltik
+        if ($ticket->assignby !== auth()->user()->name || in_array($ticket->condition, ['Closed', 'Dispatched', 'DISPATCHED', 'Saltik'])) {
+            return redirect()->route('agent.ticket.detail', $id)->with('error', 'Akses ditolak: Anda tidak dapat mengedit tiket yang tidak di-assign ke Anda atau sudah ditutup/dispatched/saltik.');
         }
         
         $validated = $request->validate([
@@ -57,22 +91,41 @@ class TicketDetailController extends Controller
     {
         $ticket = Ticket::findOrFail($id);
         
-        // Prevent status update if not assigned to this agent or if ticket is closed/dispatched
-        if ($ticket->assignby !== auth()->user()->name || in_array($ticket->condition, ['Closed', 'Dispatched', 'DISPATCHED'])) {
-            return redirect()->route('agent.ticket.detail', $id)->with('error', 'Akses ditolak: Anda tidak dapat mengubah status tiket yang tidak di-assign ke Anda atau sudah ditutup/dispatched.');
+        // Prevent status update if not assigned to this agent or if ticket is closed/dispatched/saltik
+        if ($ticket->assignby !== auth()->user()->name || in_array($ticket->condition, ['Closed', 'Dispatched', 'DISPATCHED', 'Saltik'])) {
+            return redirect()->route('agent.ticket.detail', $id)->with('error', 'Akses ditolak: Anda tidak dapat mengubah status tiket yang tidak di-assign ke Anda atau sudah ditutup/dispatched/saltik.');
         }
 
         $action = $request->input('action');
         
         switch ($action) {
             case 'submit':
-                $ticket->update(['condition' => 'In Progress']);
+                $ticket->update([
+                    'status' => 'In Progress',
+                    'condition' => 'In Progress'
+                ]);
                 break;
             case 'expired':
-                $ticket->update(['condition' => 'EXPIRED']);
+                $ticket->update([
+                    'status' => 'Closed',
+                    'condition' => 'EXPIRED'
+                ]);
                 break;
             case 'closed':
-                $ticket->update(['condition' => 'Closed', 'datesolved' => now()]);
+                $ticket->update([
+                    'status' => 'Closed',
+                    'condition' => 'Closed',
+                    'datesolved' => now(),
+                    'solvedby' => auth()->user()->name
+                ]);
+                break;
+            case 'saltik':
+                $ticket->update([
+                    'status' => 'Closed',
+                    'condition' => 'Saltik',
+                    'datesolved' => now(),
+                    'solvedby' => auth()->user()->name
+                ]);
                 break;
             case 'dispatch':
                 $ticket->update([

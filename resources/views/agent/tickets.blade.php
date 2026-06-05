@@ -207,16 +207,29 @@
         .entries-control {
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-bottom: 12px;
-            font-size: 13px;
-            color: #6B7280;
+            gap: 10px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: #4B5563;
         }
         .entries-select {
-            padding: 4px 8px;
+            padding: 8px 32px 8px 16px;
             border: 1px solid #D1D5DB;
-            border-radius: 4px;
+            border-radius: 6px;
             font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            color: #1F2937;
+            background-color: #FFFFFF;
+            width: 85px;
+            height: 38px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .entries-select:focus {
+            outline: none;
+            border-color: #1F4A5E;
+            box-shadow: 0 0 0 3px rgba(31, 74, 94, 0.15);
         }
         .table-wrapper {
             flex: 1;
@@ -227,8 +240,8 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 12px;
-            min-width: 1400px;
+            font-size: 13px;
+            min-width: 1200px;
         }
         thead {
             background: #1F4A5E;
@@ -238,48 +251,89 @@
             z-index: 10;
         }
         th {
-            padding: 10px 12px;
+            padding: 14px 16px;
             text-align: left;
             font-weight: 600;
-            font-size: 11px;
+            font-size: 12px;
             white-space: nowrap;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            opacity: 0.95;
         }
         td {
-            padding: 10px 12px;
+            padding: 14px 16px;
             border-bottom: 1px solid #F3F4F6;
+            color: #374151;
+        }
+        tbody tr {
+            transition: background-color 0.2s ease;
         }
         tbody tr:hover {
             background: #F9FAFB;
         }
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block;
+            text-align: center;
+            letter-spacing: 0.3px;
+        }
         .status-queued {
-            color: #6B7280;
-            font-weight: 600;
+            background: #FFF3E0;
+            color: #F57C00;
         }
-        .escalation-assigned {
-            color: #DC2626;
-            font-weight: 600;
+        .status-assigned {
+            background: #E3F2FD;
+            color: #1976D2;
         }
-        .escalation-pickup {
-            color: #F59E0B;
+        .status-inprogress {
+            background: #FFF9C4;
+            color: #F57F17;
+        }
+        .status-dispatched {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+        .status-closed {
+            background: #FFEBEE;
+            color: #C62828;
+        }
+        
+        .condition-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
             font-weight: 600;
+            display: inline-block;
+            text-align: center;
+            letter-spacing: 0.3px;
         }
         .condition-closed {
-            color: #DC2626;
-            font-weight: 600;
+            background: #FFEBEE;
+            color: #C62828;
         }
         .condition-expired {
-            color: #DC2626;
-            font-weight: 600;
+            background: #E0E0E0;
+            color: #616161;
             font-style: italic;
         }
         .condition-progress {
-            color: #F59E0B;
-            font-weight: 600;
-            font-style: italic;
+            background: #FFF9C4;
+            color: #F57F17;
+        }
+        .condition-dispatched {
+            background: #E3F2FD;
+            color: #0D47A1;
+        }
+        .condition-saltik {
+            background: #F3E5F5;
+            color: #7B1FA2;
         }
         .condition-open {
-            color: #6B7280;
-            font-weight: 600;
+            background: #F3F4F6;
+            color: #1F2A37;
         }
         .pagination {
             display: flex;
@@ -357,11 +411,109 @@
             overflow: hidden;
         }
         
-        .table-wrapper {
-            max-width: 100%;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
+        
+        /* Dispatched Ticket Highlights */
+        tr.highlight-dispatched td {
+            background-color: rgba(16, 185, 129, 0.07) !important; /* Soft green */
         }
+        
+        tr.highlight-dispatched td:first-child {
+            border-left: 4px solid #10b981;
+            padding-left: 8px;
+        }
+        
+        tr.highlight-dispatched:hover td {
+            background-color: rgba(16, 185, 129, 0.12) !important;
+        }
+
+        /* Assigned Ticket Highlights */
+        tr.highlight-assigned td {
+            background-color: rgba(30, 136, 229, 0.06) !important; /* Soft blue */
+        }
+        
+        tr.highlight-assigned td:first-child {
+            border-left: 4px solid #1e88e5;
+            padding-left: 8px;
+        }
+        
+        tr.highlight-assigned:hover td {
+            background-color: rgba(30, 136, 229, 0.11) !important;
+        }
+        
+        @keyframes pulse-highlight-green {
+            0% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+            }
+            70% {
+                box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+
+        @keyframes pulse-highlight-blue {
+            0% {
+                box-shadow: 0 0 0 0 rgba(30, 136, 229, 0.6);
+            }
+            70% {
+                box-shadow: 0 0 0 6px rgba(30, 136, 229, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(30, 136, 229, 0);
+            }
+        }
+        
+        .pulse-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+
+        .pulse-indicator.pulse-green {
+            background-color: #10b981;
+            animation: pulse-highlight-green 2s infinite;
+        }
+
+        .pulse-indicator.pulse-blue {
+            background-color: #1e88e5;
+            animation: pulse-highlight-blue 2s infinite;
+        }
+
+        /* ── Urgency Badge Tier ── */
+        .urgency-badge {
+            padding: 3px 9px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 700;
+            display: inline-block;
+            letter-spacing: 0.4px;
+            white-space: nowrap;
+        }
+        .urgency-low       { background:#EDF2F7; color:#4A5568; }
+        .urgency-emergency { background:#FFFBEA; color:#B7791F; border:1px solid #F6E05E; }
+        .urgency-super     { background:#FFF5F5; color:#C53030; border:1px solid #FC8181; }
+        .urgency-hvc       { background:#F5F0FF; color:#6B46C1; border:1px solid #B794F4; }
+        .urgency-vvip      { background:linear-gradient(90deg,#FFF7ED,#FFFBEB); color:#92400E; border:1px solid #F6AD55; font-weight:800; }
+
+        /* ── Division Banner ── */
+        .division-banner {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .div-area     { background:#E0F2FE; color:#0369A1; }
+        .div-besfixed { background:#DCFCE7; color:#15803D; }
+        .div-saltik   { background:#FEF3C7; color:#92400E; }
     </x-slot>
     
     <div class="stats-grid">
@@ -440,7 +592,24 @@
 
     <div class="content-card">
         <div class="workspace-header">
-            <div class="workspace-title">Workspace</div>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div class="workspace-title">Workspace</div>
+                @php
+                    $divClass = match($agentDiv) {
+                        'area'     => 'div-area',
+                        'besfixed' => 'div-besfixed',
+                        'saltik'   => 'div-saltik',
+                        default    => 'div-besfixed',
+                    };
+                    $divIcon = match($agentDiv) {
+                        'area'     => '🌐',
+                        'besfixed' => '🔧',
+                        'saltik'   => '💬',
+                        default    => '📋',
+                    };
+                @endphp
+                <span class="division-banner {{ $divClass }}">{{ $divIcon }} {{ strtoupper($agentDiv) }}</span>
+            </div>
             <div class="header-actions">
                 <form method="GET" action="{{ route('agent.tickets') }}" class="search-box">
                     <input type="hidden" name="view" value="{{ $view }}">
@@ -459,11 +628,11 @@
 
         <div class="entries-control">
             <span>Show</span>
-            <select class="entries-select">
-                <option>1</option>
-                <option selected>10</option>
-                <option>25</option>
-                <option>50</option>
+            <select class="entries-select" id="entriesSelect">
+                <option value="1" {{ request('per_page') == 1 ? 'selected' : '' }}>1</option>
+                <option value="10" {{ request('per_page', 10) == 10 ? 'selected' : '' }}>10</option>
+                <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
+                <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
             </select>
             <span>entries</span>
         </div>
@@ -473,7 +642,7 @@
                 <thead>
                     <tr>
                         <th>No. Tiket</th>
-                        <th>Reported Priority</th>
+                        <th>Urgency</th>
                         <th>Tanggal Open</th>
                         <th>Status</th>
                         <th>Regional</th>
@@ -485,18 +654,56 @@
                 </thead>
                 <tbody>
                     @forelse($tickets as $ticket)
-                    <tr ondblclick="window.location='{{ route('agent.ticket.detail', $ticket->idTicket) }}'" style="cursor: pointer;">
-                        <td>IN{{ str_pad($ticket->idTicket, 8, '0', STR_PAD_LEFT) }}</td>
-                        <td>{{ $ticket->reportedpriority ?? '-' }}</td>
+                    @php
+                        $isDispatched = (strtolower($ticket->condition) === 'dispatched' || strtolower($ticket->status) === 'dispatched');
+                        $isAssigned = (strtolower($ticket->condition) === 'assigned' || strtolower($ticket->status) === 'assigned');
+                    @endphp
+                    <tr ondblclick="window.location='{{ route('agent.ticket.detail', $ticket->idTicket) }}'" 
+                        class="{{ $isDispatched ? 'highlight-dispatched' : ($isAssigned ? 'highlight-assigned' : '') }}" 
+                        style="cursor: pointer;">
+                        <td>
+                            @if($isDispatched)
+                                <span class="pulse-indicator pulse-green" title="Dispatched Ticket"></span>
+                            @elseif($isAssigned)
+                                <span class="pulse-indicator pulse-blue" title="Newly Assigned Ticket"></span>
+                            @endif
+                            IN{{ str_pad($ticket->idTicket, 8, '0', STR_PAD_LEFT) }}
+                        </td>
+                        <td>
+                            <span class="urgency-badge {{ $ticket->urgency_badge_class ?? 'urgency-low' }}">
+                                {{ $ticket->urgency_label ?? 'Low Emergency' }}
+                            </span>
+                        </td>
                         <td>{{ $ticket->datereport ? $ticket->datereport->format('Y-m-d | H:i:s') : '-' }}</td>
-                        <td><span class="status-queued">{{ $ticket->status }}</span></td>
+                        <td>
+                            <span class="status-badge 
+                                @if(strtolower($ticket->status) == 'queued') status-queued 
+                                @elseif(strtolower($ticket->status) == 'assigned') status-assigned 
+                                @elseif(strtolower($ticket->status) == 'in progress') status-inprogress 
+                                @elseif(strtolower($ticket->status) == 'dispatched') status-dispatched 
+                                @elseif(strtolower($ticket->status) == 'closed') status-closed 
+                                @else status-queued 
+                                @endif">
+                                {{ strtoupper($ticket->status) }}
+                            </span>
+                        </td>
                         <td>{{ $ticket->regional ?? '-' }}</td>
                         <td>{{ $ticket->witel ?? '-' }}</td>
                         <td>{{ $ticket->lapul }}</td>
                         <td>{{ $ticket->gaul }}</td>
                         <td>
-                            <span class="@if($ticket->condition == 'Closed') condition-closed @elseif($ticket->condition == 'EXPIRED') condition-expired @elseif($ticket->condition == 'In Progress') condition-progress @elseif($ticket->condition == 'Dispatched') condition-progress @else condition-open @endif">
-                                {{ $ticket->condition ?? 'Open' }}
+                            <span class="condition-badge 
+                                @if($ticket->condition == 'Closed') condition-closed 
+                                @elseif($ticket->condition == 'EXPIRED') condition-expired 
+                                @elseif(in_array($ticket->condition, ['In Progress', 'Dispatched', 'DISPATCHED'])) condition-progress 
+                                @elseif($ticket->condition == 'Saltik' || $ticket->condition == 'SALTIK') condition-saltik 
+                                @else condition-open 
+                                @endif">
+                                @if(in_array($ticket->condition, ['Dispatched', 'DISPATCHED']))
+                                    In Progress
+                                @else
+                                    {{ $ticket->condition ?? 'Open' }}
+                                @endif
                             </span>
                         </td>
                     </tr>
@@ -537,128 +744,12 @@
     </div>
     
     <x-slot name="additionalScripts">
-        /* Work session functionality removed from tickets page - now only in dashboard
-        let durationInterval = null;
-        let isActive = false;
-
-        // Check status saat halaman dimuat
-        async function checkWorkStatus() {
-            try {
-                const response = await fetch('/agent/work-session/status-REMOVED');
-                const data = await response.json();
-                
-                if (data.active) {
-                    isActive = true;
-                    document.getElementById('workToggle').classList.add('active');
-                    document.getElementById('workDuration').style.display = 'block';
-                    document.getElementById('workDuration').textContent = data.duration;
-                    startDurationCounter();
-                } else {
-                    isActive = false;
-                    document.getElementById('workToggle').classList.remove('active');
-                    document.getElementById('workDuration').style.display = 'none';
-                }
-            } catch (error) {
-                console.error('Error checking work status:', error);
-            }
-        }
-
-        function startDurationCounter() {
-            if (durationInterval) clearInterval(durationInterval);
-            
-            durationInterval = setInterval(async () => {
-                try {
-                    const response = await fetch('/agent/work-session/status-REMOVED');
-                    const data = await response.json();
-                    
-                    if (data.active) {
-                        document.getElementById('workDuration').textContent = data.duration;
-                    } else {
-                        clearInterval(durationInterval);
-                    }
-                } catch (error) {
-                    console.error('Error updating duration:', error);
-                }
-            }, 60000); // Update setiap 1 menit
-        }
-
-        async function handleToggleClick() {
-            // Temporarily disabled - akan diupdate dengan sistem baru
-            alert('Fitur time tracking sedang dalam perbaikan');
-            /*
-            if (!isActive) {
-                // Mulai sesi kerja
-                try {
-                    const response = await fetch('/agent/work-session/toggle-online-REMOVED', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        }
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        isActive = true;
-                        document.getElementById('workToggle').classList.add('active');
-                        document.getElementById('workDuration').style.display = 'block';
-                        document.getElementById('workDuration').textContent = '00:00';
-                        startDurationCounter();
-                    } else {
-                        alert(data.message);
-                    }
-                } catch (error) {
-                    console.error('Error starting session:', error);
-                    alert('Gagal memulai sesi kerja');
-                }
-            } else {
-                // Tampilkan modal konfirmasi
-                document.getElementById('endModal').classList.add('show');
-            }
-            */
-        }
-
-        /* Removed - Work session now only in dashboard
-        function closeModal() {
-            document.getElementById('endModal').classList.remove('show');
-        }
-
-        async function endSession(type) {
-            try {
-                const response = await fetch('/agent/work-session/end-REMOVED', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ end_type: type })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    isActive = false;
-                    document.getElementById('workToggle').classList.remove('active');
-                    document.getElementById('workDuration').style.display = 'none';
-                    if (durationInterval) clearInterval(durationInterval);
-                    closeModal();
-                    
-                    const hours = Math.floor(data.duration_minutes / 60);
-                    const minutes = data.duration_minutes % 60;
-                    alert(`Sesi ${type === 'break' ? 'istirahat' : 'selesai'}. Durasi kerja: ${hours} jam ${minutes} menit`);
-                } else {
-                    alert(data.message);
-                }
-            } catch (error) {
-                console.error('Error ending session:', error);
-                alert('Gagal mengakhiri sesi kerja');
-            }
-        }
-        */
-
-        // Check status saat halaman dimuat
-        checkWorkStatus();
-        */
+        // Handle per_page change
+        document.getElementById('entriesSelect').addEventListener('change', function() {
+            const url = new URL(window.location.href);
+            url.searchParams.set('per_page', this.value);
+            url.searchParams.set('page', 1); // Reset to page 1
+            window.location.href = url.toString();
+        });
     </x-slot>
 </x-agent-layout>

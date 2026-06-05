@@ -26,3 +26,8 @@ Schedule::command('tickets:check-sla')
         ->hourly()
         ->withoutOverlapping()
         ->appendOutputTo(storage_path('logs/sla-checker.log'));
+
+Schedule::command('tickets:sync-telkomsel')
+        ->hourly()
+        ->withoutOverlapping()
+        ->appendOutputTo(storage_path('logs/telkomsel-sync.log'));

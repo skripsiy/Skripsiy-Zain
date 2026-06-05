@@ -54,6 +54,7 @@ Route::middleware(['auth', 'verified'])->prefix('agent')->name('agent.')->group(
     Route::get('/dashboard/filter-tickets', [App\Http\Controllers\Agent\DashboardController::class, 'filterTickets'])->name('dashboard.filter-tickets');
     Route::get('/tickets', [App\Http\Controllers\Agent\TicketController::class, 'index'])->name('tickets');
     Route::get('/tickets/{id}', [App\Http\Controllers\Agent\TicketDetailController::class, 'show'])->name('ticket.detail');
+    Route::get('/tickets/{id}/v2', [App\Http\Controllers\Agent\TicketDetailController::class, 'showV2'])->name('ticket.detail.v2');
     Route::post('/tickets/{id}/update', [App\Http\Controllers\Agent\TicketDetailController::class, 'update'])->name('ticket.update');
     Route::post('/tickets/{id}/status', [App\Http\Controllers\Agent\TicketDetailController::class, 'updateStatus'])->name('ticket.status');
     Route::get('/profile', [App\Http\Controllers\Agent\ProfileController::class, 'show'])->name('profile');

@@ -194,6 +194,8 @@
         }
 
         .btn-login {
+            position: relative;
+            overflow: hidden;
             padding: 0.75rem 2.5rem;
             font-size: 1rem;
             font-weight: 600;
@@ -204,6 +206,11 @@
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 140px;
+            height: 46px;
         }
 
         .btn-login:hover {
@@ -213,7 +220,7 @@
         }
 
         .btn-login:active {
-            transform: translateY(0);
+            transform: translateY(0) scale(0.97);
             box-shadow: 0 2px 8px rgba(30, 58, 138, 0.3);
         }
 
@@ -267,26 +274,68 @@
         /* Loading state */
         .btn-login.loading {
             pointer-events: none;
-            opacity: 0.7;
+            background: #1e40af;
         }
 
-        .btn-login.loading::after {
-            content: '';
+        .btn-login.loading .btn-text {
+            opacity: 0;
+            transform: translateY(15px);
+        }
+
+        .btn-login.loading .btn-loader {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .btn-text {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-block;
+        }
+
+        .btn-loader {
             position: absolute;
-            width: 16px;
-            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.5);
             top: 50%;
             left: 50%;
-            margin-left: -8px;
-            margin-top: -8px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.6s linear infinite;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+
+        .spinner .path {
+            stroke: #ffffff;
+            stroke-linecap: round;
+            animation: dash 1.5s ease-in-out infinite;
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes dash {
+            0% {
+                stroke-dasharray: 1, 150;
+                stroke-dashoffset: 0;
+            }
+            50% {
+                stroke-dasharray: 90, 150;
+                stroke-dashoffset: -35;
+            }
+            100% {
+                stroke-dasharray: 90, 150;
+                stroke-dashoffset: -124;
+            }
         }
     </style>
 </head>
@@ -354,7 +403,12 @@
                 <!-- Login Button -->
                 <div class="btn-container">
                     <button type="submit" class="btn-login" id="loginBtn">
-                        Login
+                        <span class="btn-text">Login</span>
+                        <span class="btn-loader">
+                            <svg class="spinner" viewBox="0 0 24 24">
+                                <circle class="path" cx="12" cy="12" r="10" fill="none" stroke-width="3"></circle>
+                            </svg>
+                        </span>
                     </button>
                 </div>
 
@@ -369,11 +423,9 @@
     </div>
 
     <script>
-        // Add loading state on form submit
         document.getElementById('loginForm').addEventListener('submit', function() {
             const btn = document.getElementById('loginBtn');
             btn.classList.add('loading');
-            btn.textContent = '';
         });
 
         // Add smooth focus transitions

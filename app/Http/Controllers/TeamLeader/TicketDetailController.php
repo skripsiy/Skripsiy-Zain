@@ -58,6 +58,7 @@ class TicketDetailController extends Controller
         switch ($action) {
             case 'closed':
                 $ticket->update([
+                    'status' => 'Closed',
                     'condition' => 'Closed',
                     'datesolved' => now(),
                     'solvedby' => Auth::user()->name
@@ -67,9 +68,20 @@ class TicketDetailController extends Controller
                 
             case 'expired':
                 $ticket->update([
+                    'status' => 'Closed',
                     'condition' => 'EXPIRED'
                 ]);
                 $message = 'Ticket has been marked as expired!';
+                break;
+                
+            case 'saltik':
+                $ticket->update([
+                    'status' => 'Closed',
+                    'condition' => 'Saltik',
+                    'datesolved' => now(),
+                    'solvedby' => Auth::user()->name
+                ]);
+                $message = 'Ticket has been marked as SALTIK and closed!';
                 break;
                 
             case 'dispatch':

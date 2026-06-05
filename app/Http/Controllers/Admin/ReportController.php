@@ -23,12 +23,14 @@ class ReportController extends Controller
 
         // Get all users with their ticket counts for TODAY
         $users = User::select('users.*')
-            ->selectRaw('COUNT(DISTINCT CASE WHEN tickets.assignby = users.email AND DATE(tickets.datereport) = ? THEN tickets.idTicket END) as assigned_tickets', [$today])
-            ->selectRaw('COUNT(DISTINCT CASE WHEN tickets.solvedby = users.email AND DATE(tickets.datesolved) = ? THEN tickets.idTicket END) as solved_tickets', [$today])
-            ->selectRaw('COUNT(DISTINCT CASE WHEN tickets.assignby = users.email AND tickets.status = "QUEUED" THEN tickets.idTicket END) as inbox_tickets') // Inbox tetap menghitung yang masih menggantung
+            ->selectRaw('COUNT(DISTINCT CASE WHEN (tickets.assignby = users.email OR tickets.assignby = users.name) AND DATE(tickets.datereport) = ? THEN tickets.idTicket END) as assigned_tickets', [$today])
+            ->selectRaw('COUNT(DISTINCT CASE WHEN (tickets.solvedby = users.email OR tickets.solvedby = users.name) AND DATE(tickets.datesolved) = ? THEN tickets.idTicket END) as solved_tickets', [$today])
+            ->selectRaw('COUNT(DISTINCT CASE WHEN (tickets.assignby = users.email OR tickets.assignby = users.name) AND tickets.status = "QUEUED" THEN tickets.idTicket END) as inbox_tickets') // Inbox tetap menghitung yang masih menggantung
             ->leftJoin('tickets', function($join) {
                 $join->on('tickets.assignby', '=', 'users.email')
-                     ->orOn('tickets.solvedby', '=', 'users.email');
+                     ->orOn('tickets.assignby', '=', 'users.name')
+                     ->orOn('tickets.solvedby', '=', 'users.email')
+                     ->orOn('tickets.solvedby', '=', 'users.name');
             })
             ->groupBy('users.id', 'users.name', 'users.email', 'users.password', 'users.role', 'users.status', 'users.campaign', 'users.area', 'users.site', 'users.username', 'users.phone', 'users.email_verified_at', 'users.remember_token', 'users.created_at', 'users.updated_at')
             ->orderBy('users.name')
@@ -45,25 +47,33 @@ class ReportController extends Controller
         $today = \Carbon\Carbon::today()->toDateString();
 
         // Get tickets assigned to user TODAY
-        $assignedTickets = Ticket::where('assignby', $user->email)
+        $assignedTickets = Ticket::where(function($q) use ($user) {
+                $q->where('assignby', $user->email)->orWhere('assignby', $user->name);
+            })
             ->whereDate('datereport', $today)
             ->orderBy('created_at', 'desc')
             ->get();
 
         // Get tickets solved by user TODAY
-        $solvedTickets = Ticket::where('solvedby', $user->email)
+        $solvedTickets = Ticket::where(function($q) use ($user) {
+                $q->where('solvedby', $user->email)->orWhere('solvedby', $user->name);
+            })
             ->whereDate('datesolved', $today)
             ->orderBy('created_at', 'desc')
             ->get();
 
         // Get inbox tickets (queued tickets assigned to user) - Inbox biasanya semua yang belum selesai
-        $inboxTickets = Ticket::where('assignby', $user->email)
+        $inboxTickets = Ticket::where(function($q) use ($user) {
+                $q->where('assignby', $user->email)->orWhere('assignby', $user->name);
+            })
             ->where('status', 'QUEUED')
             ->orderBy('created_at', 'desc')
             ->get();
 
         // Count by status for TODAY
-        $statusCounts = Ticket::where('assignby', $user->email)
+        $statusCounts = Ticket::where(function($q) use ($user) {
+                $q->where('assignby', $user->email)->orWhere('assignby', $user->name);
+            })
             ->whereDate('datereport', $today)
             ->select('status', DB::raw('count(*) as count'))
             ->groupBy('status')

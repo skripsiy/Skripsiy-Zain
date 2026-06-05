@@ -599,7 +599,7 @@
                 <h3>SALTIK Summary</h3>
                 <div class="stat-item">
                     <span class="stat-label">Total SALTIK Tickets</span>
-                    <span class="stat-value">: {{ $stats['closed'] }}</span>
+                    <span class="stat-value">: {{ $stats['saltik'] }}</span>
                 </div>
                 <div class="stat-item">
                     <span class="stat-label">SLA Target</span>
@@ -607,7 +607,7 @@
                 </div>
                 <div class="stat-item">
                     <span class="stat-label">Resolution Rate</span>
-                    <span class="stat-value blue">: {{ $stats['wo_available'] > 0 ? round(($stats['closed'] / $stats['wo_available']) * 100, 1) : 0 }}%</span>
+                    <span class="stat-value blue">: {{ $stats['wo_available'] > 0 ? round(($stats['saltik'] / $stats['wo_available']) * 100, 1) : 0 }}%</span>
                 </div>
                 <div style="margin-top: 15px; text-align: center;">
                     <div style="font-size: 11px; color: #666;">SALTIK CSAT Score</div>
@@ -620,7 +620,7 @@
                 <h3>SALTIK SLA Analytic</h3>
                 <div class="stat-item">
                     <span class="stat-label">Within SLA</span>
-                    <span class="stat-value green">: {{ $stats['closed'] }}</span>
+                    <span class="stat-value green">: {{ $stats['saltik'] }}</span>
                 </div>
                 <div class="stat-item">
                     <span class="stat-label">Breached SLA</span>
@@ -639,11 +639,11 @@
                     <div style="flex: 1;">
                         <div class="stat-item">
                             <span class="stat-label">SALTIK Share</span>
-                            <span class="stat-value" style="color: #FFC107;">: {{ $stats['wo_available'] > 0 ? round(($stats['closed'] / $stats['wo_available']) * 100, 1) : 0 }}%</span>
+                            <span class="stat-value" style="color: #FFC107;">: {{ $stats['wo_available'] > 0 ? round(($stats['saltik'] / $stats['wo_available']) * 100, 1) : 0 }}%</span>
                         </div>
                         <div class="stat-item">
                             <span class="stat-label">Other Campaigns</span>
-                            <span class="stat-value">: {{ $stats['wo_available'] > 0 ? round((($stats['wo_available'] - $stats['closed']) / $stats['wo_available']) * 100, 1) : 0 }}%</span>
+                            <span class="stat-value">: {{ $stats['wo_available'] > 0 ? round((($stats['wo_available'] - $stats['saltik']) / $stats['wo_available']) * 100, 1) : 0 }}%</span>
                         </div>
                     </div>
                     <div class="today-stats-chart" style="margin: 0; width: 100px; height: 100px;">
@@ -668,7 +668,7 @@
                         </thead>
                         <tbody>
                             @php
-                                $saltikLeaderboard = $tickets->where('condition', 'Closed')
+                                $saltikLeaderboard = $tickets->where('condition', 'Saltik')
                                     ->groupBy('assignby')
                                     ->map(fn($t) => $t->count())
                                     ->sortByDesc(fn($c) => $c);
@@ -1033,7 +1033,7 @@
         data: {
         labels: ['SALTIK', 'Other'],
         datasets: [{
-        data: [{{ $stats['closed'] }}, {{ max(0, $stats['wo_available'] - $stats['closed']) }}],
+        data: [{{ $stats['saltik'] }}, {{ max(0, $stats['wo_available'] - $stats['saltik']) }}],
         backgroundColor: ['#FFC107', '#E0E0E0'],
         borderWidth: 0
         }]
@@ -1057,7 +1057,7 @@
         labels: {!! json_encode($chartData['barLabels']) !!},
         datasets: [{
         label: 'SALTIK Resolved',
-        data: {!! json_encode($chartData['barClosed']) !!},
+        data: {!! json_encode($chartData['barSaltik']) !!},
         borderColor: '#FFC107',
         backgroundColor: 'rgba(255, 193, 7, 0.1)',
         tension: 0.4,

@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Ticket;
+use App\Observers\TicketObserver;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -11,7 +13,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Bind TicketRoutingService sebagai singleton
+        $this->app->singleton(\App\Services\TicketRoutingService::class);
     }
 
     /**
@@ -21,5 +24,8 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register custom Blade components
         \Illuminate\Support\Facades\Blade::component('layouts.agent', 'agent-layout');
+
+        // Register TicketObserver untuk routing otomatis saat tiket dibuat/diupdate
+        Ticket::observe(TicketObserver::class);
     }
 }

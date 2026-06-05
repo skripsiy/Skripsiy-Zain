@@ -48,6 +48,7 @@
         .btn-closed { background: #DC2626; color: white; }
         .btn-expired { background: #9CA3AF; color: white; }
         .btn-dispatch { background: #7ED321; color: white; }
+        .btn-saltik { background: #9C27B0; color: white; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn:not(:disabled):hover { opacity: 0.9; transform: translateY(-1px); }
         .alert { padding: 12px 16px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; }
@@ -107,6 +108,12 @@
                 </div>
                 @endif
 
+                @if(in_array($ticket->condition, ['Closed', 'Dispatched', 'EXPIRED', 'Saltik']))
+                <div class="alert alert-warning" style="background: #FEF3C7; color: #92400E; border: 1px solid #F59E0B; padding: 12px 16px; border-radius: 6px; margin-bottom: 15px; font-size: 13px;">
+                    ⚠️ Tiket ini sudah dalam status <strong>{{ strtoupper($ticket->condition) }}</strong>. Aksi perubahan status dinonaktifkan.
+                </div>
+                @endif
+
                 <div class="ticket-id">TK{{ str_pad($ticket->idTicket, 6, '0', STR_PAD_LEFT) }}</div>
 
                 <div class="info-grid">
@@ -129,6 +136,17 @@
                 </div>
 
                 <div class="badge-row">
+                    <div class="badge" style="background: 
+                         {{ match(strtolower($ticket->condition ?? '')) {
+                             'closed' => '#FFEBEE; color: #C62828; border-color: #FFCDD2;',
+                             'saltik' => '#F3E5F5; color: #7B1FA2; border-color: #E1BEE7;',
+                             'dispatched' => '#E1F5FE; color: #0288D1; border-color: #B3E5FC;',
+                             'assigned' => '#E3F2FD; color: #1976D2; border-color: #BBDEFB;',
+                             'in progress' => '#FFF9C4; color: #F57F17; border-color: #FFF59D;',
+                             default => '#F3F4F6; color: #1F2A37; border-color: #D1D5DB;',
+                         } }}">
+                        ⏰ STATUS: {{ strtoupper($ticket->condition ?? $ticket->status) }}
+                    </div>
                     <div class="badge">📍 {{ $ticket->regional ?? 'REG 1' }} | WITEL : {{ $ticket->witel ?? 'RIKEP' }} | WORKZONE : BTC</div>
                     <div class="badge">👥 OWNER GROUP : DBO</div>
                     <div class="badge">👤 CUSTOMER TYPE : HVC_SILVER</div>
@@ -276,13 +294,16 @@
                 <form method="POST" action="{{ route('team-leader.ticket.status', $ticket->idTicket) }}">
                     @csrf
                     <div class="button-row">
-                        <button type="submit" name="action" value="closed" class="btn btn-closed" disabled>
+                        <button type="submit" name="action" value="closed" class="btn btn-closed" {{ in_array($ticket->condition, ['Closed', 'Dispatched', 'EXPIRED', 'Saltik']) ? 'disabled' : '' }}>
                             CLOSED
                         </button>
-                        <button type="submit" name="action" value="expired" class="btn btn-expired" disabled>
+                        <button type="submit" name="action" value="saltik" class="btn btn-saltik" {{ in_array($ticket->condition, ['Closed', 'Dispatched', 'EXPIRED', 'Saltik']) ? 'disabled' : '' }}>
+                            SALTIK
+                        </button>
+                        <button type="submit" name="action" value="expired" class="btn btn-expired" {{ in_array($ticket->condition, ['Closed', 'Dispatched', 'EXPIRED', 'Saltik']) ? 'disabled' : '' }}>
                             EXPIRED
                         </button>
-                        <button type="submit" name="action" value="dispatch" class="btn btn-dispatch" disabled>
+                        <button type="submit" name="action" value="dispatch" class="btn btn-dispatch" {{ in_array($ticket->condition, ['Closed', 'Dispatched', 'EXPIRED', 'Saltik']) ? 'disabled' : '' }}>
                             DISPATCH
                         </button>
                     </div>

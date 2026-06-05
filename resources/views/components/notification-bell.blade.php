@@ -252,7 +252,17 @@
         listContainer.innerHTML = '<div class="notification-loading"><p>Loading notifications...</p></div>';
 
         try {
-            const response = await fetch('/notifications/unread');
+            const response = await fetch('/notifications/unread', {
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+            
             const data = await response.json();
 
             if (data.notifications.length === 0) {
@@ -294,7 +304,17 @@
     // Update notification badge
     async function updateNotificationBadge() {
         try {
-            const response = await fetch('/notifications/count');
+            const response = await fetch('/notifications/count', {
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+            
             const data = await response.json();
 
             const badge = document.getElementById('notificationBadge');
@@ -486,22 +506,34 @@
 
     // Real-time notifications with Laravel Reverb
     function initReverbNotifications() {
-        if (typeof Echo !== 'undefined') {
-            // Listen for private channel based on user role
-            const channelName = userRole === 'agent' ? `agent.${userId}` : `${userRole}.${userId}`;
+        let checkCount = 0;
+        const checkInterval = setInterval(() => {
+            checkCount++;
+            if (typeof window.Echo !== 'undefined') {
+                clearInterval(checkInterval);
+                setupEchoListeners();
+            } else if (checkCount > 100) { // Check for up to 10 seconds
+                clearInterval(checkInterval);
+                console.error('Laravel Echo failed to initialize after 10 seconds.');
+            }
+        }, 100);
+    }
 
-            console.log('Listening on channel:', channelName);
+    function setupEchoListeners() {
+        // Listen for private channel based on user role
+        const channelName = userRole === 'agent' ? `agent.${userId}` : `${userRole}.${userId}`;
 
-            Echo.private(channelName)
-                .listen('.ticket.assigned', (e) => {
-                    console.log('Real-time notification received:', e);
-                    addNewNotification(e);
-                })
-                .listen('TicketAssigned', (e) => {
-                    console.log('TicketAssigned event received:', e);
-                    addNewNotification(e);
-                });
-        }
+        console.log('Listening on channel:', channelName);
+
+        window.Echo.private(channelName)
+            .listen('.ticket.assigned', (e) => {
+                console.log('Real-time notification received:', e);
+                addNewNotification(e);
+            })
+            .listen('TicketAssigned', (e) => {
+                console.log('TicketAssigned event received:', e);
+                addNewNotification(e);
+            });
     }
 
     // Start polling as fallback

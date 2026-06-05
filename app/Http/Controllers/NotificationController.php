@@ -15,24 +15,18 @@ class NotificationController extends Controller
     {
         $user = Auth::user();
         
-        // Get new tickets assigned to user that haven't been viewed
-        $newTickets = Ticket::where('assignby', $user->email)
-            ->where('status', 'QUEUED')
-            ->where('created_at', '>=', now()->subHours(24)) // Last 24 hours
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        $notifications = $newTickets->map(function($ticket) {
+        $notifications = $user->unreadNotifications->map(function($notification) {
+            $data = $notification->data;
             return [
-                'id' => $ticket->idTicket,
-                'type' => 'new_ticket',
-                'title' => 'New Ticket Assigned',
-                'message' => "Ticket #{$ticket->idTicket} from {$ticket->namacust}",
-                'ticket_id' => $ticket->idTicket,
-                'customer_name' => $ticket->namacust,
-                'ticket_type' => $ticket->jenisTicket,
-                'created_at' => $ticket->created_at->diffForHumans(),
-                'timestamp' => $ticket->created_at->toIso8601String(),
+                'id' => $notification->id,
+                'type' => $data['type'] ?? 'ticket_assigned',
+                'title' => $data['title'] ?? 'New Ticket Assigned',
+                'message' => $data['message'] ?? '',
+                'ticket_id' => $data['ticket_id'] ?? ($data['id'] ?? null),
+                'customer_name' => $data['customer_name'] ?? null,
+                'ticket_type' => $data['ticket_type'] ?? null,
+                'created_at' => $notification->created_at->diffForHumans(),
+                'timestamp' => $notification->created_at->toIso8601String(),
             ];
         });
 
@@ -47,8 +41,9 @@ class NotificationController extends Controller
      */
     public function markAsRead(Request $request)
     {
-        // In a real application, you would update a notifications table
-        // For now, we'll just return success
+        $user = Auth::user();
+        $user->unreadNotifications->markAsRead();
+        
         return response()->json(['success' => true]);
     }
 
@@ -58,11 +53,7 @@ class NotificationController extends Controller
     public function getCount()
     {
         $user = Auth::user();
-        
-        $count = Ticket::where('assignby', $user->email)
-            ->where('status', 'QUEUED')
-            ->where('created_at', '>=', now()->subHours(24))
-            ->count();
+        $count = $user->unreadNotifications()->count();
 
         return response()->json(['count' => $count]);
     }

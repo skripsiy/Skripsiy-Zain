@@ -100,8 +100,12 @@ class UserController extends Controller
         }
 
         // UC-12: Prevent deleting users that have tickets assigned
-        $hasTickets = \App\Models\Ticket::where('assignby', $user->email)
-            ->orWhere('solvedby', $user->email)
+        $hasTickets = \App\Models\Ticket::where(function($q) use ($user) {
+                $q->where('assignby', $user->email)->orWhere('assignby', $user->name);
+            })
+            ->orWhere(function($q) use ($user) {
+                $q->where('solvedby', $user->email)->orWhere('solvedby', $user->name);
+            })
             ->exists();
 
         if ($hasTickets) {

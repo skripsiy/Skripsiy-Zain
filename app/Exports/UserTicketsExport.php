@@ -36,15 +36,20 @@ class UserTicketsExport implements FromCollection, WithHeadings, WithMapping, Wi
 
         switch ($this->type) {
             case 'solved':
-                $query->where('solvedby', $this->user->email);
+                $query->where(function($q) {
+                    $q->where('solvedby', $this->user->email)->orWhere('solvedby', $this->user->name);
+                });
                 break;
             case 'inbox':
-                $query->where('assignby', $this->user->email)
-                      ->where('status', 'QUEUED');
+                $query->where(function($q) {
+                    $q->where('assignby', $this->user->email)->orWhere('assignby', $this->user->name);
+                })->where('status', 'QUEUED');
                 break;
             case 'assigned':
             default:
-                $query->where('assignby', $this->user->email);
+                $query->where(function($q) {
+                    $q->where('assignby', $this->user->email)->orWhere('assignby', $this->user->name);
+                });
                 break;
         }
 

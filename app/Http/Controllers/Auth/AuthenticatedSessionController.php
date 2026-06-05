@@ -28,6 +28,22 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        $intended = $request->session()->get('url.intended');
+        if ($intended) {
+            $ignoredPatterns = [
+                '/work-session',
+                '/notifications',
+                '/filter-tickets',
+                '/mark-read'
+            ];
+            foreach ($ignoredPatterns as $pattern) {
+                if (str_contains($intended, $pattern)) {
+                    $request->session()->forget('url.intended');
+                    break;
+                }
+            }
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

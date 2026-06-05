@@ -49,6 +49,7 @@
         .btn-closed { background: #DC2626; color: white; }
         .btn-expired { background: #9CA3AF; color: white; }
         .btn-dispatch { background: #7ED321; color: white; }
+        .btn-saltik { background: #9C27B0; color: white; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn:not(:disabled):hover { opacity: 0.9; transform: translateY(-1px); }
         .alert { padding: 12px 16px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; }
@@ -108,7 +109,11 @@
                 
                 @if(!$canEdit)
                 <div class="alert alert-warning" style="background: #FEF3C7; color: #92400E; border: 1px solid #F59E0B; padding: 12px 16px; border-radius: 6px; margin-bottom: 15px; font-size: 13px;">
-                    ⚠️ Anda sedang dalam mode <strong>Hanya Lihat (Read-Only)</strong> karena tiket ini tidak di-assign kepada Anda. Anda tidak dapat melakukan perubahan atau update status.
+                    @if(in_array($ticket->condition, ['Closed', 'Dispatched', 'DISPATCHED', 'Saltik']))
+                        ⚠️ Anda sedang dalam mode <strong>Hanya Lihat (Read-Only)</strong> karena tiket ini sudah ditutup, didispatch, atau ditandai sebagai SALTIK.
+                    @else
+                        ⚠️ Anda sedang dalam mode <strong>Hanya Lihat (Read-Only)</strong> karena tiket ini tidak di-assign kepada Anda. Anda tidak dapat melakukan perubahan atau update status.
+                    @endif
                 </div>
                 @endif
 
@@ -146,6 +151,18 @@
                 </div>
 
                 <div class="badge-row">
+                    <div class="badge" style="background: 
+                        {{ match(strtolower($ticket->condition ?? '')) {
+                            'closed' => '#FFEBEE; color: #C62828; border-color: #FFCDD2;',
+                            'saltik' => '#F3E5F5; color: #7B1FA2; border-color: #E1BEE7;',
+                            'dispatched' => '#E1F5FE; color: #0288D1; border-color: #B3E5FC;',
+                            'assigned' => '#E3F2FD; color: #1976D2; border-color: #BBDEFB;',
+                            'in progress' => '#FFF9C4; color: #F57F17; border-color: #FFF59D;',
+                            default => '#F3F4F6; color: #1F2A37; border-color: #D1D5DB;',
+                        } }}">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        STATUS: {{ strtoupper($ticket->condition ?? $ticket->status) }}
+                    </div>
                     <div class="badge">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                         {{ $ticket->regional ?? 'REG 1' }} | WITEL : {{ $ticket->witel ?? 'RIKEP' }} | WORKZONE : BTC
@@ -384,17 +401,20 @@
                     </div>
 
                     <div class="button-row">
-                        <button type="submit" class="btn btn-submit" {{ (!$canEdit || $ticket->condition == 'Closed') ? 'disabled' : '' }}>
+                        <button type="submit" class="btn btn-submit" {{ !$canEdit ? 'disabled' : '' }}>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                             SUBMIT
                         </button>
-                        <button type="submit" formaction="{{ route('agent.ticket.status', $ticket->idTicket) }}" name="action" value="closed" class="btn btn-closed" {{ (!$canEdit || $ticket->condition == 'Closed') ? 'disabled' : '' }}>
+                        <button type="submit" formaction="{{ route('agent.ticket.status', $ticket->idTicket) }}" name="action" value="closed" class="btn btn-closed" {{ !$canEdit ? 'disabled' : '' }}>
                             CLOSED
                         </button>
-                        <button type="submit" formaction="{{ route('agent.ticket.status', $ticket->idTicket) }}" name="action" value="expired" class="btn btn-expired" {{ (!$canEdit || $ticket->condition == 'Closed') ? 'disabled' : '' }}>
+                        <button type="submit" formaction="{{ route('agent.ticket.status', $ticket->idTicket) }}" name="action" value="saltik" class="btn btn-saltik" {{ !$canEdit ? 'disabled' : '' }}>
+                            SALTIK
+                        </button>
+                        <button type="submit" formaction="{{ route('agent.ticket.status', $ticket->idTicket) }}" name="action" value="expired" class="btn btn-expired" {{ !$canEdit ? 'disabled' : '' }}>
                             EXPIRED
                         </button>
-                        <button type="submit" formaction="{{ route('agent.ticket.status', $ticket->idTicket) }}" name="action" value="dispatch" class="btn btn-dispatch" id="btnDispatch" {{ (!$canEdit || $ticket->condition == 'Closed') ? 'disabled' : '' }}>
+                        <button type="submit" formaction="{{ route('agent.ticket.status', $ticket->idTicket) }}" name="action" value="dispatch" class="btn btn-dispatch" id="btnDispatch" {{ !$canEdit ? 'disabled' : '' }}>
                             DISPATCH
                         </button>
                     </div>
