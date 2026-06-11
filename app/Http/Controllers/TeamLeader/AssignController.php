@@ -15,13 +15,16 @@ class AssignController extends Controller
         $tl       = auth()->user();
         $tlDiv    = strtolower($tl->campaign ?? '');
 
-        // ── Loker Dispatch TL: tiket prioritas tinggi (SE/HVC/VVIP) yang belum di-assign ──
-        // Filter berdasarkan divisi TL. Jika TL tidak punya divisi, tampilkan semua.
-        $dispatchQuery = Ticket::whereIn('urgency_level', [3, 4, 5])
+        // ── Loker Dispatch TL: tiket unassigned & belum closed >= 6 jam ──
+        $dispatchQuery = Ticket::where('condition', '!=', 'Closed')
             ->where(function ($q) {
                 $q->whereNull('assignby')
                   ->orWhere('assignby', '')
-                  ->orWhereIn('condition', ['QUEUED']);
+                  ->orWhereIn('condition', ['QUEUED', 'UNASSIGNED']);
+            })
+            ->where(function ($q) {
+                $q->where('created_at', '<=', now()->subHours(6))
+                  ->orWhere('datereport', '<=', now()->subHours(6));
             });
 
         if ($tlDiv !== '') {
@@ -29,8 +32,8 @@ class AssignController extends Controller
         }
 
         $dispatchTickets = $dispatchQuery
-            ->orderByRaw("urgency_level DESC")          // VVIP → HVC → SE
-            ->orderBy('datereport', 'asc')              // usia terlama dulu
+            ->orderByRaw("urgency_level DESC")          // VVIP → HVC → SE → Emergency → Low
+            ->orderBy('created_at', 'asc')              // usia terlama dulu
             ->orderByRaw('(COALESCE(lapul,0) + COALESCE(gaul,0)) DESC')
             ->get();
 

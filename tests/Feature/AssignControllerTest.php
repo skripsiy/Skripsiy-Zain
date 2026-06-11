@@ -47,7 +47,7 @@ class AssignControllerTest extends TestCase
 
         // 5. Assert redirection and success message
         $response->assertRedirect(route('team-leader.assign'));
-        $response->assertSessionHas('success', 'Ticket successfully assigned to ' . $agent->name);
+        $response->assertSessionHas('success', 'Ticket berhasil di-dispatch ke ' . $agent->name);
 
         // 6. Assert ticket data is updated
         $ticket->refresh();

@@ -60,62 +60,6 @@ class TicketRoutingService
      */
     public function determineDivision(Ticket $ticket): string
     {
-        $channel      = (string) ($ticket->channel ?? '');
-        $sourceSystem = strtoupper($ticket->source_system ?? '');
-        $poolId       = $ticket->pool_id ?? '';
-        $status       = $ticket->status ?? '';
-        $statusDsc    = $ticket->statusSC ?? '';   // gunakan statusSC sebagai status internal
-        $klasifikasi  = strtoupper($ticket->klasifikasi ?? '');
-        $topic        = strtoupper($ticket->topic ?? '');
-
-        // ─── SALTIK ───────────────────────────────────────────────
-        // Cek lebih dulu karena overlap channel dengan Besfixed
-        $isSaltikPoolId  = str_contains(strtoupper($poolId), 'SALAM SIMPATIK');
-        $isSaltikDscStat = $this->statusMatchesAny($status, self::DSC_SALTIK_STATUSES)
-                        || $this->statusMatchesAny($statusDsc, self::DSC_SALTIK_STATUSES);
-        $isSaltikInseraStat = $this->statusMatchesAny($status, self::INSERA_SALTIK_STATUSES);
-        $isSaltikDscWsa  = ($sourceSystem === 'DSC' && str_contains(strtoupper($klasifikasi), 'WSA'));
-        $isSaltikChannel = in_array($channel, self::INSERA_CHANNELS_SALTIK);
-
-        if (
-            $isSaltikPoolId
-            || $isSaltikDscWsa
-            || ($sourceSystem === 'DSC' && $isSaltikDscStat)
-            || ($sourceSystem === 'INSERA' && $isSaltikChannel && $isSaltikInseraStat)
-        ) {
-            return 'saltik';
-        }
-
-        // ─── AREA ─────────────────────────────────────────────────
-        $isAreaPoolId     = str_contains(strtoupper($poolId), 'NETWORK SERVICE DESK');
-        $isAreaChannel    = in_array($channel, self::INSERA_CHANNEL_AREA);
-        $isDscInProgress  = $this->statusMatchesAny($status, self::DSC_INPROGRESS_STATUSES)
-                         || $this->statusMatchesAny($statusDsc, self::DSC_INPROGRESS_STATUSES);
-        $isInseraInProgress = $this->statusMatchesAny($status, self::INSERA_INPROGRESS_STATUSES);
-        $isNearSla        = $this->isNearOrOutSla($ticket, 'area');
-
-        if (
-            ($sourceSystem === 'DSC' && ($isAreaPoolId || $isDscInProgress))
-            || ($sourceSystem === 'INSERA' && $isAreaChannel && $isInseraInProgress)
-            || $isNearSla
-        ) {
-            return 'area';
-        }
-
-        // ─── BESFIXED ─────────────────────────────────────────────
-        $isBesPoolId     = str_contains(strtoupper($poolId), 'NEW_SITE179') 
-                        || str_contains(strtoupper($poolId), 'BESFIXED');
-        $isBesChannel    = in_array($channel, self::INSERA_CHANNELS_BESFIXED);
-
-        if (
-            ($sourceSystem === 'DSC')
-            || ($sourceSystem === 'INSERA' && $isBesChannel)
-            || $isBesPoolId
-        ) {
-            return 'besfixed';
-        }
-
-        // ─── Fallback ──────────────────────────────────────────────
         return 'besfixed';
     }
 
@@ -173,7 +117,7 @@ class TicketRoutingService
      */
     public function shouldAutoAssign(Ticket $ticket): bool
     {
-        return in_array($ticket->urgency_level, [1, 2]);
+        return false;
     }
 
     /**
@@ -248,32 +192,14 @@ class TicketRoutingService
         // 2. Tentukan urgency
         $urgency = $this->determineUrgencyLevel($ticket);
 
-        // 3. Update tiket dulu
+        // 3. Update tiket ke QUEUED / unassigned secara default
         $ticket->update([
             'division_target' => $division,
             'urgency_level'   => $urgency,
+            'condition'       => 'QUEUED',
+            'status'          => 'QUEUED',
+            'assignby'        => null,
         ]);
-
-        $ticket->refresh();
-
-        // 4. Auto-assign hanya untuk urgency 1 & 2
-        if ($this->shouldAutoAssign($ticket)) {
-            $assigned = $this->autoAssignToAgent($ticket);
-            if (!$assigned) {
-                // Tidak ada agent online, set ke QUEUED agar TL bisa dispatch
-                $ticket->update(['condition' => 'QUEUED', 'status' => 'QUEUED']);
-            }
-        } else {
-            // Urgency tinggi (3/4/5): masuk loker TL sebagai UNASSIGNED
-            $ticket->update([
-                'condition' => 'QUEUED',
-                'status'    => 'QUEUED',
-                'assignby'  => null,
-            ]);
-
-            // Notifikasi ke semua TL divisi tersebut
-            $this->notifyTeamLeaders($ticket, $division);
-        }
     }
 
     // ─────────────────────────────────────────────────────────────────

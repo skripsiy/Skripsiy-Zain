@@ -32,6 +32,7 @@ class AgentDashboardTest extends TestCase
             'status' => 'ASSIGNED',
             'condition' => 'ASSIGNED',
             'assignby' => 'Agent Bobby',
+            'division_target' => 'besfixed',
             'created_at' => now()->subDays(5),
             'updated_at' => now(), // updated/assigned today
         ]);
@@ -72,6 +73,7 @@ class AgentDashboardTest extends TestCase
             'status' => 'DISPATCHED',
             'condition' => 'Dispatched',
             'assignby' => 'Agent Bobby',
+            'division_target' => 'besfixed',
             'created_at' => now()->subDays(5),
             'updated_at' => now(), // updated/dispatched today
         ]);

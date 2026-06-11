@@ -30,7 +30,7 @@ class DivisionUsersSeeder extends Seeder
             ['Hendra Wijaya',   'hendra.area@xena.com',  'hendra_area'],
         ];
         foreach ($areaAgents as [$name, $email, $username]) {
-            $this->createAgent($name, $email, $username, 'area');
+            $this->createAgent($name, $email, $username, 'besfixed');
         }
 
         // ─── BESFIXED ────────────────────────────────────────────────
@@ -68,7 +68,7 @@ class DivisionUsersSeeder extends Seeder
             ['Sinta Maharani',   'sinta.saltik@xena.com',  'sinta_saltik'],
         ];
         foreach ($saltikAgents as [$name, $email, $username]) {
-            $this->createAgent($name, $email, $username, 'saltik');
+            $this->createAgent($name, $email, $username, 'besfixed');
         }
 
         $this->command->info('✅ Selesai! Data yang dibuat:');
@@ -78,9 +78,7 @@ class DivisionUsersSeeder extends Seeder
                 ['Team Leader', 'Area',     '1'],
                 ['Team Leader', 'Besfixed', '1'],
                 ['Team Leader', 'Saltik',   '1'],
-                ['Agent',       'Area',     '5'],
-                ['Agent',       'Besfixed', '5'],
-                ['Agent',       'Saltik',   '5'],
+                ['Agent',       'Besfixed', '15'],
             ]
         );
         $this->command->info('Password semua user: password123');

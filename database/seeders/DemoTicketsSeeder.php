@@ -34,11 +34,9 @@ class DemoTicketsSeeder extends Seeder
         $this->command->info('🧹 Caches and ticket tables cleared.');
 
         // 2. Ambil agent berdasarkan divisi dari database
-        $areaAgents = User::where('role', 'agent')->whereRaw('LOWER(campaign) = ?', ['area'])->get();
         $besfixedAgents = User::where('role', 'agent')->whereRaw('LOWER(campaign) = ?', ['besfixed'])->get();
-        $saltikAgents = User::where('role', 'agent')->whereRaw('LOWER(campaign) = ?', ['saltik'])->get();
 
-        if ($areaAgents->isEmpty() || $besfixedAgents->isEmpty() || $saltikAgents->isEmpty()) {
+        if ($besfixedAgents->isEmpty()) {
             $this->command->error('❌ Pastikan DivisionUsersSeeder sudah dijalankan terlebih dahulu!');
             return;
         }
@@ -61,13 +59,13 @@ class DemoTicketsSeeder extends Seeder
         $this->command->info('🟢 Created active online work sessions for all 15 agents.');
 
         // 4. Seed Area Tickets (18 Tickets)
-        $this->seedAreaTickets($areaAgents);
+        $this->seedAreaTickets($besfixedAgents);
 
         // 5. Seed Besfixed Tickets (18 Tickets)
         $this->seedBesfixedTickets($besfixedAgents);
 
         // 6. Seed Saltik Tickets (12 Tickets)
-        $this->seedSaltikTickets($saltikAgents);
+        $this->seedSaltikTickets($besfixedAgents);
 
         // 7. Seed Fallback & Routing Test Tickets (5 Tickets via Observer)
         $this->seedFallbackRoutingTickets();
@@ -77,16 +75,12 @@ class DemoTicketsSeeder extends Seeder
 
     private function seedAreaTickets($agents)
     {
-        $ticketsData = [
-            // --- VVIP (Loker TL) ---
+        // Tiket Aktif (Akan dirouting otomatis oleh Observer ke divisi Area & auto-assigned)
+        $activeTickets = [
+            // --- VVIP (Akan masuk Loker TL Area) ---
             [
                 'namacust' => 'Joko Widodo (Kepresidenan)',
                 'reportedpriority' => 'VVIP',
-                'urgency_level' => 5,
-                'division_target' => 'area',
-                'status' => 'QUEUED',
-                'condition' => 'QUEUED',
-                'assignby' => null,
                 'lapul' => 5,
                 'gaul' => 3,
                 'regional' => 'DKI JAKARTA',
@@ -96,17 +90,12 @@ class DemoTicketsSeeder extends Seeder
                 'source_system' => 'INSERA',
                 'channel' => '21',
                 'pool_id' => 'Network Service Desk',
-                'datereport' => Carbon::now()->subHours(2),
+                'datereport' => Carbon::now()->subHours(8),
                 'THT' => Carbon::now()->addHours(1),
             ],
             [
                 'namacust' => 'Sri Mulyani (Kemenkeu)',
                 'reportedpriority' => 'MANAGEMENT',
-                'urgency_level' => 5,
-                'division_target' => 'area',
-                'status' => 'QUEUED',
-                'condition' => 'QUEUED',
-                'assignby' => null,
                 'lapul' => 3,
                 'gaul' => 1,
                 'regional' => 'DKI JAKARTA',
@@ -116,19 +105,14 @@ class DemoTicketsSeeder extends Seeder
                 'source_system' => 'INSERA',
                 'channel' => '21',
                 'pool_id' => 'Network Service Desk',
-                'datereport' => Carbon::now()->subHours(3),
+                'datereport' => Carbon::now()->subHours(9),
                 'THT' => Carbon::now()->addHours(2),
             ],
 
-            // --- HVC (Loker TL) ---
+            // --- HVC (Akan masuk Loker TL Area) ---
             [
                 'namacust' => 'PT Bank Mandiri Tbk',
                 'reportedpriority' => 'HVC',
-                'urgency_level' => 4,
-                'division_target' => 'area',
-                'status' => 'QUEUED',
-                'condition' => 'QUEUED',
-                'assignby' => null,
                 'lapul' => 4,
                 'gaul' => 2,
                 'regional' => 'JATIM',
@@ -138,19 +122,14 @@ class DemoTicketsSeeder extends Seeder
                 'source_system' => 'INSERA',
                 'channel' => '21',
                 'pool_id' => 'Network Service Desk',
-                'datereport' => Carbon::now()->subHours(4),
+                'datereport' => Carbon::now()->subHours(10),
                 'THT' => Carbon::now()->addHours(3),
             ],
 
-            // --- Super Emergency (Loker TL) ---
+            // --- Super Emergency (Akan masuk Loker TL Area) ---
             [
                 'namacust' => 'Badan Penanggulangan Bencana (BPBD)',
                 'reportedpriority' => 'SUPER EMERGENCY',
-                'urgency_level' => 3,
-                'division_target' => 'area',
-                'status' => 'QUEUED',
-                'condition' => 'QUEUED',
-                'assignby' => null,
                 'lapul' => 6,
                 'gaul' => 4,
                 'regional' => 'JABAR',
@@ -160,19 +139,14 @@ class DemoTicketsSeeder extends Seeder
                 'source_system' => 'DSC',
                 'channel' => '21',
                 'pool_id' => 'Network Service Desk',
-                'datereport' => Carbon::now()->subHours(1),
+                'datereport' => Carbon::now()->subHours(7),
                 'THT' => Carbon::now()->addMinutes(45),
             ],
 
-            // --- Emergency (Assigned ke Agent Area) ---
+            // --- Emergency (Otomatis Auto-assigned Round-Robin ke Agent Area) ---
             [
-                'namacust' => 'Ridwan Kamil',
+                'namacust' => 'Ridwan Kamil (Auto Area Emergency)',
                 'reportedpriority' => 'Emergency',
-                'urgency_level' => 2,
-                'division_target' => 'area',
-                'status' => 'ASSIGNED',
-                'condition' => 'ASSIGNED',
-                'assignby' => $agents[0]->name, // Budi Santoso
                 'lapul' => 2,
                 'gaul' => 0,
                 'regional' => 'JABAR',
@@ -186,13 +160,8 @@ class DemoTicketsSeeder extends Seeder
                 'THT' => Carbon::now()->addHours(2),
             ],
             [
-                'namacust' => 'Anies Baswedan',
+                'namacust' => 'Anies Baswedan (Auto Area Emergency)',
                 'reportedpriority' => 'Emergency',
-                'urgency_level' => 2,
-                'division_target' => 'area',
-                'status' => 'ASSIGNED',
-                'condition' => 'In Progress',
-                'assignby' => $agents[1]->name, // Dewi Rahayu
                 'lapul' => 1,
                 'gaul' => 0,
                 'regional' => 'DKI JAKARTA',
@@ -206,15 +175,10 @@ class DemoTicketsSeeder extends Seeder
                 'THT' => Carbon::now()->addHours(3),
             ],
 
-            // --- Low Emergency (Assigned ke Agent Area) ---
+            // --- Low Emergency (Otomatis Auto-assigned Round-Robin ke Agent Area) ---
             [
-                'namacust' => 'Bambang Pamungkas',
+                'namacust' => 'Bambang Pamungkas (Auto Area Low)',
                 'reportedpriority' => 'Low',
-                'urgency_level' => 1,
-                'division_target' => 'area',
-                'status' => 'ASSIGNED',
-                'condition' => 'ASSIGNED',
-                'assignby' => $agents[2]->name, // Farhan Hidayat
                 'lapul' => 0,
                 'gaul' => 0,
                 'regional' => 'DKI JAKARTA',
@@ -227,16 +191,9 @@ class DemoTicketsSeeder extends Seeder
                 'datereport' => Carbon::now()->subHours(5),
                 'THT' => Carbon::now()->addHours(4),
             ],
-
-            // --- THT Out SLA (THT sudah terlewat, harus di area teratas) ---
             [
-                'namacust' => 'Susi Susanti',
+                'namacust' => 'Susi Susanti (Auto Area Low - Out SLA)',
                 'reportedpriority' => 'Low',
-                'urgency_level' => 1,
-                'division_target' => 'area',
-                'status' => 'ASSIGNED',
-                'condition' => 'ASSIGNED',
-                'assignby' => $agents[0]->name, // Budi Santoso
                 'lapul' => 3,
                 'gaul' => 1,
                 'regional' => 'JATIM',
@@ -249,16 +206,9 @@ class DemoTicketsSeeder extends Seeder
                 'datereport' => Carbon::now()->subHours(6),
                 'THT' => Carbon::now()->subMinutes(15), // Out SLA!
             ],
-
-            // --- THT Menuju SLA (Sisa waktu tinggal 5 menit, harus di area teratas) ---
             [
-                'namacust' => 'Alan Budikusuma',
+                'namacust' => 'Alan Budikusuma (Auto Area Low - Menuju SLA)',
                 'reportedpriority' => 'Low',
-                'urgency_level' => 1,
-                'division_target' => 'area',
-                'status' => 'ASSIGNED',
-                'condition' => 'ASSIGNED',
-                'assignby' => $agents[1]->name, // Dewi Rahayu
                 'lapul' => 2,
                 'gaul' => 1,
                 'regional' => 'JATIM',
@@ -271,13 +221,34 @@ class DemoTicketsSeeder extends Seeder
                 'datereport' => Carbon::now()->subHours(2),
                 'THT' => Carbon::now()->addMinutes(5), // Menuju SLA!
             ],
+        ];
 
-            // --- Closed / Resolved Area ---
+        // Tambah tiket tambahan untuk variasi
+        for ($i = 1; $i <= 7; $i++) {
+            $activeTickets[] = [
+                'namacust' => 'Pelanggan Area ' . $i . ' (Auto Area Low)',
+                'reportedpriority' => 'Low',
+                'lapul' => rand(0, 2),
+                'gaul' => rand(0, 1),
+                'regional' => 'JABAR',
+                'witel' => 'BANDUNG',
+                'detailticket' => 'Pengujian konektivitas rutin area ke-' . $i,
+                'klasifikasi' => 'ROUTINE CHECK',
+                'source_system' => 'DSC',
+                'channel' => '21',
+                'pool_id' => 'Network Service Desk',
+                'datereport' => Carbon::now()->subDays(rand(1, 5)),
+                'THT' => Carbon::now()->addHours(24),
+            ];
+        }
+
+        // Tiket Closed (Historical, By pass observer karena sudah selesai di masa lalu)
+        $closedTickets = [
             [
                 'namacust' => 'Taufik Hidayat',
                 'reportedpriority' => 'Low',
                 'urgency_level' => 1,
-                'division_target' => 'area',
+                'division_target' => 'besfixed',
                 'status' => 'Closed',
                 'condition' => 'Closed',
                 'assignby' => $agents[3]->name, // Gita Permata
@@ -300,7 +271,7 @@ class DemoTicketsSeeder extends Seeder
                 'namacust' => 'Erick Thohir',
                 'reportedpriority' => 'Emergency',
                 'urgency_level' => 2,
-                'division_target' => 'area',
+                'division_target' => 'besfixed',
                 'status' => 'Closed',
                 'condition' => 'Closed',
                 'assignby' => $agents[4]->name, // Hendra Wijaya
@@ -321,41 +292,34 @@ class DemoTicketsSeeder extends Seeder
             ]
         ];
 
-        // Tambah tiket tambahan untuk variasi
-        for ($i = 1; $i <= 7; $i++) {
-            $agent = $agents[$i % count($agents)];
-            $ticketsData[] = [
-                'namacust' => 'Pelanggan Area ' . $i,
-                'reportedpriority' => 'Low',
-                'urgency_level' => 1,
-                'division_target' => 'area',
-                'status' => 'ASSIGNED',
-                'condition' => 'ASSIGNED',
-                'assignby' => $agent->name,
-                'lapul' => rand(0, 2),
-                'gaul' => rand(0, 1),
-                'regional' => 'JABAR',
-                'witel' => 'BANDUNG',
-                'detailticket' => 'Pengujian konektivitas rutin area ke-' . $i,
-                'klasifikasi' => 'ROUTINE CHECK',
-                'source_system' => 'DSC',
-                'channel' => '21',
-                'pool_id' => 'Network Service Desk',
-                'datereport' => Carbon::now()->subDays(rand(1, 5)),
-                'THT' => Carbon::now()->addHours(24),
-            ];
+        // 1. Jalankan Tiket Aktif melalui OBSERVER agar otomatis ter-assign round-robin
+        foreach ($activeTickets as $data) {
+            $ticket = new Ticket(array_merge([
+                'jenisTicket' => 'INTERNET',
+                'notelpCust' => '0812' . rand(10000000, 99999999),
+                'idlaporan' => rand(400000, 499999),
+                'noSC' => 'SC' . rand(2000000, 2999999),
+                'statusSC' => 'Open',
+                'contact' => 'Telepon',
+                'eksalasiVia' => 'Telegram',
+                'resume' => 'Demo Area: Laporan ' . $data['namacust'],
+            ], $data));
+            if (isset($data['datereport'])) {
+                $ticket->created_at = Carbon::parse($data['datereport']);
+            }
+            $ticket->save();
         }
 
-        // Bypass observer agar field custom tidak tertimpa
+        // 2. Jalankan Tiket Closed dengan BYPASS observer
         $dispatcher = Ticket::getEventDispatcher();
         Ticket::unsetEventDispatcher();
-        foreach ($ticketsData as $data) {
+        foreach ($closedTickets as $data) {
             Ticket::create(array_merge([
                 'jenisTicket' => 'INTERNET',
                 'notelpCust' => '0812' . rand(10000000, 99999999),
                 'idlaporan' => rand(400000, 499999),
                 'noSC' => 'SC' . rand(2000000, 2999999),
-                'statusSC' => isset($data['datesolved']) ? 'Closed' : 'Open',
+                'statusSC' => 'Closed',
                 'contact' => 'Telepon',
                 'eksalasiVia' => 'Telegram',
                 'resume' => 'Demo Area: Laporan ' . $data['namacust'],
@@ -366,16 +330,12 @@ class DemoTicketsSeeder extends Seeder
 
     private function seedBesfixedTickets($agents)
     {
-        $ticketsData = [
-            // --- VVIP (Loker TL) ---
+        // Tiket Aktif (Akan dirouting otomatis oleh Observer ke divisi Besfixed & auto-assigned)
+        $activeTickets = [
+            // --- VVIP (Akan masuk Loker TL Besfixed) ---
             [
                 'namacust' => 'Prabowo Subianto',
                 'reportedpriority' => 'VVIP',
-                'urgency_level' => 5,
-                'division_target' => 'besfixed',
-                'status' => 'QUEUED',
-                'condition' => 'QUEUED',
-                'assignby' => null,
                 'lapul' => 8,
                 'gaul' => 4,
                 'regional' => 'JABAR',
@@ -385,19 +345,14 @@ class DemoTicketsSeeder extends Seeder
                 'source_system' => 'INSERA',
                 'channel' => '19',
                 'pool_id' => 'new_site179 BESFIXED',
-                'datereport' => Carbon::now()->subHours(1),
+                'datereport' => Carbon::now()->subHours(8),
                 'THT' => Carbon::now()->addHours(2),
             ],
 
-            // --- HVC (Loker TL) ---
+            // --- HVC (Akan masuk Loker TL Besfixed) ---
             [
                 'namacust' => 'Gibran Rakabuming',
                 'reportedpriority' => 'HVC',
-                'urgency_level' => 4,
-                'division_target' => 'besfixed',
-                'status' => 'QUEUED',
-                'condition' => 'QUEUED',
-                'assignby' => null,
                 'lapul' => 3,
                 'gaul' => 2,
                 'regional' => 'JATENG',
@@ -407,19 +362,14 @@ class DemoTicketsSeeder extends Seeder
                 'source_system' => 'INSERA',
                 'channel' => '2',
                 'pool_id' => 'new_site179 BESFIXED',
-                'datereport' => Carbon::now()->subHours(2),
+                'datereport' => Carbon::now()->subHours(9),
                 'THT' => Carbon::now()->addHours(4),
             ],
 
-            // --- Super Emergency (Loker TL) ---
+            // --- Super Emergency (Akan masuk Loker TL Besfixed) ---
             [
                 'namacust' => 'Rumah Sakit Hasan Sadikin',
                 'reportedpriority' => 'SUPER EMERGENCY',
-                'urgency_level' => 3,
-                'division_target' => 'besfixed',
-                'status' => 'QUEUED',
-                'condition' => 'QUEUED',
-                'assignby' => null,
                 'lapul' => 6,
                 'gaul' => 2,
                 'regional' => 'JABAR',
@@ -429,19 +379,14 @@ class DemoTicketsSeeder extends Seeder
                 'source_system' => 'DSC',
                 'channel' => '4',
                 'pool_id' => 'new_site179 BESFIXED',
-                'datereport' => Carbon::now()->subMinutes(30),
+                'datereport' => Carbon::now()->subHours(7),
                 'THT' => Carbon::now()->addHours(1),
             ],
 
-            // --- Emergency (Assigned ke Agent Besfixed) ---
+            // --- Emergency (Otomatis Auto-assigned Round-Robin ke Agent Besfixed) ---
             [
-                'namacust' => 'Sandhy Sondoro',
+                'namacust' => 'Sandhy Sondoro (Auto Besfixed Emergency)',
                 'reportedpriority' => 'Emergency',
-                'urgency_level' => 2,
-                'division_target' => 'besfixed',
-                'status' => 'ASSIGNED',
-                'condition' => 'ASSIGNED',
-                'assignby' => $agents[0]->name, // Irfan Maulana
                 'lapul' => 2,
                 'gaul' => 0,
                 'regional' => 'DKI JAKARTA',
@@ -455,13 +400,8 @@ class DemoTicketsSeeder extends Seeder
                 'THT' => Carbon::now()->addHours(4),
             ],
             [
-                'namacust' => 'Afgan Syahreza',
+                'namacust' => 'Afgan Syahreza (Auto Besfixed Emergency)',
                 'reportedpriority' => 'Emergency',
-                'urgency_level' => 2,
-                'division_target' => 'besfixed',
-                'status' => 'ASSIGNED',
-                'condition' => 'In Progress',
-                'assignby' => $agents[1]->name, // Juliana Putri
                 'lapul' => 1,
                 'gaul' => 1,
                 'regional' => 'DKI JAKARTA',
@@ -475,15 +415,10 @@ class DemoTicketsSeeder extends Seeder
                 'THT' => Carbon::now()->addHours(5),
             ],
 
-            // --- Low Emergency (Assigned ke Agent Besfixed) ---
+            // --- Low Emergency (Otomatis Auto-assigned Round-Robin ke Agent Besfixed) ---
             [
-                'namacust' => 'Isyana Sarasvati',
+                'namacust' => 'Isyana Sarasvati (Auto Besfixed Low)',
                 'reportedpriority' => 'Low',
-                'urgency_level' => 1,
-                'division_target' => 'besfixed',
-                'status' => 'ASSIGNED',
-                'condition' => 'ASSIGNED',
-                'assignby' => $agents[2]->name, // Kevin Firmansyah
                 'lapul' => 0,
                 'gaul' => 0,
                 'regional' => 'JABAR',
@@ -496,8 +431,29 @@ class DemoTicketsSeeder extends Seeder
                 'datereport' => Carbon::now()->subHours(3),
                 'THT' => Carbon::now()->addHours(6),
             ],
+        ];
 
-            // --- Closed / Resolved Besfixed ---
+        // Tambah tiket tambahan untuk variasi
+        for ($i = 1; $i <= 10; $i++) {
+            $activeTickets[] = [
+                'namacust' => 'Pelanggan Besfixed ' . $i . ' (Auto Besfixed Low)',
+                'reportedpriority' => 'Low',
+                'lapul' => rand(0, 2),
+                'gaul' => rand(0, 1),
+                'regional' => 'JATIM',
+                'witel' => 'SURABAYA',
+                'detailticket' => 'Pemeliharaan berkala ONT pelanggan ke-' . $i,
+                'klasifikasi' => 'MAINTENANCE CHECK',
+                'source_system' => 'DSC',
+                'channel' => '19',
+                'pool_id' => 'new_site179 BESFIXED',
+                'datereport' => Carbon::now()->subDays(rand(1, 5)),
+                'THT' => Carbon::now()->addHours(48),
+            ];
+        }
+
+        // Tiket Closed (Historical, Bypass observer)
+        $closedTickets = [
             [
                 'namacust' => 'Raisa Andriana',
                 'reportedpriority' => 'Low',
@@ -546,40 +502,34 @@ class DemoTicketsSeeder extends Seeder
             ]
         ];
 
-        // Tambah tiket tambahan untuk variasi
-        for ($i = 1; $i <= 10; $i++) {
-            $agent = $agents[$i % count($agents)];
-            $ticketsData[] = [
-                'namacust' => 'Pelanggan Besfixed ' . $i,
-                'reportedpriority' => 'Low',
-                'urgency_level' => 1,
-                'division_target' => 'besfixed',
-                'status' => 'ASSIGNED',
-                'condition' => 'ASSIGNED',
-                'assignby' => $agent->name,
-                'lapul' => rand(0, 2),
-                'gaul' => rand(0, 1),
-                'regional' => 'JATIM',
-                'witel' => 'SURABAYA',
-                'detailticket' => 'Pemeliharaan berkala ONT pelanggan ke-' . $i,
-                'klasifikasi' => 'MAINTENANCE CHECK',
-                'source_system' => 'DSC',
-                'channel' => '19',
-                'pool_id' => 'new_site179 BESFIXED',
-                'datereport' => Carbon::now()->subDays(rand(1, 5)),
-                'THT' => Carbon::now()->addHours(48),
-            ];
+        // 1. Jalankan Tiket Aktif melalui OBSERVER agar otomatis ter-assign round-robin
+        foreach ($activeTickets as $data) {
+            $ticket = new Ticket(array_merge([
+                'jenisTicket' => 'INTERNET',
+                'notelpCust' => '0812' . rand(10000000, 99999999),
+                'idlaporan' => rand(500000, 599999),
+                'noSC' => 'SC' . rand(3000000, 3999999),
+                'statusSC' => 'Open',
+                'contact' => 'Telepon',
+                'eksalasiVia' => 'Telegram',
+                'resume' => 'Demo Besfixed: Laporan ' . $data['namacust'],
+            ], $data));
+            if (isset($data['datereport'])) {
+                $ticket->created_at = Carbon::parse($data['datereport']);
+            }
+            $ticket->save();
         }
 
+        // 2. Jalankan Tiket Closed dengan BYPASS observer
         $dispatcher = Ticket::getEventDispatcher();
         Ticket::unsetEventDispatcher();
-        foreach ($ticketsData as $data) {
+        foreach ($closedTickets as $data) {
             Ticket::create(array_merge([
                 'jenisTicket' => 'INTERNET',
                 'notelpCust' => '0812' . rand(10000000, 99999999),
                 'idlaporan' => rand(500000, 599999),
                 'noSC' => 'SC' . rand(3000000, 3999999),
-                'statusSC' => isset($data['datesolved']) ? 'Closed' : 'Open',
+                'statusSC' => 'Closed',
                 'contact' => 'Telepon',
                 'eksalasiVia' => 'Telegram',
                 'resume' => 'Demo Besfixed: Laporan ' . $data['namacust'],
@@ -590,16 +540,12 @@ class DemoTicketsSeeder extends Seeder
 
     private function seedSaltikTickets($agents)
     {
-        $ticketsData = [
-            // --- VVIP (Loker TL) ---
+        // Tiket Aktif (Akan dirouting otomatis oleh Observer ke divisi Saltik & auto-assigned)
+        $activeTickets = [
+            // --- VVIP (Akan masuk Loker TL Saltik) ---
             [
                 'namacust' => 'Megawati Soekarnoputri',
                 'reportedpriority' => 'VVIP',
-                'urgency_level' => 5,
-                'division_target' => 'saltik',
-                'status' => 'QUEUED',
-                'condition' => 'QUEUED',
-                'assignby' => null,
                 'lapul' => 5,
                 'gaul' => 2,
                 'regional' => 'DKI JAKARTA',
@@ -609,19 +555,14 @@ class DemoTicketsSeeder extends Seeder
                 'source_system' => 'DSC',
                 'channel' => '2',
                 'pool_id' => 'SALAM SIMPATIK',
-                'datereport' => Carbon::now()->subHours(2),
+                'datereport' => Carbon::now()->subHours(8),
                 'THT' => Carbon::now()->addHours(1),
             ],
 
-            // --- HVC (Loker TL) ---
+            // --- HVC (Akan masuk Loker TL Saltik) ---
             [
                 'namacust' => 'Susilo Bambang Yudhoyono',
                 'reportedpriority' => 'HVC',
-                'urgency_level' => 4,
-                'division_target' => 'saltik',
-                'status' => 'QUEUED',
-                'condition' => 'QUEUED',
-                'assignby' => null,
                 'lapul' => 4,
                 'gaul' => 1,
                 'regional' => 'JABAR',
@@ -631,19 +572,14 @@ class DemoTicketsSeeder extends Seeder
                 'source_system' => 'DSC',
                 'channel' => '19',
                 'pool_id' => 'SALAM SIMPATIK',
-                'datereport' => Carbon::now()->subHours(3),
+                'datereport' => Carbon::now()->subHours(9),
                 'THT' => Carbon::now()->addHours(2),
             ],
 
-            // --- Emergency (Assigned ke Agent Saltik) ---
+            // --- Emergency (Otomatis Auto-assigned Round-Robin ke Agent Saltik) ---
             [
-                'namacust' => 'Yura Yunita',
+                'namacust' => 'Yura Yunita (Auto Saltik Emergency)',
                 'reportedpriority' => 'Emergency',
-                'urgency_level' => 2,
-                'division_target' => 'saltik',
-                'status' => 'ASSIGNED',
-                'condition' => 'ASSIGNED',
-                'assignby' => $agents[0]->name, // Nadia Kurniawati
                 'lapul' => 1,
                 'gaul' => 0,
                 'regional' => 'JABAR',
@@ -657,13 +593,8 @@ class DemoTicketsSeeder extends Seeder
                 'THT' => Carbon::now()->addHours(3),
             ],
             [
-                'namacust' => 'Tulus',
+                'namacust' => 'Tulus (Auto Saltik Emergency)',
                 'reportedpriority' => 'Emergency',
-                'urgency_level' => 2,
-                'division_target' => 'saltik',
-                'status' => 'ASSIGNED',
-                'condition' => 'In Progress',
-                'assignby' => $agents[1]->name, // Oscar Pratama
                 'lapul' => 3,
                 'gaul' => 1,
                 'regional' => 'JABAR',
@@ -677,15 +608,10 @@ class DemoTicketsSeeder extends Seeder
                 'THT' => Carbon::now()->addHours(4),
             ],
 
-            // --- Low Emergency (Assigned ke Agent Saltik) ---
+            // --- Low Emergency (Otomatis Auto-assigned Round-Robin ke Agent Saltik) ---
             [
-                'namacust' => 'Ari Lasso',
+                'namacust' => 'Ari Lasso (Auto Saltik Low)',
                 'reportedpriority' => 'Low',
-                'urgency_level' => 1,
-                'division_target' => 'saltik',
-                'status' => 'ASSIGNED',
-                'condition' => 'ASSIGNED',
-                'assignby' => $agents[2]->name, // Putri Ayu
                 'lapul' => 0,
                 'gaul' => 0,
                 'regional' => 'JATIM',
@@ -698,13 +624,34 @@ class DemoTicketsSeeder extends Seeder
                 'datereport' => Carbon::now()->subHours(4),
                 'THT' => Carbon::now()->addHours(5),
             ],
+        ];
 
-            // --- Closed / Resolved Saltik ---
+        // Tambah tiket tambahan untuk variasi
+        for ($i = 1; $i <= 6; $i++) {
+            $activeTickets[] = [
+                'namacust' => 'Pelanggan Saltik ' . $i . ' (Auto Saltik Low)',
+                'reportedpriority' => 'Low',
+                'lapul' => rand(0, 2),
+                'gaul' => rand(0, 1),
+                'regional' => 'JABAR',
+                'witel' => 'BANDUNG',
+                'detailticket' => 'Cek kualitas line WSA ke-' . $i,
+                'klasifikasi' => 'WSA LINE TESTING',
+                'source_system' => 'DSC',
+                'channel' => '2',
+                'pool_id' => 'SALAM SIMPATIK',
+                'datereport' => Carbon::now()->subDays(rand(1, 5)),
+                'THT' => Carbon::now()->addHours(72),
+            ];
+        }
+
+        // Tiket Closed (Historical, Bypass observer)
+        $closedTickets = [
             [
                 'namacust' => 'Once Mekel',
                 'reportedpriority' => 'Low',
                 'urgency_level' => 1,
-                'division_target' => 'saltik',
+                'division_target' => 'besfixed',
                 'status' => 'Closed',
                 'condition' => 'Closed',
                 'assignby' => $agents[3]->name, // Rendi Saputra
@@ -725,40 +672,34 @@ class DemoTicketsSeeder extends Seeder
             ]
         ];
 
-        // Tambah tiket tambahan untuk variasi
-        for ($i = 1; $i <= 6; $i++) {
-            $agent = $agents[$i % count($agents)];
-            $ticketsData[] = [
-                'namacust' => 'Pelanggan Saltik ' . $i,
-                'reportedpriority' => 'Low',
-                'urgency_level' => 1,
-                'division_target' => 'saltik',
-                'status' => 'ASSIGNED',
-                'condition' => 'ASSIGNED',
-                'assignby' => $agent->name,
-                'lapul' => rand(0, 2),
-                'gaul' => rand(0, 1),
-                'regional' => 'JABAR',
-                'witel' => 'BANDUNG',
-                'detailticket' => 'Cek kualitas line WSA ke-' . $i,
-                'klasifikasi' => 'WSA LINE TESTING',
-                'source_system' => 'DSC',
-                'channel' => '2',
-                'pool_id' => 'SALAM SIMPATIK',
-                'datereport' => Carbon::now()->subDays(rand(1, 5)),
-                'THT' => Carbon::now()->addHours(72),
-            ];
+        // 1. Jalankan Tiket Aktif melalui OBSERVER agar otomatis ter-assign round-robin
+        foreach ($activeTickets as $data) {
+            $ticket = new Ticket(array_merge([
+                'jenisTicket' => 'TELEPON',
+                'notelpCust' => '0812' . rand(10000000, 99999999),
+                'idlaporan' => rand(600000, 699999),
+                'noSC' => 'SC' . rand(4000000, 4999999),
+                'statusSC' => 'Open',
+                'contact' => 'Telepon',
+                'eksalasiVia' => 'Telegram',
+                'resume' => 'Demo Saltik: Laporan ' . $data['namacust'],
+            ], $data));
+            if (isset($data['datereport'])) {
+                $ticket->created_at = Carbon::parse($data['datereport']);
+            }
+            $ticket->save();
         }
 
+        // 2. Jalankan Tiket Closed dengan BYPASS observer
         $dispatcher = Ticket::getEventDispatcher();
         Ticket::unsetEventDispatcher();
-        foreach ($ticketsData as $data) {
+        foreach ($closedTickets as $data) {
             Ticket::create(array_merge([
                 'jenisTicket' => 'TELEPON',
                 'notelpCust' => '0812' . rand(10000000, 99999999),
                 'idlaporan' => rand(600000, 699999),
                 'noSC' => 'SC' . rand(4000000, 4999999),
-                'statusSC' => isset($data['datesolved']) ? 'Closed' : 'Open',
+                'statusSC' => 'Closed',
                 'contact' => 'Telepon',
                 'eksalasiVia' => 'Telegram',
                 'resume' => 'Demo Saltik: Laporan ' . $data['namacust'],
@@ -804,8 +745,9 @@ class DemoTicketsSeeder extends Seeder
 
         // Jalankan MELALUI OBSERVER (tanpa bypass) agar routing logic bekerja langsung
         foreach ($fallbackTickets as $data) {
-            Ticket::create(array_merge([
-                'datereport' => Carbon::now(),
+            $createdAt = Carbon::now()->subHours(8);
+            $ticket = new Ticket(array_merge([
+                'datereport' => $createdAt,
                 'jenisTicket' => 'GANGGUAN UMUM',
                 'notelpCust' => '0813' . rand(10000000, 99999999),
                 'idlaporan' => rand(700000, 799999),
@@ -820,6 +762,8 @@ class DemoTicketsSeeder extends Seeder
                 'pool_id' => null,
                 'source_system' => null,
             ], $data));
+            $ticket->created_at = $createdAt;
+            $ticket->save();
         }
     }
 }
