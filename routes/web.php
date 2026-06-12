@@ -36,6 +36,7 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     
     // Reports Routes
     Route::get('/reports', [App\Http\Controllers\Admin\ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/tickets', [App\Http\Controllers\Admin\ReportController::class, 'ticketsReport'])->name('reports.tickets');
     Route::get('/reports/user/{user}', [App\Http\Controllers\Admin\ReportController::class, 'getUserTickets'])->name('reports.user');
     
     // Excel Export Routes

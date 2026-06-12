@@ -2,21 +2,14 @@
     <x-slot name="title">User Reports</x-slot>
     
     <x-slot name="headerContent">
-        <div class="header-actions">
-            <div class="search-box">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <path d="m21 21-4.35-4.35"></path>
-                </svg>
-                <input type="text" id="searchInput" placeholder="Search users...">
-            </div>
-            <a href="{{ route('admin.reports.export.users') }}" class="download-btn">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-                Export Excel
+        <div style="display:flex; gap:12px; align-items:center;">
+            <a href="{{ route('admin.reports.index') }}" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;background:#1F4A5E;color:#fff;text-decoration:none;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                Laporan User
+            </a>
+            <a href="{{ route('admin.reports.tickets') }}" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:500;color:#64748b;text-decoration:none;transition:all .2s;" onmouseover="this.style.background='#f1f5f9';this.style.color='#1F4A5E'" onmouseout="this.style.background='';this.style.color='#64748b'">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+                Laporan Tiket
             </a>
         </div>
     </x-slot>
@@ -466,8 +459,19 @@
         }
     </x-slot>
     
+    <div style="margin-bottom:16px;">
+        <div class="search-box" style="max-width:280px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <input type="text" id="searchInput" placeholder="Cari nama user...">
+        </div>
+    </div>
+
     <div class="users-grid" id="usersGrid">
         @forelse($users as $user)
+
         <div class="user-card" onclick="viewUserDetails({{ $user->id }})">
             <div class="user-header">
                 <div class="user-avatar">

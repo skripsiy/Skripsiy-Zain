@@ -11,6 +11,7 @@ use App\Exports\UserTicketsExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
+use Carbon\Carbon;
 
 class ReportController extends Controller
 {
@@ -93,6 +94,94 @@ class ReportController extends Controller
     }
 
     /**
+     * Tampilkan laporan tiket menyeluruh dengan filter (F-25)
+     */
+    public function ticketsReport(Request $request)
+    {
+        // Ambil semua agent untuk dropdown filter
+        $agents = User::where('role', 'agent')->orderBy('name')->get();
+
+        // Filter params
+        $dateFrom  = $request->get('date_from');
+        $dateTo    = $request->get('date_to');
+        $status    = $request->get('status');
+        $agentId   = $request->get('agent_id');
+
+        // Query tiket
+        $query = Ticket::query();
+
+        // Filter tanggal masuk (datereport)
+        if ($dateFrom) {
+            $query->whereDate('datereport', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('datereport', '<=', $dateTo);
+        }
+
+        // Filter status
+        if ($status) {
+            if ($status === 'QUEUED') {
+                // QUEUED dan UNASSIGNED dianggap sama
+                $query->whereIn('condition', ['QUEUED', 'UNASSIGNED']);
+            } else {
+                $query->where('condition', $status);
+            }
+        }
+
+        // Filter agent
+        if ($agentId) {
+            $agent = User::find($agentId);
+            if ($agent) {
+                $query->where(function ($q) use ($agent) {
+                    $q->where('assignby', $agent->email)
+                      ->orWhere('assignby', $agent->name)
+                      ->orWhere('solvedby', $agent->email)
+                      ->orWhere('solvedby', $agent->name);
+                });
+            }
+        }
+
+        $tickets = $query->orderBy('datereport', 'desc')->paginate(20)->withQueryString();
+
+        // Statistik ringkas dari hasil filter (tanpa paginate)
+        $statsQuery = Ticket::query();
+        if ($dateFrom)  $statsQuery->whereDate('datereport', '>=', $dateFrom);
+        if ($dateTo)    $statsQuery->whereDate('datereport', '<=', $dateTo);
+        if ($status) {
+            if ($status === 'QUEUED') {
+                $statsQuery->whereIn('condition', ['QUEUED', 'UNASSIGNED']);
+            } else {
+                $statsQuery->where('condition', $status);
+            }
+        }
+        if ($agentId && isset($agent)) {
+            $statsQuery->where(function ($q) use ($agent) {
+                $q->where('assignby', $agent->email)
+                  ->orWhere('assignby', $agent->name)
+                  ->orWhere('solvedby', $agent->email)
+                  ->orWhere('solvedby', $agent->name);
+            });
+        }
+
+        $statusCounts = (clone $statsQuery)
+            ->select('condition', DB::raw('count(*) as total'))
+            ->groupBy('condition')
+            ->pluck('total', 'condition')
+            ->toArray();
+
+        $totalTickets   = array_sum($statusCounts);
+        $closedCount    = $statusCounts['Closed']   ?? 0;
+        $assignedCount  = $statusCounts['ASSIGNED']  ?? 0;
+        $queuedCount    = ($statusCounts['QUEUED']   ?? 0) + ($statusCounts['UNASSIGNED'] ?? 0);
+
+        return view('admin.reports.tickets', compact(
+            'tickets', 'agents', 'statusCounts',
+            'totalTickets', 'closedCount', 'assignedCount', 'queuedCount',
+            'dateFrom', 'dateTo', 'status', 'agentId'
+        ));
+    }
+
+    /**
      * Export all user reports to Excel
      */
     public function exportUserReports()
@@ -120,7 +209,9 @@ class ReportController extends Controller
 
         return Excel::download(
             new TicketsExport($filters),
-            'all_tickets_' . now()->format('Y-m-d_His') . '.xlsx'
+            'laporan_tiket_' . now()->format('Y-m-d_His') . '.csv',
+            \Maatwebsite\Excel\Excel::CSV,
+            ['Content-Type' => 'text/csv']
         );
     }
 
