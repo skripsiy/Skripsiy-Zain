@@ -24,14 +24,12 @@ class ReportController extends Controller
 
         // Get all users with their ticket counts for TODAY
         $users = User::select('users.*')
-            ->selectRaw('COUNT(DISTINCT CASE WHEN (tickets.assignby = users.email OR tickets.assignby = users.name) AND DATE(tickets.datereport) = ? THEN tickets.idTicket END) as assigned_tickets', [$today])
-            ->selectRaw('COUNT(DISTINCT CASE WHEN (tickets.solvedby = users.email OR tickets.solvedby = users.name) AND DATE(tickets.datesolved) = ? THEN tickets.idTicket END) as solved_tickets', [$today])
-            ->selectRaw('COUNT(DISTINCT CASE WHEN (tickets.assignby = users.email OR tickets.assignby = users.name) AND tickets.status = "QUEUED" THEN tickets.idTicket END) as inbox_tickets') // Inbox tetap menghitung yang masih menggantung
+            ->selectRaw('COUNT(DISTINCT CASE WHEN tickets.assigned_to_user_id = users.id AND DATE(tickets.datereport) = ? THEN tickets.idTicket END) as assigned_tickets', [$today])
+            ->selectRaw('COUNT(DISTINCT CASE WHEN tickets.solved_by_user_id = users.id AND DATE(tickets.datesolved) = ? THEN tickets.idTicket END) as solved_tickets', [$today])
+            ->selectRaw('COUNT(DISTINCT CASE WHEN tickets.assigned_to_user_id = users.id AND tickets.status = "QUEUED" THEN tickets.idTicket END) as inbox_tickets')
             ->leftJoin('tickets', function($join) {
-                $join->on('tickets.assignby', '=', 'users.email')
-                     ->orOn('tickets.assignby', '=', 'users.name')
-                     ->orOn('tickets.solvedby', '=', 'users.email')
-                     ->orOn('tickets.solvedby', '=', 'users.name');
+                $join->on('tickets.assigned_to_user_id', '=', 'users.id')
+                     ->orOn('tickets.solved_by_user_id', '=', 'users.id');
             })
             ->groupBy('users.id', 'users.name', 'users.email', 'users.password', 'users.role', 'users.status', 'users.campaign', 'users.area', 'users.site', 'users.username', 'users.phone', 'users.email_verified_at', 'users.remember_token', 'users.created_at', 'users.updated_at')
             ->orderBy('users.name')
@@ -48,33 +46,25 @@ class ReportController extends Controller
         $today = \Carbon\Carbon::today()->toDateString();
 
         // Get tickets assigned to user TODAY
-        $assignedTickets = Ticket::where(function($q) use ($user) {
-                $q->where('assignby', $user->email)->orWhere('assignby', $user->name);
-            })
+        $assignedTickets = Ticket::where('assigned_to_user_id', $user->id)
             ->whereDate('datereport', $today)
             ->orderBy('created_at', 'desc')
             ->get();
 
         // Get tickets solved by user TODAY
-        $solvedTickets = Ticket::where(function($q) use ($user) {
-                $q->where('solvedby', $user->email)->orWhere('solvedby', $user->name);
-            })
+        $solvedTickets = Ticket::where('solved_by_user_id', $user->id)
             ->whereDate('datesolved', $today)
             ->orderBy('created_at', 'desc')
             ->get();
 
         // Get inbox tickets (queued tickets assigned to user) - Inbox biasanya semua yang belum selesai
-        $inboxTickets = Ticket::where(function($q) use ($user) {
-                $q->where('assignby', $user->email)->orWhere('assignby', $user->name);
-            })
+        $inboxTickets = Ticket::where('assigned_to_user_id', $user->id)
             ->where('status', 'QUEUED')
             ->orderBy('created_at', 'desc')
             ->get();
 
         // Count by status for TODAY
-        $statusCounts = Ticket::where(function($q) use ($user) {
-                $q->where('assignby', $user->email)->orWhere('assignby', $user->name);
-            })
+        $statusCounts = Ticket::where('assigned_to_user_id', $user->id)
             ->whereDate('datereport', $today)
             ->select('status', DB::raw('count(*) as count'))
             ->groupBy('status')
@@ -106,9 +96,15 @@ class ReportController extends Controller
         $dateTo    = $request->get('date_to');
         $status    = $request->get('status');
         $agentId   = $request->get('agent_id');
+        $ticketId  = $request->get('ticket_id');
 
         // Query tiket
         $query = Ticket::query();
+
+        // Filter ticket ID
+        if ($ticketId) {
+            $query->where('idTicket', 'like', "%{$ticketId}%");
+        }
 
         // Filter tanggal masuk (datereport)
         if ($dateFrom) {
@@ -130,21 +126,20 @@ class ReportController extends Controller
 
         // Filter agent
         if ($agentId) {
-            $agent = User::find($agentId);
-            if ($agent) {
-                $query->where(function ($q) use ($agent) {
-                    $q->where('assignby', $agent->email)
-                      ->orWhere('assignby', $agent->name)
-                      ->orWhere('solvedby', $agent->email)
-                      ->orWhere('solvedby', $agent->name);
-                });
-            }
+            $query->where(function ($q) use ($agentId) {
+                $q->where('assigned_to_user_id', $agentId)
+                  ->orWhere('solved_by_user_id', $agentId);
+            });
         }
 
-        $tickets = $query->orderBy('datereport', 'desc')->paginate(20)->withQueryString();
+        $tickets = $query->with(['assignedTo'])
+            ->orderBy('datereport', 'desc')
+            ->paginate(20)
+            ->withQueryString();
 
         // Statistik ringkas dari hasil filter (tanpa paginate)
         $statsQuery = Ticket::query();
+        if ($ticketId)  $statsQuery->where('idTicket', 'like', "%{$ticketId}%");
         if ($dateFrom)  $statsQuery->whereDate('datereport', '>=', $dateFrom);
         if ($dateTo)    $statsQuery->whereDate('datereport', '<=', $dateTo);
         if ($status) {
@@ -154,12 +149,10 @@ class ReportController extends Controller
                 $statsQuery->where('condition', $status);
             }
         }
-        if ($agentId && isset($agent)) {
-            $statsQuery->where(function ($q) use ($agent) {
-                $q->where('assignby', $agent->email)
-                  ->orWhere('assignby', $agent->name)
-                  ->orWhere('solvedby', $agent->email)
-                  ->orWhere('solvedby', $agent->name);
+        if ($agentId) {
+            $statsQuery->where(function ($q) use ($agentId) {
+                $q->where('assigned_to_user_id', $agentId)
+                  ->orWhere('solved_by_user_id', $agentId);
             });
         }
 
@@ -169,15 +162,18 @@ class ReportController extends Controller
             ->pluck('total', 'condition')
             ->toArray();
 
+        // Normalize keys to lowercase to prevent case sensitivity mismatch bugs
+        $normalizedCounts = array_change_key_case($statusCounts, CASE_LOWER);
+
         $totalTickets   = array_sum($statusCounts);
-        $closedCount    = $statusCounts['Closed']   ?? 0;
-        $assignedCount  = $statusCounts['ASSIGNED']  ?? 0;
-        $queuedCount    = ($statusCounts['QUEUED']   ?? 0) + ($statusCounts['UNASSIGNED'] ?? 0);
+        $closedCount    = $normalizedCounts['closed']   ?? 0;
+        $assignedCount  = $normalizedCounts['assigned']  ?? 0;
+        $queuedCount    = ($normalizedCounts['queued']   ?? 0) + ($normalizedCounts['unassigned'] ?? 0);
 
         return view('admin.reports.tickets', compact(
             'tickets', 'agents', 'statusCounts',
             'totalTickets', 'closedCount', 'assignedCount', 'queuedCount',
-            'dateFrom', 'dateTo', 'status', 'agentId'
+            'dateFrom', 'dateTo', 'status', 'agentId', 'ticketId'
         ));
     }
 
@@ -204,14 +200,13 @@ class ReportController extends Controller
             'regional',
             'witel',
             'date_from',
-            'date_to'
+            'date_to',
+            'ticket_id'
         ]);
 
         return Excel::download(
             new TicketsExport($filters),
-            'laporan_tiket_' . now()->format('Y-m-d_His') . '.csv',
-            \Maatwebsite\Excel\Excel::CSV,
-            ['Content-Type' => 'text/csv']
+            'laporan_tiket_' . now()->format('Y-m-d_His') . '.xlsx'
         );
     }
 

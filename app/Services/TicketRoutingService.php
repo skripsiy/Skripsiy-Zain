@@ -113,25 +113,24 @@ class TicketRoutingService
     }
 
     /**
-     * Cek apakah tiket boleh di-auto-assign (hanya urgency 1 & 2)
+     * Cek apakah tiket boleh di-auto-assign (hanya urgency 1 & 2).
+     * Urgency 3 (Super Emergency), 4 (HVC), 5 (VVIP) harus di-assign manual oleh Team Leader.
      */
     public function shouldAutoAssign(Ticket $ticket): bool
     {
-        return false;
+        $urgency = (int) ($ticket->urgency_level ?? $this->determineUrgencyLevel($ticket));
+        return $urgency <= 2; // Level 1 (Low Emergency) & 2 (Emergency) → auto round-robin
     }
 
     /**
-     * Auto-assign tiket ke agent online dari divisi yang tepat (round-robin).
+     * Auto-assign tiket ke agent online secara global (round-robin).
      * Maksimal 10 agent yang aktif per hari.
      */
     public function autoAssignToAgent(Ticket $ticket): bool
     {
-        $division = $ticket->division_target ?? 'besfixed';
-
-        // Ambil agent yang online hari ini dari divisi ini (case-insensitive)
+        // Ambil agent yang online hari ini secara global (case-insensitive)
         $onlineAgents = User::where('role', 'agent')
             ->where('status', 'active')
-            ->whereRaw('LOWER(campaign) = ?', [strtolower($division)])
             ->whereHas('workSessions', function ($q) {
                 $q->where('work_date', today())
                   ->where('status', 'online');
@@ -145,7 +144,7 @@ class TicketRoutingService
         }
 
         // Round-robin: ambil index dari cache, increment, wrap around
-        $cacheKey = "rr_index_{$division}";
+        $cacheKey = "rr_index_global";
         $index    = Cache::get($cacheKey, 0);
 
         if ($index >= $onlineAgents->count()) {
@@ -155,12 +154,12 @@ class TicketRoutingService
         $agent = $onlineAgents[$index];
         Cache::put($cacheKey, ($index + 1) % $onlineAgents->count(), 3600);
 
-        // Assign tiket ke agent
+        // Assign tiket ke agent menggunakan assigned_to_user_id
         $ticket->update([
-            'assignby'        => $agent->name,
-            'condition'       => 'ASSIGNED',
-            'status'          => 'ASSIGNED',
-            'auto_assigned_at' => now(),
+            'assigned_to_user_id' => $agent->id,
+            'condition'           => 'ASSIGNED',
+            'status'              => 'ASSIGNED',
+            'auto_assigned_at'    => now(),
         ]);
 
         // Kirim notifikasi ke agent
@@ -183,6 +182,10 @@ class TicketRoutingService
 
     /**
      * Route tiket: tentukan divisi, urgency, lalu auto-assign atau biarkan di loker TL.
+     *
+     * Flow:
+     *   - Urgency 1 (Low Emergency) & 2 (Emergency) → auto-assign round-robin ke agent
+     *   - Urgency 3 (Super Emergency), 4 (HVC), 5 (VVIP) → QUEUED untuk Team Leader
      */
     public function routeTicket(Ticket $ticket): void
     {
@@ -192,14 +195,34 @@ class TicketRoutingService
         // 2. Tentukan urgency
         $urgency = $this->determineUrgencyLevel($ticket);
 
-        // 3. Update tiket ke QUEUED / unassigned secara default
-        $ticket->update([
+        // 3. Update divisi & urgency dulu (quietly agar tidak re-trigger observer)
+        $ticket->updateQuietly([
             'division_target' => $division,
             'urgency_level'   => $urgency,
-            'condition'       => 'QUEUED',
-            'status'          => 'QUEUED',
-            'assignby'        => null,
         ]);
+
+        // 4. Cek apakah bisa auto-assign (urgency 1-2)
+        if ($this->shouldAutoAssign($ticket)) {
+            // Coba auto-assign via round-robin
+            $assigned = $this->autoAssignToAgent($ticket);
+
+            if (!$assigned) {
+                // Tidak ada agent online, masukkan ke queue
+                $ticket->updateQuietly([
+                    'condition'           => 'QUEUED',
+                    'status'              => 'QUEUED',
+                    'assigned_to_user_id' => null,
+                ]);
+            }
+            // Jika assigned, autoAssignToAgent() sudah update status ke ASSIGNED
+        } else {
+            // Urgency 3-5: masuk loker Team Leader untuk assign manual
+            $ticket->updateQuietly([
+                'condition'           => 'QUEUED',
+                'status'              => 'QUEUED',
+                'assigned_to_user_id' => null,
+            ]);
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────
@@ -236,7 +259,6 @@ class TicketRoutingService
     {
         $teamLeaders = User::where('role', 'team_leader')
             ->where('status', 'active')
-            ->whereRaw('LOWER(campaign) = ?', [strtolower($division)])
             ->get();
 
         foreach ($teamLeaders as $tl) {

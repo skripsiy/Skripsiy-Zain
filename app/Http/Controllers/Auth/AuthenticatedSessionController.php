@@ -52,6 +52,20 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        $user = Auth::user();
+        if ($user && $user->isAgent()) {
+            $today = \Carbon\Carbon::today();
+            $session = \App\Models\AgentWorkSession::where('user_id', $user->id)
+                ->where('work_date', $today)
+                ->first();
+
+            if ($session && in_array($session->status, ['online', 'aux'])) {
+                return redirect()->back()->withErrors([
+                    'logout_blocked' => 'Anda harus mengakhiri shift (End Shift) terlebih dahulu sebelum logout.'
+                ])->with('error', 'Anda harus mengakhiri shift (End Shift) terlebih dahulu sebelum logout.');
+            }
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

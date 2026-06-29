@@ -24,9 +24,6 @@
         <a class="sidebar-icon active" href="{{ route('admin.reports.index') }}" title="Reports">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
         </a>
-        <a class="sidebar-icon" href="{{ route('admin.settings.index') }}" title="Settings">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
-        </a>
     </x-slot>
 
     <x-slot name="customStyles">
@@ -305,9 +302,15 @@
     </x-slot>
 
     {{-- ═══ Active Filter Tags ═══ --}}
-    @if($dateFrom || $dateTo || $status || $agentId)
+    @if($dateFrom || $dateTo || $status || $agentId || $ticketId)
     <div class="active-filters">
         <span style="font-size:11px;color:#64748b;font-weight:600;align-self:center;">Filter aktif:</span>
+        @if($ticketId)
+            <span class="filter-tag">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                ID Tiket: {{ $ticketId }}
+            </span>
+        @endif
         @if($dateFrom)
             <span class="filter-tag">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -346,6 +349,11 @@
         </div>
         <form method="GET" action="{{ route('admin.reports.tickets') }}" id="filterForm">
             <div class="filter-row">
+                <div class="filter-group">
+                    <label>ID Tiket</label>
+                    <input type="text" name="ticket_id" id="ticket_id"
+                           placeholder="Cari ID tiket..." value="{{ $ticketId }}">
+                </div>
                 <div class="filter-group">
                     <label>Tanggal Dari</label>
                     <input type="date" name="date_from" id="date_from"
@@ -453,7 +461,7 @@
                     <polyline points="7 10 12 15 17 10"/>
                     <line x1="12" y1="15" x2="12" y2="3"/>
                 </svg>
-                Export CSV
+                Export Excel
             </a>
         </div>
 
@@ -486,8 +494,8 @@
                             {{ $ticket->namacust ?? '-' }}
                         </td>
                         <td>{{ $ticket->jenisTicket ?? '-' }}</td>
-                        <td>{{ $ticket->assignby ?? '-' }}</td>
-                        <td>{{ $ticket->solvedby ?? '-' }}</td>
+                        <td>{{ $ticket->assignedTo?->name ?? '-' }}</td>
+                        <td>{{ $ticket->solvedBy?->name ?? '-' }}</td>
                         <td>{{ $ticket->regional ?? '-' }}</td>
                         <td>
                             @php

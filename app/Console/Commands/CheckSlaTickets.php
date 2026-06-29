@@ -93,7 +93,7 @@ class CheckSlaTickets extends Command
             // Notification::send($teamLeaders, new TicketSlaBreachNotification($ticket));
             
             // Contoh 2: Kirim email/WhatsApp API ke tim dispatch
-            // dispatch(new SendWhatsAppNotificationJob($ticket->assignby, "Tiket {$ticket->idTicket} telah melewati SLA 6 Jam!"));
+            // dispatch(new SendWhatsAppNotificationJob($ticket->assignedTo?->name, "Tiket {$ticket->idTicket} telah melewati SLA 6 Jam!"));
             
             // Contoh 3: Update flag agar tidak diproses berulang-ulang
             // $ticket->update(['sla_notified' => true]);

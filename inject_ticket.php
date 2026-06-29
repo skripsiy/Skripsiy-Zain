@@ -2,7 +2,7 @@
 $agent = App\Models\User::where("role", "agent")->first();
 if ($agent) {
     App\Models\Ticket::create([
-        "assignby" => $agent->name,
+        "assigned_to_user_id" => $agent->id,
         "topic" => "Test Dashboard",
         "condition" => "In Progress",
         "status" => "ASSIGNED",

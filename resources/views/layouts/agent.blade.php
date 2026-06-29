@@ -293,6 +293,14 @@
             }, 5000);
         }
 
+        // Display session success or error messages as toasts
+        @if(session('success'))
+            window.showToast("{{ session('success') }}", 'success');
+        @endif
+        @if(session('error'))
+            window.showToast("{{ session('error') }}", 'error');
+        @endif
+
         // Listen for events
         let checkCount = 0;
         const checkInterval = setInterval(() => {

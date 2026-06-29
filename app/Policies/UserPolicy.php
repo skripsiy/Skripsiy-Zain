@@ -45,4 +45,20 @@ class UserPolicy
     {
         return $user->role === 'admin' && $user->id !== $model->id;
     }
+
+    /**
+     * Determine whether the user can update the role of the user.
+     */
+    public function updateRole(User $user, User $model): bool
+    {
+        return $user->role === 'admin';
+    }
+
+    /**
+     * Determine whether the user can update the status of the user.
+     */
+    public function updateStatus(User $user, User $model): bool
+    {
+        return $user->role === 'admin';
+    }
 }

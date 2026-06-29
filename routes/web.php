@@ -24,7 +24,7 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 // Admin Routes
-Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
     
     // User Management Routes
@@ -43,14 +43,10 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     Route::get('/reports/export/users', [App\Http\Controllers\Admin\ReportController::class, 'exportUserReports'])->name('reports.export.users');
     Route::get('/reports/export/tickets', [App\Http\Controllers\Admin\ReportController::class, 'exportAllTickets'])->name('reports.export.tickets');
     Route::get('/reports/export/user-tickets/{user}', [App\Http\Controllers\Admin\ReportController::class, 'exportUserTickets'])->name('reports.export.user-tickets');
-    
-    // Settings Routes
-    Route::get('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
-    Route::post('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
 });
 
 // Agent Routes
-Route::middleware(['auth', 'verified'])->prefix('agent')->name('agent.')->group(function () {
+Route::middleware(['auth', 'verified', 'role:agent'])->prefix('agent')->name('agent.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\Agent\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/filter-tickets', [App\Http\Controllers\Agent\DashboardController::class, 'filterTickets'])->name('dashboard.filter-tickets');
     Route::get('/tickets', [App\Http\Controllers\Agent\TicketController::class, 'index'])->name('tickets');
@@ -71,7 +67,7 @@ Route::middleware(['auth', 'verified'])->prefix('agent')->name('agent.')->group(
 });
 
 // Team Leader Routes
-Route::middleware(['auth', 'verified'])->prefix('team-leader')->name('team-leader.')->group(function () {
+Route::middleware(['auth', 'verified', 'role:team_leader'])->prefix('team-leader')->name('team-leader.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\TeamLeader\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/tickets', [App\Http\Controllers\TeamLeader\TicketController::class, 'index'])->name('tickets');
     Route::get('/tickets/{id}', [App\Http\Controllers\TeamLeader\TicketDetailController::class, 'show'])->name('ticket.detail');

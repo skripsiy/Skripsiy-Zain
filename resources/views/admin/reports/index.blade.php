@@ -30,11 +30,6 @@
                 <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
             </svg>
         </a>
-        <a class="sidebar-icon" href="{{ route('admin.settings.index') }}" title="Settings">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
-            </svg>
-        </a>
     </x-slot>
     
     <x-slot name="customStyles">
@@ -243,59 +238,7 @@
             color: #1F4A5E;
         }
         
-        .modal-actions {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .download-btn.small {
-            padding: 6px 12px;
-            font-size: 12px;
-        }
-        
-        .export-dropdown {
-            position: relative;
-        }
-        
-        .export-dropdown-menu {
-            display: none;
-            position: absolute;
-            top: 100%;
-            right: 0;
-            margin-top: 8px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-            min-width: 200px;
-            z-index: 1000;
-            overflow: hidden;
-        }
-        
-        .export-dropdown-menu.active {
-            display: block;
-            animation: fadeIn 0.2s ease;
-        }
-        
-        .export-option {
-            display: block;
-            padding: 10px 16px;
-            color: #374151;
-            text-decoration: none;
-            font-size: 13px;
-            transition: all 0.2s ease;
-            border-bottom: 1px solid #E5E7EB;
-        }
-        
-        .export-option:last-child {
-            border-bottom: none;
-        }
-        
-        .export-option:hover {
-            background: #F3F4F6;
-            color: #2C5F7C;
-            padding-left: 20px;
-        }
+
         
         .close-modal {
             background: none;
@@ -512,24 +455,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title" id="modalUserName">User Details</h2>
-                <div class="modal-actions">
-                    <div class="export-dropdown">
-                        <button class="download-btn small" onclick="toggleExportDropdown()">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="7 10 12 15 17 10"></polyline>
-                                <line x1="12" y1="15" x2="12" y2="3"></line>
-                            </svg>
-                            Export
-                        </button>
-                        <div class="export-dropdown-menu" id="exportDropdown">
-                            <a href="#" class="export-option" data-type="assigned">Export Assigned Tickets</a>
-                            <a href="#" class="export-option" data-type="solved">Export Solved Tickets</a>
-                            <a href="#" class="export-option" data-type="inbox">Export Inbox Tickets</a>
-                        </div>
-                    </div>
-                    <button class="close-modal" onclick="closeUserDetails()">&times;</button>
-                </div>
+                <button class="close-modal" onclick="closeUserDetails()">&times;</button>
             </div>
             
             <div id="modalContent">
@@ -649,47 +575,10 @@
         // Close modal when clicking outside
         window.onclick = function(event) {
             const modal = document.getElementById('userDetailsModal');
-            const dropdown = document.getElementById('exportDropdown');
             
             if (event.target === modal) {
                 closeUserDetails();
             }
-            
-            // Close dropdown when clicking outside
-            if (!event.target.closest('.export-dropdown')) {
-                if (dropdown) dropdown.classList.remove('active');
-            }
         }
-        
-        // Current user ID for export
-        let currentUserId = null;
-        
-        // Store user ID when viewing details
-        const originalViewUserDetails = viewUserDetails;
-        viewUserDetails = async function(userId) {
-            currentUserId = userId;
-            await originalViewUserDetails(userId);
-        }
-        
-        // Toggle export dropdown
-        function toggleExportDropdown() {
-            event.stopPropagation();
-            const dropdown = document.getElementById('exportDropdown');
-            dropdown.classList.toggle('active');
-        }
-        
-        // Handle export option click
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.export-option').forEach(option => {
-                option.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const type = this.getAttribute('data-type');
-                    if (currentUserId) {
-                        window.location.href = `/admin/reports/export/user-tickets/${currentUserId}?type=${type}`;
-                    }
-                    document.getElementById('exportDropdown').classList.remove('active');
-                });
-            });
-        });
     </x-slot>
 </x-agent-layout>

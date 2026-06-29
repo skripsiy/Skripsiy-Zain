@@ -53,7 +53,7 @@ class AssignControllerTest extends TestCase
         $ticket->refresh();
         $this->assertEquals('ASSIGNED', $ticket->status);
         $this->assertEquals('ASSIGNED', $ticket->condition);
-        $this->assertEquals($agent->name, $ticket->assignby);
+        $this->assertEquals($agent->id, $ticket->assigned_to_user_id);
 
         // 7. Assert notification is created in database
         $this->assertDatabaseHas('notifications', [
@@ -67,5 +67,50 @@ class AssignControllerTest extends TestCase
         $this->assertNotNull($notification);
         $this->assertEquals('ticket_assigned', $notification->data['type']);
         $this->assertEquals($ticket->idTicket, $notification->data['ticket_id']);
+    }
+
+    public function test_team_leader_assign_page_contains_all_tickets_for_filtering()
+    {
+        $teamLeader = User::factory()->create([
+            'role' => 'team_leader',
+        ]);
+
+        $agent = User::factory()->create([
+            'role' => 'agent',
+            'status' => 'active',
+        ]);
+
+        // 1. Create an unassigned (queued) ticket
+        $unassignedTicket = Ticket::create([
+            'datereport' => now(),
+            'jenisTicket' => 'INTERNET',
+            'notelpCust' => '081294135917',
+            'namacust' => 'Unassigned Customer',
+            'status' => 'QUEUED',
+            'condition' => 'QUEUED',
+        ]);
+
+        // 2. Create an assigned ticket
+        $assignedTicket = Ticket::create([
+            'datereport' => now(),
+            'jenisTicket' => 'INTERNET',
+            'notelpCust' => '081294135918',
+            'namacust' => 'Assigned Customer',
+            'status' => 'ASSIGNED',
+            'condition' => 'ASSIGNED',
+            'assigned_to_user_id' => $agent->id,
+        ]);
+
+        // 3. Request the page
+        $response = $this->actingAs($teamLeader)
+            ->get(route('team-leader.assign'));
+
+        $response->assertOk();
+
+        // 4. Assert both tickets exist in $allTickets view data (F-24 requirement)
+        $response->assertViewHas('allTickets', function ($allTickets) use ($unassignedTicket, $assignedTicket) {
+            return $allTickets->contains('idTicket', $unassignedTicket->idTicket) &&
+                   $allTickets->contains('idTicket', $assignedTicket->idTicket);
+        });
     }
 }

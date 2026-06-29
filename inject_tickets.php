@@ -11,10 +11,7 @@ Ticket::truncate();
 DB::table('activity_log')->truncate(); // clear logs for fresh start
 DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
-$agents = User::where('role', 'agent')->pluck('name')->toArray();
-if (empty($agents)) {
-    $agents = ['Today User 5', 'Agent 1', 'Agent 2'];
-}
+$agents = User::where('role', 'agent')->get();
 
 $topics = ['LOS Merah', 'Koneksi Lambat', 'Router Blank', 'Biling Tagihan', 'Putus-putus'];
 $priorities = ['Super Emergency', 'Emergency', 'High', 'Medium'];
@@ -48,8 +45,8 @@ for ($i = 1; $i <= 30; $i++) {
         'reportedpriority' => $priority,
         'status'           => 'QUEUED',
         'condition'        => 'QUEUED',
-        'assignby'         => null,   // Belum di-assign
-        'solvedby'         => null,
+        'assigned_to_user_id' => null,   // Belum di-assign
+        'solved_by_user_id' => null,
         'eksalasiVia'      => 'Telegram',
     ]);
 }
@@ -66,7 +63,9 @@ for ($i = 1; $i <= 70; $i++) {
     $date = Carbon::now()->subDays(rand(0, 10))->subHours(rand(0, 24));
     $condition = $conditions[array_rand($conditions)];
     $isClosed = $condition === 'Closed';
-    $agentAssigned = $agents[array_rand($agents)];
+    $agent = $agents->isEmpty() ? null : $agents->random();
+    $agentId = $agent ? $agent->id : null;
+    $agentName = $agent ? $agent->name : null;
     $priority = $priorities[array_rand($priorities)];
 
     Ticket::create([
@@ -84,10 +83,10 @@ for ($i = 1; $i <= 70; $i++) {
         'reportedpriority' => $priority,
         'status'           => $isClosed ? 'Closed' : 'ASSIGNED',
         'condition'        => $condition,
-        'assignby'         => $agentAssigned,
-        'solvedby'         => $isClosed ? $agentAssigned : null,
+        'assigned_to_user_id' => $agentId,
+        'solved_by_user_id' => $isClosed ? $agentId : null,
         'hasil_pengecekan' => $isClosed ? 'Pengecekan port sisi ODP normal. Reset sisi OLT sukses. Koneksi pelanggan kembali Up.' : 'Masih dalam proses eskalasi regu teknisi.',
-        'resolved_by_agent'=> $isClosed ? $agentAssigned : null,
+        'resolved_by_agent'=> $isClosed ? $agentName : null,
         'eksalasiVia'      => 'Telegram',
     ]);
 }

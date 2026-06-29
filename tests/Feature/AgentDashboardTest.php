@@ -31,7 +31,7 @@ class AgentDashboardTest extends TestCase
             'reportedpriority' => 'Emergency',
             'status' => 'ASSIGNED',
             'condition' => 'ASSIGNED',
-            'assignby' => 'Agent Bobby',
+            'assigned_to_user_id' => $agent->id,
             'division_target' => 'besfixed',
             'created_at' => now()->subDays(5),
             'updated_at' => now(), // updated/assigned today
@@ -72,7 +72,7 @@ class AgentDashboardTest extends TestCase
             'reportedpriority' => 'Emergency',
             'status' => 'DISPATCHED',
             'condition' => 'Dispatched',
-            'assignby' => 'Agent Bobby',
+            'assigned_to_user_id' => $agent->id,
             'division_target' => 'besfixed',
             'created_at' => now()->subDays(5),
             'updated_at' => now(), // updated/dispatched today
@@ -104,7 +104,7 @@ class AgentDashboardTest extends TestCase
             'namacust' => 'Customer',
             'status' => 'ASSIGNED',
             'condition' => 'ASSIGNED',
-            'assignby' => 'Agent Bobby',
+            'assigned_to_user_id' => $agent->id,
         ]);
 
         $response = $this->actingAs($agent)
@@ -149,7 +149,7 @@ class AgentDashboardTest extends TestCase
             'namacust' => 'Customer',
             'status' => 'ASSIGNED',
             'condition' => 'ASSIGNED',
-            'assignby' => 'Agent Bobby',
+            'assigned_to_user_id' => $agent->id,
         ]);
 
         $response = $this->actingAs($agent)

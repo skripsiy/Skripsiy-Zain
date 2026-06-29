@@ -251,8 +251,8 @@ class DemoTicketsSeeder extends Seeder
                 'division_target' => 'besfixed',
                 'status' => 'Closed',
                 'condition' => 'Closed',
-                'assignby' => $agents[3]->name, // Gita Permata
-                'solvedby' => $agents[3]->name,
+                'assigned_to_user_id' => $agents[3]->id, // Gita Permata
+                'solved_by_user_id' => $agents[3]->id,
                 'datesolved' => Carbon::now(),
                 'lapul' => 0,
                 'gaul' => 0,
@@ -274,8 +274,8 @@ class DemoTicketsSeeder extends Seeder
                 'division_target' => 'besfixed',
                 'status' => 'Closed',
                 'condition' => 'Closed',
-                'assignby' => $agents[4]->name, // Hendra Wijaya
-                'solvedby' => $agents[4]->name,
+                'assigned_to_user_id' => $agents[4]->id, // Hendra Wijaya
+                'solved_by_user_id' => $agents[4]->id,
                 'datesolved' => Carbon::now(),
                 'lapul' => 1,
                 'gaul' => 0,
@@ -461,8 +461,8 @@ class DemoTicketsSeeder extends Seeder
                 'division_target' => 'besfixed',
                 'status' => 'Closed',
                 'condition' => 'Closed',
-                'assignby' => $agents[3]->name, // Linda Sari
-                'solvedby' => $agents[3]->name,
+                'assigned_to_user_id' => $agents[3]->id, // Linda Sari
+                'solved_by_user_id' => $agents[3]->id,
                 'datesolved' => Carbon::now(),
                 'lapul' => 0,
                 'gaul' => 0,
@@ -484,8 +484,8 @@ class DemoTicketsSeeder extends Seeder
                 'division_target' => 'besfixed',
                 'status' => 'Closed',
                 'condition' => 'Closed',
-                'assignby' => $agents[4]->name, // Muhamad Rizki
-                'solvedby' => $agents[4]->name,
+                'assigned_to_user_id' => $agents[4]->id, // Muhamad Rizki
+                'solved_by_user_id' => $agents[4]->id,
                 'datesolved' => Carbon::now(),
                 'lapul' => 1,
                 'gaul' => 0,
@@ -654,8 +654,8 @@ class DemoTicketsSeeder extends Seeder
                 'division_target' => 'besfixed',
                 'status' => 'Closed',
                 'condition' => 'Closed',
-                'assignby' => $agents[3]->name, // Rendi Saputra
-                'solvedby' => $agents[3]->name,
+                'assigned_to_user_id' => $agents[3]->id, // Rendi Saputra
+                'solved_by_user_id' => $agents[3]->id,
                 'datesolved' => Carbon::now(),
                 'lapul' => 0,
                 'gaul' => 0,

@@ -36,11 +36,10 @@ class UserController extends Controller
             'password' => 'required|string|min:8',
             'role' => 'required|in:admin,team_leader,agent',
             'campaign' => 'nullable|string|max:255',
+            'area' => 'nullable|string|max:255',
             'site' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:20',
         ]);
-
-        $validated['password'] = Hash::make($validated['password']);
 
         User::create($validated);
 
@@ -100,12 +99,8 @@ class UserController extends Controller
         }
 
         // UC-12: Prevent deleting users that have tickets assigned
-        $hasTickets = \App\Models\Ticket::where(function($q) use ($user) {
-                $q->where('assignby', $user->email)->orWhere('assignby', $user->name);
-            })
-            ->orWhere(function($q) use ($user) {
-                $q->where('solvedby', $user->email)->orWhere('solvedby', $user->name);
-            })
+        $hasTickets = \App\Models\Ticket::where('assigned_to_user_id', $user->id)
+            ->orWhere('solved_by_user_id', $user->id)
             ->exists();
 
         if ($hasTickets) {
@@ -118,8 +113,14 @@ class UserController extends Controller
             return redirect()->route('admin.users.index')
                 ->with('success', 'User deleted successfully.');
         } catch (\Exception $e) {
+            // Fix S-3: Log detail error secara internal, jangan ekspos ke UI
+            \Illuminate\Support\Facades\Log::error('User delete failed', [
+                'admin_id'       => auth()->id(),
+                'target_user_id' => $user->id,
+                'error'          => $e->getMessage(),
+            ]);
             return redirect()->route('admin.users.index')
-                ->with('error', 'Failed to delete user: ' . $e->getMessage());
+                ->with('error', 'Gagal menghapus user. Silakan coba lagi atau hubungi administrator.');
         }
     }
 }

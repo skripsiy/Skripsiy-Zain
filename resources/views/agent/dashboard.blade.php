@@ -595,7 +595,7 @@
                     <tr>
                         <td>IN{{ str_pad($ticket->idTicket, 8, '0', STR_PAD_LEFT) }}</td>
                         <td>{{ $ticket->topic ?? '-' }}</td>
-                        <td>{{ $ticket->assignby ?? '-' }}</td>
+                        <td>{{ $ticket->assignedTo?->name ?? '-' }}</td>
                         <td>{{ $ticket->created_at->format('Y-m-d') }}</td>
                         <td><span style="color: {{ $ticket->condition == 'Closed' ? '#7ED321' : '#4A90E2' }}; font-weight: 600;">{{ $ticket->condition }}</span></td>
                     </tr>

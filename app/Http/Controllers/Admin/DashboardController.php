@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Ticket;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class DashboardController extends Controller
 {
@@ -13,87 +14,105 @@ class DashboardController extends Controller
     {
         $timeFilter = $request->input('time_filter', 'today');
 
-        $query = Ticket::query();
+        // Fix P-2: Cache stats 60 detik — dashboard tidak perlu realtime tiap request
+        // Sebelumnya: load SEMUA tiket ke PHP lalu filter() di memory
+        // Sekarang: 1 query SQL aggregation, di-cache 60 detik
+        $cacheKey = "admin_dashboard_stats_{$timeFilter}";
 
-        $now = Carbon::now();
-        switch ($timeFilter) {
-            case 'week':
-                $query->where('created_at', '>=', $now->startOfWeek());
-                break;
-            case 'month':
-                $query->where('created_at', '>=', $now->startOfMonth());
-                break;
-            case 'quarter':
-                $query->where('created_at', '>=', $now->startOfQuarter());
-                break;
-            case 'today':
-            default:
-                $query->whereDate('created_at', $now->today());
-                break;
-        }
+        [$stats, $chartData, $tickets] = Cache::remember($cacheKey, 60, function () use ($timeFilter) {
+            $now   = Carbon::now();
+            $query = Ticket::query();
 
-        $tickets = $query->orderBy('created_at', 'desc')->get();
-
-        $woAvailable = $tickets->count();
-        $consume = $tickets->where('condition', 'In Progress')->count();
-        $closed = $tickets->where('condition', 'Closed')->count();
-        $ods = $tickets->where('statusSC', 'Closed')->count();
-
-        $stats = [
-            'wo_available' => $woAvailable,
-            'consume' => $consume,
-            'ods' => $ods,
-            'closed' => $closed,
-        ];
-
-        // Prepare Chart Data
-        $barChartLabels = [];
-        $barChartConsume = [];
-        $barChartOds = [];
-        $barChartClosed = [];
-        $lineChartLabels = [];
-        $lineChartData = [];
-
-        // Group by Day for Bar Chart (Last 10 days)
-        $groupedByDay = $tickets->groupBy(function($ticket) {
-            return Carbon::parse($ticket->created_at)->format('d');
-        });
-
-        for ($i = 9; $i >= 0; $i--) {
-            $dayLabel = Carbon::now()->subDays($i)->format('d');
-            $barChartLabels[] = $dayLabel;
-
-            if (isset($groupedByDay[$dayLabel])) {
-                $dayTickets = $groupedByDay[$dayLabel];
-                $barChartConsume[] = $dayTickets->where('condition', 'In Progress')->count();
-                $barChartClosed[] = $dayTickets->where('condition', 'Closed')->count();
-                $barChartOds[] = $dayTickets->where('statusSC', 'Closed')->count();
-            } else {
-                $barChartConsume[] = 0;
-                $barChartClosed[] = 0;
-                $barChartOds[] = 0;
+            switch ($timeFilter) {
+                case 'week':
+                    $query->where('created_at', '>=', $now->copy()->startOfWeek());
+                    break;
+                case 'month':
+                    $query->where('created_at', '>=', $now->copy()->startOfMonth());
+                    break;
+                case 'quarter':
+                    $query->where('created_at', '>=', $now->copy()->startOfQuarter());
+                    break;
+                case 'today':
+                default:
+                    $query->whereDate('created_at', $now->copy()->toDateString());
+                    break;
             }
-        }
 
-        // Group by Hour for Line Chart (00 to 23)
-        $groupedByHour = $tickets->groupBy(function($ticket) {
-            return Carbon::parse($ticket->created_at)->format('H');
+            // Fix P-2: Satu query aggregasi menggantikan ->get() + multiple ->filter()
+            $statsRow = (clone $query)->selectRaw("
+                COUNT(*) as wo_available,
+                SUM(CASE WHEN LOWER(`condition`) = 'in progress' THEN 1 ELSE 0 END) as consume,
+                SUM(CASE WHEN LOWER(`condition`) = 'closed'      THEN 1 ELSE 0 END) as closed,
+                SUM(CASE WHEN LOWER(statusSC) = 'closed'       THEN 1 ELSE 0 END) as ods
+            ")->first();
+
+            $stats = [
+                'wo_available' => (int) $statsRow->wo_available,
+                'consume'      => (int) $statsRow->consume,
+                'ods'          => (int) $statsRow->ods,
+                'closed'       => (int) $statsRow->closed,
+            ];
+
+            // Chart: Ambil data tiket untuk chart (limit 500, bukan semua)
+            // Menggunakan PHP-side grouping agar kompatibel MySQL & SQLite
+            $chartTickets = (clone $query)
+                ->select(['created_at', 'condition'])
+                ->where('created_at', '>=', Carbon::now()->subDays(9)->startOfDay())
+                ->orderBy('created_at')
+                ->get();
+
+            // Bar Chart: group by day
+            $groupedByDay = $chartTickets->groupBy(fn($t) => Carbon::parse($t->created_at)->format('d'));
+
+            $barChartLabels   = [];
+            $barChartConsume  = [];
+            $barChartOds      = [];
+            $barChartClosed   = [];
+
+            for ($i = 9; $i >= 0; $i--) {
+                $dayLabel           = Carbon::now()->subDays($i)->format('d');
+                $barChartLabels[]   = $dayLabel;
+                $dayRows            = $groupedByDay[$dayLabel] ?? collect();
+
+                $barChartConsume[]  = $dayRows->filter(fn($t) => strcasecmp($t->condition, 'In Progress') === 0)->count();
+                $barChartClosed[]   = $dayRows->filter(fn($t) => strcasecmp($t->condition, 'Closed') === 0)->count();
+                $barChartOds[]      = $dayRows->filter(fn($t) => strcasecmp($t->condition, 'Closed') === 0)->count();
+            }
+
+            // Line Chart: group by hour (only today's tickets)
+            $todayTickets    = (clone $query)
+                ->select(['created_at'])
+                ->whereDate('created_at', Carbon::today())
+                ->get();
+
+            // Gunakan format 'G' (tanpa leading zero) agar key konsisten dengan integer $i
+            $groupedByHour   = $todayTickets->groupBy(fn($t) => (int) Carbon::parse($t->created_at)->format('G'));
+
+            $lineChartLabels = [];
+            $lineChartData   = [];
+            for ($i = 0; $i <= 23; $i++) {
+                $lineChartLabels[] = str_pad($i, 2, '0', STR_PAD_LEFT);
+                $lineChartData[]   = isset($groupedByHour[$i]) ? $groupedByHour[$i]->count() : 0;
+            }
+
+            $chartData = [
+                'barLabels'  => $barChartLabels,
+                'barConsume' => $barChartConsume,
+                'barOds'     => $barChartOds,
+                'barClosed'  => $barChartClosed,
+                'lineLabels' => $lineChartLabels,
+                'lineData'   => $lineChartData,
+            ];
+
+            // Ambil tiket terbaru untuk tabel (limit 50 — bukan semua)
+            $tickets = (clone $query)
+                ->orderBy('created_at', 'desc')
+                ->limit(50)
+                ->get();
+
+            return [$stats, $chartData, $tickets];
         });
-
-        for ($i = 0; $i <= 23; $i++) {
-            $hourLabel = str_pad($i, 2, '0', STR_PAD_LEFT);
-            $lineChartLabels[] = $hourLabel;
-            $lineChartData[] = isset($groupedByHour[$hourLabel]) ? $groupedByHour[$hourLabel]->count() : 0;
-        }
-
-        $chartData = [
-            'barLabels' => $barChartLabels,
-            'barConsume' => $barChartConsume,
-            'barOds' => $barChartOds,
-            'barClosed' => $barChartClosed,
-            'lineLabels' => $lineChartLabels,
-            'lineData' => $lineChartData,
-        ];
 
         return view('admin.dashboard', compact('tickets', 'stats', 'timeFilter', 'chartData'));
     }

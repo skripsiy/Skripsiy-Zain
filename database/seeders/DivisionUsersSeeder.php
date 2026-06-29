@@ -30,7 +30,7 @@ class DivisionUsersSeeder extends Seeder
             ['Hendra Wijaya',   'hendra.area@xena.com',  'hendra_area'],
         ];
         foreach ($areaAgents as [$name, $email, $username]) {
-            $this->createAgent($name, $email, $username, 'besfixed');
+            $this->createAgent($name, $email, $username, 'area');
         }
 
         // ─── BESFIXED ────────────────────────────────────────────────
@@ -68,7 +68,7 @@ class DivisionUsersSeeder extends Seeder
             ['Sinta Maharani',   'sinta.saltik@xena.com',  'sinta_saltik'],
         ];
         foreach ($saltikAgents as [$name, $email, $username]) {
-            $this->createAgent($name, $email, $username, 'besfixed');
+            $this->createAgent($name, $email, $username, 'saltik');
         }
 
         $this->command->info('✅ Selesai! Data yang dibuat:');
@@ -102,7 +102,7 @@ class DivisionUsersSeeder extends Seeder
                 'campaign' => $campaign,
                 'role'     => 'team_leader',
                 'status'   => 'active',
-                'password' => Hash::make('password123'),
+                'password' => 'password123',
                 'phone'    => '08' . rand(100000000, 999999999),
                 'site'     => 'BANDUNG',
                 'area'     => strtoupper($campaign),
@@ -124,7 +124,7 @@ class DivisionUsersSeeder extends Seeder
                 'campaign' => $campaign,
                 'role'     => 'agent',
                 'status'   => 'active',
-                'password' => Hash::make('password123'),
+                'password' => 'password123',
                 'phone'    => '08' . rand(100000000, 999999999),
                 'site'     => 'BANDUNG',
                 'area'     => strtoupper($campaign),

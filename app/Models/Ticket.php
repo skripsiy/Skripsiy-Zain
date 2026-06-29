@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Support\Facades\Cache;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 
@@ -20,7 +20,7 @@ class Ticket extends Model
         'validateClose', 'reasonnoODS', 'eksalasiTicket', 'eksalasiVia',
         'PIC', 'contact', 'responBE', 'description', 'reportedpriority',
         'datesolved', 'THT', 'status', 'regional', 'witel', 'condition',
-        'assignby', 'solvedby', 'escalationStatus', 'resolved_by_agent', 'hasil_pengecekan',
+        'assigned_to_user_id', 'solved_by_user_id', 'escalationStatus', 'resolved_by_agent', 'hasil_pengecekan',
         // Routing fields
         'channel', 'source_system', 'pool_id', 'urgency_level', 'division_target', 'auto_assigned_at',
     ];
@@ -42,11 +42,28 @@ class Ticket extends Model
     }
 
     /**
-     * Get the user who assigned this ticket
+     * Invalidasi cache dashboard setiap ada perubahan tiket.
+     * Agar statistik dashboard tidak stale saat data berubah.
      */
-    public function assignedBy()
+    protected static function booted(): void
     {
-        return $this->belongsTo(User::class, 'assignby', 'email');
+        $clearCache = function () {
+            foreach (['today', 'week', 'month', 'quarter'] as $filter) {
+                Cache::forget("admin_dashboard_stats_{$filter}");
+                Cache::forget("admin_chart_{$filter}");
+            }
+        };
+
+        static::created($clearCache);
+        static::updated($clearCache);
+    }
+
+    /**
+     * Get the user this ticket is assigned to
+     */
+    public function assignedTo()
+    {
+        return $this->belongsTo(User::class, 'assigned_to_user_id');
     }
 
     /**
@@ -54,7 +71,7 @@ class Ticket extends Model
      */
     public function solvedBy()
     {
-        return $this->belongsTo(User::class, 'solvedby', 'email');
+        return $this->belongsTo(User::class, 'solved_by_user_id');
     }
 
     // ─────────────────────────────────────────────

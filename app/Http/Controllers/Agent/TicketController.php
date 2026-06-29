@@ -35,18 +35,16 @@ class TicketController extends Controller
             }
 
             // Tetap batasi ke tiket milik agent ini saat search
-            $query->where(function ($q) use ($agentName, $agentEmail) {
-                $q->where('assignby', $agentName)
-                  ->orWhere('solvedby', $agentName)
-                  ->orWhere('solvedby', $agentEmail);
+            $query->where(function ($q) {
+                $q->where('assigned_to_user_id', auth()->id())
+                  ->orWhere('solved_by_user_id', auth()->id());
             });
 
         } else {
             // ── Filter: hanya tiket yang sudah di-assign ke agent ini ──
-            $query->where(function ($q) use ($agentName, $agentEmail) {
-                $q->where('assignby', $agentName)
-                  ->orWhere('solvedby', $agentName)
-                  ->orWhere('solvedby', $agentEmail);
+            $query->where(function ($q) {
+                $q->where('assigned_to_user_id', auth()->id())
+                  ->orWhere('solved_by_user_id', auth()->id());
             });
 
             // ── Filter by view type ──
@@ -75,6 +73,7 @@ class TicketController extends Controller
         // 3. Lapul + Gaul DESC
         // 4. Tiket ASSIGNED tampil lebih awal
         $tickets = $query
+            ->with(['assignedTo']) // Fix P-1: Eager load relation
             ->orderByRaw("CASE
                 WHEN `condition` IN ('ASSIGNED') OR `status` IN ('ASSIGNED') THEN 0
                 WHEN `condition` IN ('Dispatched', 'DISPATCHED') THEN 1
@@ -87,30 +86,26 @@ class TicketController extends Controller
             ->withQueryString();
 
         // ── Statistik agent ──
-        $baseQuery = Ticket::where(function ($q) use ($agentName, $agentEmail) {
-            $q->where('assignby', $agentName)
-              ->orWhere('solvedby', $agentName)
-              ->orWhere('solvedby', $agentEmail);
-        });
+        // Fix P-2: Gunakan 1 query DB aggregation untuk mengambil seluruh data statistik sekaligus
+        // (Sebelumnya memicu 5 query COUNT terpisah)
+        $statsRow = Ticket::where(function ($q) {
+            $q->where('assigned_to_user_id', auth()->id())
+              ->orWhere('solved_by_user_id', auth()->id());
+        })
+        ->selectRaw("
+            COUNT(*) as total,
+            SUM(CASE WHEN solved_by_user_id = ? THEN 1 ELSE 0 END) as consumed,
+            SUM(CASE WHEN assigned_to_user_id = ? AND LOWER(`condition`) IN ('queued', 'assigned', 'open') THEN 1 ELSE 0 END) as submitted,
+            SUM(CASE WHEN solved_by_user_id = ? AND LOWER(`condition`) IN ('closed', 'saltik') THEN 1 ELSE 0 END) as closed,
+            SUM(CASE WHEN assigned_to_user_id = ? AND LOWER(`condition`) IN ('dispatched') THEN 1 ELSE 0 END) as dispatched
+        ", [auth()->id(), auth()->id(), auth()->id(), auth()->id()])
+        ->first();
 
-        $totalTickets = (clone $baseQuery)->count();
-
-        $consumedTickets = Ticket::where('solvedby', $agentName)
-            ->orWhere('solvedby', $agentEmail)
-            ->count();
-
-        $submittedTickets = Ticket::where('assignby', $agentName)
-            ->whereIn('condition', ['QUEUED', 'ASSIGNED', 'Open'])
-            ->count();
-
-        $closedTickets = Ticket::where(function ($q) use ($agentName, $agentEmail) {
-            $q->where('solvedby', $agentName)
-              ->orWhere('solvedby', $agentEmail);
-        })->whereIn('condition', ['Closed', 'Saltik'])->count();
-
-        $dispatchedTickets = Ticket::where('assignby', $agentName)
-            ->whereIn('condition', ['Dispatched', 'DISPATCHED'])
-            ->count();
+        $totalTickets      = (int) ($statsRow->total ?? 0);
+        $consumedTickets   = (int) ($statsRow->consumed ?? 0);
+        $submittedTickets  = (int) ($statsRow->submitted ?? 0);
+        $closedTickets     = (int) ($statsRow->closed ?? 0);
+        $dispatchedTickets = (int) ($statsRow->dispatched ?? 0);
 
         return view('agent.tickets', compact(
             'tickets', 'totalTickets', 'consumedTickets', 'submittedTickets',

@@ -17,10 +17,12 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 class TicketsExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithColumnWidths, ShouldAutoSize
 {
     protected $filters;
+    protected $tickets;
 
-    public function __construct($filters = [])
+    public function __construct($filters = [], $tickets = null)
     {
         $this->filters = $filters;
+        $this->tickets = $tickets;
     }
 
     /**
@@ -28,17 +30,22 @@ class TicketsExport implements FromCollection, WithHeadings, WithMapping, WithSt
      */
     public function collection()
     {
-        $query = Ticket::query()->with(['assignedBy', 'solvedBy']);
+        if ($this->tickets !== null) {
+            return $this->tickets;
+        }
+        $query = Ticket::query()->with(['assignedTo', 'solvedBy']);
 
         // Apply filters if provided
+        if (!empty($this->filters['ticket_id'])) {
+            $query->where('idTicket', 'like', "%" . $this->filters['ticket_id'] . "%");
+        }
+
         if (!empty($this->filters['user_id'])) {
-            $user = \App\Models\User::find($this->filters['user_id']);
-            if ($user) {
-                $query->where(function($q) use ($user) {
-                    $q->where('assignby', $user->email)
-                      ->orWhere('solvedby', $user->email);
-                });
-            }
+            $userId = $this->filters['user_id'];
+            $query->where(function($q) use ($userId) {
+                $q->where('assigned_to_user_id', $userId)
+                  ->orWhere('solved_by_user_id', $userId);
+            });
         }
 
         if (!empty($this->filters['status'])) {
@@ -150,8 +157,8 @@ class TicketsExport implements FromCollection, WithHeadings, WithMapping, WithSt
             $ticket->datesolved ? \Carbon\Carbon::parse($ticket->datesolved)->format('Y-m-d') : '',
             $ticket->THT ? \Carbon\Carbon::parse($ticket->THT)->format('Y-m-d H:i:s') : '',
             $ticket->condition,
-            $ticket->assignedBy->name ?? $ticket->assignby,
-            $ticket->solvedBy->name ?? $ticket->solvedby,
+            $ticket->assignedTo->name ?? '',
+            $ticket->solvedBy->name ?? '',
             $ticket->escalationStatus,
             $ticket->created_at ? $ticket->created_at->format('Y-m-d H:i:s') : '',
             $ticket->updated_at ? $ticket->updated_at->format('Y-m-d H:i:s') : ''

@@ -53,7 +53,7 @@ class ProfileController extends Controller
 
         $user = Auth::user();
         $user->update([
-            'password' => Hash::make($validated['password']),
+            'password' => $validated['password'],
         ]);
 
         return redirect()->route('agent.profile')->with('success', 'Password updated successfully!');

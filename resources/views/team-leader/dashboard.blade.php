@@ -669,8 +669,11 @@
                         <tbody>
                             @php
                                 $saltikLeaderboard = $tickets->where('condition', 'Saltik')
-                                    ->groupBy('assignby')
-                                    ->map(fn($t) => $t->count())
+                                    ->groupBy('assigned_to_user_id')
+                                    ->mapWithKeys(function($items, $userId) {
+                                        $user = $items->first()->assignedTo;
+                                        return [$user ? $user->name : 'Unassigned' => $items->count()];
+                                    })
                                     ->sortByDesc(fn($c) => $c);
                                 $rank = 1;
                             @endphp
@@ -679,7 +682,7 @@
                                     <td style="padding: 8px 10px; font-weight: bold;">
                                         @if($rank == 1) 🥇 @elseif($rank == 2) 🥈 @elseif($rank == 3) 🥉 @else #{{ $rank }} @endif
                                     </td>
-                                    <td style="padding: 8px 10px; font-weight: 500;">{{ $agentName ?? 'Unassigned' }}</td>
+                                    <td style="padding: 8px 10px; font-weight: 500;">{{ $agentName }}</td>
                                     <td style="padding: 8px 10px; text-align: right; font-weight: bold; color: #FF9800;">{{ $resolvedCount }}</td>
                                 </tr>
                                 @php $rank++; @endphp
@@ -736,7 +739,7 @@
                             <td>IN{{ str_pad($ticket->idTicket, 8, '0', STR_PAD_LEFT) }}</td>
                             <td>{{ $ticket->topic ?? 'Helpdesk C4' }}</td>
                             <td>{{ $ticket->regional ?? 'Jakarta' }}</td>
-                            <td>{{ $ticket->assignby ?? 'Reca' }}</td>
+                            <td>{{ $ticket->assignedTo?->name ?? '-' }}</td>
                             <td><button class="inject-btn"
                                     onclick="window.location='{{ route('team-leader.ticket.detail', $ticket->idTicket) }}'">View
                                     Ticket</button></td>

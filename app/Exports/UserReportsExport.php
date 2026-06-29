@@ -25,15 +25,11 @@ class UserReportsExport implements FromCollection, WithHeadings, WithMapping, Wi
     public function collection()
     {
         return User::select('users.*')
-            ->selectRaw('COUNT(DISTINCT CASE WHEN (tickets.assignby = users.email OR tickets.assignby = users.name) THEN tickets.idTicket END) as assigned_tickets')
-            ->selectRaw('COUNT(DISTINCT CASE WHEN (tickets.solvedby = users.email OR tickets.solvedby = users.name) THEN tickets.idTicket END) as solved_tickets')
-            ->selectRaw('COUNT(DISTINCT CASE WHEN (tickets.assignby = users.email OR tickets.assignby = users.name) AND tickets.status = "QUEUED" THEN tickets.idTicket END) as inbox_tickets')
-            ->leftJoin('tickets', function($join) {
-                $join->on('tickets.assignby', '=', 'users.email')
-                     ->orOn('tickets.assignby', '=', 'users.name')
-                     ->orOn('tickets.solvedby', '=', 'users.email')
-                     ->orOn('tickets.solvedby', '=', 'users.name');
-            })
+            ->selectRaw('COUNT(DISTINCT tickets_assigned.idTicket) as assigned_tickets')
+            ->selectRaw('COUNT(DISTINCT tickets_solved.idTicket) as solved_tickets')
+            ->selectRaw('COUNT(DISTINCT CASE WHEN tickets_assigned.status = "QUEUED" THEN tickets_assigned.idTicket END) as inbox_tickets')
+            ->leftJoin('tickets as tickets_assigned', 'tickets_assigned.assigned_to_user_id', '=', 'users.id')
+            ->leftJoin('tickets as tickets_solved', 'tickets_solved.solved_by_user_id', '=', 'users.id')
             ->groupBy('users.id', 'users.name', 'users.email', 'users.password', 'users.role', 'users.status', 'users.campaign', 'users.area', 'users.site', 'users.username', 'users.phone', 'users.email_verified_at', 'users.remember_token', 'users.created_at', 'users.updated_at')
             ->orderBy('users.name')
             ->get();

@@ -7,6 +7,8 @@ use App\Models\Ticket;
 use App\Models\User;
 use App\Notifications\TicketAssignedNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AssignController extends Controller
 {
@@ -16,43 +18,37 @@ class AssignController extends Controller
         $tlDiv    = strtolower($tl->campaign ?? '');
 
         // ── Loker Dispatch TL: tiket unassigned & belum closed >= 6 jam ──
-        $dispatchQuery = Ticket::where('condition', '!=', 'Closed')
+        $dispatchTickets = Ticket::where('condition', '!=', 'Closed')
             ->where(function ($q) {
-                $q->whereNull('assignby')
-                  ->orWhere('assignby', '')
+                $q->whereNull('assigned_to_user_id')
                   ->orWhereIn('condition', ['QUEUED', 'UNASSIGNED']);
             })
             ->where(function ($q) {
                 $q->where('created_at', '<=', now()->subHours(6))
                   ->orWhere('datereport', '<=', now()->subHours(6));
-            });
-
-        if ($tlDiv !== '') {
-            $dispatchQuery->whereRaw('LOWER(division_target) = ?', [$tlDiv]);
-        }
-
-        $dispatchTickets = $dispatchQuery
+            })
             ->orderByRaw("urgency_level DESC")          // VVIP → HVC → SE → Emergency → Low
             ->orderBy('created_at', 'asc')              // usia terlama dulu
             ->orderByRaw('(COALESCE(lapul,0) + COALESCE(gaul,0)) DESC')
             ->get();
 
         // ── Semua tiket (termasuk low/emergency) — untuk re-assign jika diperlukan ──
-        $allTicketsQuery = Ticket::whereNotIn('condition', ['Closed', 'Saltik']);
-        if ($tlDiv !== '') {
-            $allTicketsQuery->whereRaw('LOWER(division_target) = ?', [$tlDiv]);
-        }
-        $allTickets = $allTicketsQuery
+        $allTickets = Ticket::whereNotIn('condition', ['Closed', 'Saltik'])
             ->orderByRaw("COALESCE(urgency_level,1) DESC")
             ->orderBy('created_at', 'asc')
             ->get();
 
-        // ── Agent aktif dari divisi TL (case-insensitive) ──
-        $agentQuery = User::where('role', 'agent')->where('status', 'active');
-        if ($tlDiv !== '') {
-            $agentQuery->whereRaw('LOWER(campaign) = ?', [$tlDiv]);
-        }
-        $agents = $agentQuery->orderBy('name')->get();
+        // ── Agent aktif secara global ──
+        // Fix P-1: Gunakan withExists() untuk menghindari N+1 query
+        // (sebelumnya loop filter memanggil workSessions() 1x per agent)
+        $agents = User::where('role', 'agent')
+            ->where('status', 'active')
+            ->withExists(['workSessions as is_online_today' => function ($query) {
+                $query->where('work_date', today())
+                      ->where('status', 'online');
+            }])
+            ->orderBy('name')
+            ->get();
 
         // ── Statistik ringkas ──
         $stats = [
@@ -60,12 +56,8 @@ class AssignController extends Controller
             'vvip_count'     => $dispatchTickets->where('urgency_level', 5)->count(),
             'hvc_count'      => $dispatchTickets->where('urgency_level', 4)->count(),
             'se_count'       => $dispatchTickets->where('urgency_level', 3)->count(),
-            'agents_online'  => $agents->filter(function ($agent) {
-                return $agent->workSessions()
-                    ->where('work_date', today())
-                    ->where('status', 'online')
-                    ->exists();
-            })->count(),
+            // Fix P-1: Tidak lagi N+1, cukup filter kolom virtual is_online_today
+            'agents_online'  => $agents->where('is_online_today', true)->count(),
         ];
 
         return view('team-leader.assign', compact(
@@ -79,33 +71,39 @@ class AssignController extends Controller
             'agent_id' => 'required|exists:users,id'
         ]);
 
-        $agent = User::find($request->agent_id);
-        $tl    = auth()->user();
-        $tlDiv = strtolower($tl->campaign ?? '');
+        // Fix R-1: Gunakan findOrFail agar 404 jika agent tidak ditemukan
+        $agent = User::findOrFail($request->agent_id);
 
-        // Pastikan agent dari divisi yang sama dengan TL (jika TL punya divisi)
-        if ($tlDiv !== '' && strtolower($agent->campaign ?? '') !== $tlDiv) {
-            return redirect()->back()->with('error', 'Agent tidak berada dalam divisi Anda.');
-        }
+        // Fix R-1: Bungkus update data penting dengan DB::transaction()
+        // Jika update gagal di tengah jalan, semua perubahan otomatis di-rollback
+        DB::transaction(function () use ($ticket, $agent) {
+            $ticket->update([
+                'assigned_to_user_id' => $agent->id,
+                'status'              => 'ASSIGNED',
+                'condition'           => 'ASSIGNED',
+            ]);
+        });
 
-        $ticket->update([
-            'assignby'  => $agent->name,
-            'status'    => 'ASSIGNED',
-            'condition' => 'ASSIGNED',
-        ]);
-
-        // Broadcast event ke agent
+        // Broadcast event ke agent (di luar transaction — boleh gagal, tidak rollback data)
         try {
             event(new \App\Events\TicketAssigned($ticket, $agent->id));
         } catch (\Exception $e) {
-            \Log::warning("TicketAssigned event failed: " . $e->getMessage());
+            Log::warning('TicketAssigned event failed', [
+                'ticket_id' => $ticket->idTicket,
+                'agent_id'  => $agent->id,
+                'error'     => $e->getMessage(),
+            ]);
         }
 
-        // Kirim notifikasi ke agent
+        // Kirim notifikasi ke agent (di luar transaction — boleh gagal, tidak rollback data)
         try {
             $agent->notify(new TicketAssignedNotification($ticket, $agent));
         } catch (\Exception $e) {
-            \Log::warning("Notification failed: " . $e->getMessage());
+            Log::warning('TicketAssignedNotification failed', [
+                'ticket_id' => $ticket->idTicket,
+                'agent_id'  => $agent->id,
+                'error'     => $e->getMessage(),
+            ]);
         }
 
         return redirect()->back()->with('success', 'Ticket berhasil di-dispatch ke ' . $agent->name);

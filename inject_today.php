@@ -9,7 +9,7 @@ echo "Injecting 5 tickets strictly for TODAY...\n";
 
 for ($i = 1; $i <= 5; $i++) {
     Ticket::create([
-        "assignby" => $agentName,
+        "assigned_to_user_id" => $agent ? $agent->id : null,
         "topic" => "TODAY TICKET #" . $i,
         "condition" => "In Progress",
         "status" => "ASSIGNED",

@@ -31,3 +31,19 @@ Schedule::command('tickets:sync-telkomsel')
         ->hourly()
         ->withoutOverlapping()
         ->appendOutputTo(storage_path('logs/telkomsel-sync.log'));
+
+// ====================================================================================
+// SIMULASI REAL-TIME TICKET FLOW
+// ====================================================================================
+// Command tickets:inject dijalankan setiap 2 menit untuk inject tiket baru
+// secara otomatis dengan random urgency, topik, dan data pelanggan.
+// Ini mensimulasikan alur tiket real-time jika website ini di-deploy secara nyata.
+//
+// Untuk menjalankan scheduler di local: php artisan schedule:work
+// Log disimpan di: storage/logs/ticket-injector.log
+// ====================================================================================
+
+Schedule::command('tickets:inject')
+        ->everyTwoMinutes()
+        ->withoutOverlapping()
+        ->appendOutputTo(storage_path('logs/ticket-injector.log'));

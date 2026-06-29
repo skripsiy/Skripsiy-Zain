@@ -61,7 +61,7 @@ class TicketDetailController extends Controller
                     'status' => 'Closed',
                     'condition' => 'Closed',
                     'datesolved' => now(),
-                    'solvedby' => Auth::user()->name
+                    'solved_by_user_id' => Auth::id()
                 ]);
                 $message = 'Ticket has been closed successfully!';
                 break;
@@ -79,7 +79,7 @@ class TicketDetailController extends Controller
                     'status' => 'Closed',
                     'condition' => 'Saltik',
                     'datesolved' => now(),
-                    'solvedby' => Auth::user()->name
+                    'solved_by_user_id' => Auth::id()
                 ]);
                 $message = 'Ticket has been marked as SALTIK and closed!';
                 break;

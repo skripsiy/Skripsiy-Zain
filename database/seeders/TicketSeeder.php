@@ -21,10 +21,7 @@ class TicketSeeder extends Seeder
         
         Schema::enableForeignKeyConstraints();
 
-        $agents = User::where('role', 'agent')->pluck('name')->toArray();
-        if (empty($agents)) {
-            $agents = ['Agent 1', 'Agent 2', 'Agent 3'];
-        }
+        $agents = User::where('role', 'agent')->get();
 
         $topics = ['LOS Merah', 'Koneksi Lambat', 'Router Blank', 'Biling Tagihan', 'Putus-putus'];
         $conditions = ['QUEUED', 'In Progress', 'Closed'];
@@ -33,8 +30,10 @@ class TicketSeeder extends Seeder
             $date = Carbon::now()->subDays(rand(0, 10))->subHours(rand(0, 24));
             $condition = $conditions[array_rand($conditions)];
             $isClosed = $condition === 'Closed';
-            $agentAssigned = $agents[array_rand($agents)];
-            
+            $agent = $agents->isEmpty() ? null : $agents->random();
+            $agentId = $agent ? $agent->id : null;
+            $agentName = $agent ? $agent->name : null;
+
             Ticket::create([
                 'datereport' => $date,
                 'jenisTicket' => 'INTERNET',
@@ -49,10 +48,10 @@ class TicketSeeder extends Seeder
                 'contact' => 'Telepon',
                 'reportedpriority' => 'High',
                 'condition' => $condition,
-                'assignby' => $agentAssigned,
-                'solvedby' => $isClosed ? $agentAssigned : null,
+                'assigned_to_user_id' => $agentId,
+                'solved_by_user_id' => $isClosed ? $agentId : null,
                 'hasil_pengecekan' => $isClosed ? 'Pengecekan port sisi ODP normal. Reset sisi OLT sukses. Koneksi pelanggan kembali Up.' : 'Masih dalam proses eskalasi regu teknisi.',
-                'resolved_by_agent' => $isClosed ? $agentAssigned : null,
+                'resolved_by_agent' => $isClosed ? $agentName : null,
                 'eksalasiVia' => 'Telegram',
             ]);
         }

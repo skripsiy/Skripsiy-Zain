@@ -713,7 +713,7 @@
             <!-- Result count -->
             <div class="filter-results">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <span class="result-count" id="visibleCount">{{ $dispatchTickets->count() }}</span> of {{ $dispatchTickets->count() }} tickets
+                <span class="result-count" id="visibleCount">{{ $allTickets->count() }}</span> of {{ $allTickets->count() }} tickets
             </div>
         </div>
         
@@ -733,10 +733,10 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($dispatchTickets as $ticket)
+                    @forelse($allTickets as $ticket)
                         <tr
                             data-date="{{ $ticket->datereport ? $ticket->datereport->format('Y-m-d') : ($ticket->created_at ? $ticket->created_at->format('Y-m-d') : '') }}"
-                            data-assigned="{{ ($ticket->assignby || in_array($ticket->status, ['ASSIGNED','In Progress','DISPATCHED'])) ? 'assigned' : 'unassigned' }}"
+                            data-assigned="{{ ($ticket->assigned_to_user_id || in_array($ticket->status, ['ASSIGNED','In Progress','DISPATCHED'])) ? 'assigned' : 'unassigned' }}"
                         >
                             <td><strong>IN{{ str_pad($ticket->idTicket, 8, '0', STR_PAD_LEFT) }}</strong></td>
                             <td>{{ $ticket->namacust ?? 'N/A' }}</td>
@@ -777,13 +777,13 @@
                                 @endif
                             </td>
                             <td>
-                                @if($ticket->assignby)
+                                @if($ticket->assigned_to_user_id)
                                     <span class="status-badge status-assigned">ASSIGNED</span>
                                 @else
                                     <span class="status-badge status-unassigned">QUEUED</span>
                                 @endif
                             </td>
-                            <td>{{ $ticket->assignby ?? '-' }}</td>
+                            <td>{{ $ticket->assignedTo?->name ?? '-' }}</td>
                             <td>
                                 <form action="{{ route('team-leader.assign.ticket', $ticket->idTicket) }}" method="POST" class="assign-form">
                                     @csrf

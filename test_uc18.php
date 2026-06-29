@@ -24,7 +24,7 @@ for ($i = 1; $i <= 25; $i++) {
     $date = now()->subDays($daysAgo);
 
     Ticket::create([
-        "assignby" => ($status !== "QUEUED") ? $agentName : null,
+        "assigned_to_user_id" => ($status !== "QUEUED" && $agent) ? $agent->id : null,
         "topic" => $topic . " #" . $i,
         "condition" => $condition,
         "status" => $status,

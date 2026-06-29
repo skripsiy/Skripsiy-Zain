@@ -101,4 +101,20 @@ class User extends Authenticatable
     {
         return $this->hasMany(AgentWorkSession::class);
     }
+
+    /**
+     * Tickets assigned to this user
+     */
+    public function assignedTickets()
+    {
+        return $this->hasMany(Ticket::class, 'assigned_to_user_id');
+    }
+
+    /**
+     * Tickets solved by this user
+     */
+    public function solvedTickets()
+    {
+        return $this->hasMany(Ticket::class, 'solved_by_user_id');
+    }
 }

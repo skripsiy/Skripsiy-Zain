@@ -82,7 +82,7 @@ class InjectDemoTicketsSeeder extends Seeder
                     $ticket->idTicket,
                     $ticket->namacust,
                     strtoupper($ticket->division_target),
-                    $ticket->assignby ?? 'UNASSIGNED'
+                    $ticket->assignedTo?->name ?? 'UNASSIGNED'
                 ));
 
                 $totalInjected++;

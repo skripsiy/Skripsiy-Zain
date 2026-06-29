@@ -19,7 +19,7 @@ class UserSeeder extends Seeder
             'name' => 'Admin User',
             'email' => 'admin@xena.com',
             'role' => 'admin',
-            'password' => Hash::make('password123'),
+            'password' => 'password123',
         ]);
 
         // Create Team Leader User
@@ -27,7 +27,7 @@ class UserSeeder extends Seeder
             'name' => 'Team Leader',
             'email' => 'teamleader@xena.com',
             'role' => 'team_leader',
-            'password' => Hash::make('password123'),
+            'password' => 'password123',
         ]);
 
         // Create Agent User
@@ -35,7 +35,7 @@ class UserSeeder extends Seeder
             'name' => 'Agent User',
             'email' => 'agent@xena.com',
             'role' => 'agent',
-            'password' => Hash::make('password123'),
+            'password' => 'password123',
         ]);
     }
 }

@@ -3,114 +3,130 @@
 namespace App\Http\Controllers\Agent;
 
 use App\Http\Controllers\Controller;
+use App\Models\Ticket;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
     public function index(Request $request)
     {
         $timeFilter = $request->input('time_filter', 'today');
-        $agentName = auth()->user()->name;
+        $agentId    = auth()->id();
 
-        $query = \App\Models\Ticket::where('assignby', $agentName);
+        // Fix P-2: Cache stats dashboard agent selama 60 detik
+        // Menggunakan key dinamis per user agent agar tidak saling tertimpa
+        $cacheKey = "agent_dashboard_stats_{$agentId}_{$timeFilter}";
 
-        $now = \Carbon\Carbon::now();
-        switch ($timeFilter) {
-            case 'week':
-                $query->where(function($q) use ($now) {
-                    $q->where('created_at', '>=', $now->copy()->startOfWeek())
-                      ->orWhere('updated_at', '>=', $now->copy()->startOfWeek());
-                });
-                break;
-            case 'month':
-                $query->where(function($q) use ($now) {
-                    $q->where('created_at', '>=', $now->copy()->startOfMonth())
-                      ->orWhere('updated_at', '>=', $now->copy()->startOfMonth());
-                });
-                break;
-            case 'quarter':
-                $query->where(function($q) use ($now) {
-                    $q->where('created_at', '>=', $now->copy()->startOfQuarter())
-                      ->orWhere('updated_at', '>=', $now->copy()->startOfQuarter());
-                });
-                break;
-            case 'today':
-            default:
-                $query->where(function($q) use ($now) {
-                    $q->whereDate('created_at', $now->today())
-                      ->orWhereDate('updated_at', $now->today());
-                });
-                break;
-        }
+        [$stats, $chartData, $tickets] = Cache::remember($cacheKey, 60, function () use ($timeFilter, $agentId) {
+            $now   = Carbon::now();
+            $query = Ticket::where('assigned_to_user_id', $agentId);
 
-        $tickets = $query->orderBy('created_at', 'desc')->get();
-
-        $woAvailable = $tickets->count();
-        $consume = $tickets->where('condition', 'In Progress')->count();
-        $closed = $tickets->whereIn('condition', ['Closed', 'Saltik'])->count();
-        $dispatched = $tickets->whereIn('condition', ['Dispatched', 'DISPATCHED'])->count();
-        $ods = $tickets->whereIn('condition', ['Closed', 'Saltik'])->count();
-
-        $stats = [
-            'wo_available' => $woAvailable,
-            'consume' => $consume,
-            'ods' => $ods,
-            'closed' => $closed,
-            'dispatched' => $dispatched,
-        ];
-
-        // Prepare Chart Data
-        $barChartLabels = [];
-        $barChartConsume = [];
-        $barChartOds = [];
-        $barChartClosed = [];
-        $barChartDispatched = [];
-        $lineChartLabels = [];
-        $lineChartData = [];
-
-        // Group by Day for Bar Chart (Last 10 days)
-        $groupedByDay = $tickets->groupBy(function($ticket) {
-            return \Carbon\Carbon::parse($ticket->created_at)->format('d');
-        });
-        
-        for ($i = 9; $i >= 0; $i--) {
-            $dayLabel = \Carbon\Carbon::now()->subDays($i)->format('d');
-            $barChartLabels[] = $dayLabel;
-            
-            if (isset($groupedByDay[$dayLabel])) {
-                $dayTickets = $groupedByDay[$dayLabel];
-                $barChartConsume[] = $dayTickets->where('condition', 'In Progress')->count();
-                $barChartClosed[] = $dayTickets->whereIn('condition', ['Closed', 'Saltik'])->count();
-                $barChartOds[] = $dayTickets->whereIn('condition', ['Closed', 'Saltik'])->count();
-                $barChartDispatched[] = $dayTickets->whereIn('condition', ['Dispatched', 'DISPATCHED'])->count();
-            } else {
-                $barChartConsume[] = 0;
-                $barChartClosed[] = 0;
-                $barChartOds[] = 0;
-                $barChartDispatched[] = 0;
+            switch ($timeFilter) {
+                case 'week':
+                    $query->where(function ($q) use ($now) {
+                        $q->where('created_at', '>=', $now->copy()->startOfWeek())
+                          ->orWhere('updated_at', '>=', $now->copy()->startOfWeek());
+                    });
+                    break;
+                case 'month':
+                    $query->where(function ($q) use ($now) {
+                        $q->where('created_at', '>=', $now->copy()->startOfMonth())
+                          ->orWhere('updated_at', '>=', $now->copy()->startOfMonth());
+                    });
+                    break;
+                case 'quarter':
+                    $query->where(function ($q) use ($now) {
+                        $q->where('created_at', '>=', $now->copy()->startOfQuarter())
+                          ->orWhere('updated_at', '>=', $now->copy()->startOfQuarter());
+                    });
+                    break;
+                case 'today':
+                default:
+                    $query->where(function ($q) use ($now) {
+                        $q->whereDate('created_at', $now->today())
+                          ->orWhereDate('updated_at', $now->today());
+                    });
+                    break;
             }
-        }
 
-        // Group by Hour for Line Chart (00 to 23)
-        $groupedByHour = $tickets->groupBy(function($ticket) {
-            return \Carbon\Carbon::parse($ticket->created_at)->format('H');
+            // Fix P-2: DB Aggregation untuk performa tinggi
+            $statsRow = (clone $query)->selectRaw("
+                COUNT(*) as wo_available,
+                SUM(CASE WHEN LOWER(`condition`) = 'in progress' THEN 1 ELSE 0 END) as consume,
+                SUM(CASE WHEN LOWER(`condition`) IN ('closed', 'saltik') THEN 1 ELSE 0 END) as closed,
+                SUM(CASE WHEN LOWER(`condition`) = 'dispatched' THEN 1 ELSE 0 END) as dispatched
+            ")->first();
+
+            $stats = [
+                'wo_available' => (int) $statsRow->wo_available,
+                'consume'      => (int) $statsRow->consume,
+                'closed'       => (int) $statsRow->closed,
+                'dispatched'   => (int) $statsRow->dispatched,
+                'ods'          => (int) $statsRow->closed, // ODS sama dengan closed
+            ];
+
+            // Chart: Grouping di PHP side (DB-agnostic)
+            $chartTickets = (clone $query)
+                ->select(['created_at', 'condition'])
+                ->where('created_at', '>=', Carbon::now()->subDays(9)->startOfDay())
+                ->orderBy('created_at')
+                ->get();
+
+            $groupedByDay = $chartTickets->groupBy(fn($t) => Carbon::parse($t->created_at)->format('d'));
+
+            $barChartLabels     = [];
+            $barChartConsume    = [];
+            $barChartOds        = [];
+            $barChartClosed     = [];
+            $barChartDispatched = [];
+
+            for ($i = 9; $i >= 0; $i--) {
+                $dayLabel             = Carbon::now()->subDays($i)->format('d');
+                $barChartLabels[]     = $dayLabel;
+                $dayRows              = $groupedByDay[$dayLabel] ?? collect();
+
+                $barChartConsume[]    = $dayRows->filter(fn($t) => strcasecmp($t->condition, 'In Progress') === 0)->count();
+                $barChartClosed[]     = $dayRows->filter(fn($t) => in_array(strtolower($t->condition), ['closed', 'saltik']))->count();
+                $barChartOds[]        = $dayRows->filter(fn($t) => in_array(strtolower($t->condition), ['closed', 'saltik']))->count();
+                $barChartDispatched[] = $dayRows->filter(fn($t) => strcasecmp($t->condition, 'Dispatched') === 0)->count();
+            }
+
+            // Line Chart: group by hour
+            $todayTickets    = (clone $query)
+                ->select(['created_at'])
+                ->whereDate('created_at', Carbon::today())
+                ->get();
+
+            $groupedByHour   = $todayTickets->groupBy(fn($t) => (int) Carbon::parse($t->created_at)->format('G'));
+
+            $lineChartLabels = [];
+            $lineChartData   = [];
+            for ($i = 0; $i <= 23; $i++) {
+                $lineChartLabels[] = str_pad($i, 2, '0', STR_PAD_LEFT);
+                $lineChartData[]   = isset($groupedByHour[$i]) ? $groupedByHour[$i]->count() : 0;
+            }
+
+            $chartData = [
+                'barLabels'          => $barChartLabels,
+                'barConsume'         => $barChartConsume,
+                'barOds'             => $barChartOds,
+                'barClosed'          => $barChartClosed,
+                'barDispatched'      => $barChartDispatched,
+                'lineLabels'         => $lineChartLabels,
+                'lineData'           => $lineChartData,
+            ];
+
+            // Limit data tiket terbaru yang di-load ke tabel (max 50 baris, bukan ribuan)
+            $tickets = (clone $query)
+                ->orderBy('created_at', 'desc')
+                ->limit(50)
+                ->get();
+
+            return [$stats, $chartData, $tickets];
         });
-        
-        for ($i = 0; $i <= 23; $i++) {
-            $hourLabel = str_pad($i, 2, '0', STR_PAD_LEFT);
-            $lineChartLabels[] = $hourLabel;
-            $lineChartData[] = isset($groupedByHour[$hourLabel]) ? $groupedByHour[$hourLabel]->count() : 0;
-        }
-
-        $chartData = [
-            'barLabels' => $barChartLabels,
-            'barConsume' => $barChartConsume,
-            'barOds' => $barChartOds,
-            'barClosed' => $barChartClosed,
-            'barDispatched' => $barChartDispatched,
-            'lineLabels' => $lineChartLabels,
-            'lineData' => $lineChartData,
-        ];
 
         return view('agent.dashboard', compact('tickets', 'stats', 'timeFilter', 'chartData'));
     }
@@ -120,11 +136,10 @@ class DashboardController extends Controller
      */
     public function filterTickets(Request $request)
     {
-        $agentName = auth()->user()->name;
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
-        $query = \App\Models\Ticket::where('assignby', $agentName);
+        $query = \App\Models\Ticket::where('assigned_to_user_id', auth()->id());
 
         if ($startDate && $endDate) {
             $query->where(function($q) use ($startDate, $endDate) {
@@ -138,13 +153,15 @@ class DashboardController extends Controller
             });
         }
 
-        $tickets = $query->orderBy('created_at', 'desc')->get();
+        // Fix P-1: Tambahkan eager loading ->with('assignedTo')
+        // Sebelumnya: tiap $ticket->assignedTo?->name trigger 1 query tersendiri (N+1)
+        $tickets = $query->with('assignedTo')->orderBy('created_at', 'desc')->get();
 
         $result = $tickets->map(function ($ticket) {
             return [
                 'code' => 'IN' . str_pad($ticket->idTicket, 8, '0', STR_PAD_LEFT),
                 'symptomp' => $ticket->topic ?? '-',
-                'agent' => $ticket->assignby ?? '-',
+                'agent' => $ticket->assignedTo?->name ?? '-',
                 'date' => $ticket->created_at->format('Y-m-d'),
                 'status' => $ticket->condition,
             ];
