@@ -42,6 +42,40 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_inactive_users_cannot_authenticate(): void
+    {
+        $user = User::factory()->create([
+            'status' => 'inactive',
+        ]);
+
+        $response = $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertGuest();
+        $response->assertSessionHasErrors([
+            'email' => 'Akun Anda telah dinonaktifkan. Silakan hubungi administrator.',
+        ]);
+    }
+
+    public function test_suspended_users_cannot_authenticate(): void
+    {
+        $user = User::factory()->create([
+            'status' => 'suspend',
+        ]);
+
+        $response = $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertGuest();
+        $response->assertSessionHasErrors([
+            'email' => 'Akun Anda ditangguhkan. Silakan hubungi administrator.',
+        ]);
+    }
+
     public function test_users_can_logout(): void
     {
         $user = User::factory()->create();

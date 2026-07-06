@@ -49,6 +49,21 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        // F-09: tolak login jika akun tidak aktif
+        $user = Auth::user();
+        if ($user->status !== 'active') {
+            Auth::logout();
+            RateLimiter::hit($this->throttleKey());
+
+            $message = $user->status === 'suspend'
+                ? 'Akun Anda ditangguhkan. Silakan hubungi administrator.'
+                : 'Akun Anda telah dinonaktifkan. Silakan hubungi administrator.';
+
+            throw ValidationException::withMessages([
+                'email' => $message,
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 
