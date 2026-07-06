@@ -92,35 +92,30 @@ class UserController extends Controller
     {
         Gate::authorize('delete', $user);
 
-        // UC-12: Prevent admin from deleting themselves
+        // Cegah admin menonaktifkan akun sendiri
         if (auth()->id() === $user->id) {
             return redirect()->route('admin.users.index')
-                ->with('error', 'Security Alert: You cannot delete your own admin account.');
+                ->with('error', 'Anda tidak dapat menonaktifkan akun Anda sendiri.');
         }
 
-        // UC-12: Prevent deleting users that have tickets assigned
-        $hasTickets = \App\Models\Ticket::where('assigned_to_user_id', $user->id)
-            ->orWhere('solved_by_user_id', $user->id)
-            ->exists();
-
-        if ($hasTickets) {
+        // Kalau user sudah 'inactive', kembalikan pesan info tanpa mengubah apa-apa
+        if ($user->status === 'inactive') {
             return redirect()->route('admin.users.index')
-                ->with('error', "Cannot delete {$user->name} because they have associated tickets in the database.");
+                ->with('info', 'User sudah dalam status nonaktif.');
         }
 
         try {
-            $user->delete();
+            $user->update(['status' => 'inactive']);
             return redirect()->route('admin.users.index')
-                ->with('success', 'User deleted successfully.');
+                ->with('success', "User {$user->name} berhasil dinonaktifkan.");
         } catch (\Exception $e) {
-            // Fix S-3: Log detail error secara internal, jangan ekspos ke UI
-            \Illuminate\Support\Facades\Log::error('User delete failed', [
+            \Illuminate\Support\Facades\Log::error('User deactivation failed', [
                 'admin_id'       => auth()->id(),
                 'target_user_id' => $user->id,
                 'error'          => $e->getMessage(),
             ]);
             return redirect()->route('admin.users.index')
-                ->with('error', 'Gagal menghapus user. Silakan coba lagi atau hubungi administrator.');
+                ->with('error', 'Gagal menonaktifkan user. Silakan coba lagi.');
         }
     }
 }

@@ -81,7 +81,7 @@ class AdminUserManagementTest extends TestCase
             ->delete(route('admin.users.destroy', $agent));
 
         $response->assertRedirect(route('admin.users.index'));
-        $response->assertSessionHas('success', "Pengguna {$agent->name} berhasil dinonaktifkan.");
+        $response->assertSessionHas('success', "User {$agent->name} berhasil dinonaktifkan.");
         $this->assertDatabaseHas('users', [
             'id' => $agent->id,
             'status' => 'inactive',

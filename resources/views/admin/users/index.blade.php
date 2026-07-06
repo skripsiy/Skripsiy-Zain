@@ -370,6 +370,13 @@
                                     </svg>
                                     <span>Edit</span>
                                 </button>
+                                <button class="btn-action btn-delete" onclick="confirmDeactivate({{ $user->id }}, '{{ $user->name }}')" title="Nonaktifkan" {{ $user->status === 'inactive' ? 'disabled' : '' }} style="width: auto; padding: 0 12px; gap: 6px; {{ $user->status === 'inactive' ? 'opacity: 0.5; cursor: not-allowed;' : '' }}">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                                        <line x1="12" y1="2" x2="12" y2="12"></line>
+                                    </svg>
+                                    <span>Nonaktifkan</span>
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -491,6 +498,11 @@
             </form>
         </div>
     </div>
+    <!-- Delete Confirmation (using form) -->
+    <form id="deleteForm" method="POST" style="display: none;">
+        @csrf
+        @method('DELETE')
+    </form>
     
     
     <x-slot name="additionalScripts">
@@ -552,6 +564,15 @@
         
         function closeEditModal() {
             document.getElementById('editRoleModal').classList.remove('active');
+        }
+        
+        // Deactivate confirmation
+        function confirmDeactivate(id, name) {
+            if (confirm(`Nonaktifkan user "${name}"? User tidak akan bisa login tapi datanya tetap tersimpan.`)) {
+                const form = document.getElementById('deleteForm');
+                form.action = `{{ url('admin/users') }}/${id}`;
+                form.submit();
+            }
         }
         
 
