@@ -14,13 +14,11 @@ class DashboardController extends Controller
     {
         $timeFilter = $request->input('time_filter', 'today');
 
-        // Fix P-2: Cache stats 60 detik — dashboard tidak perlu realtime tiap request
-        // Sebelumnya: load SEMUA tiket ke PHP lalu filter() di memory
-        // Sekarang: 1 query SQL aggregation, di-cache 60 detik
+
         $cacheKey = "admin_dashboard_stats_{$timeFilter}";
 
         [$stats, $chartData, $tickets] = Cache::remember($cacheKey, 60, function () use ($timeFilter) {
-            $now   = Carbon::now();
+            $now = Carbon::now();
             $query = Ticket::query();
 
             switch ($timeFilter) {
@@ -49,9 +47,9 @@ class DashboardController extends Controller
 
             $stats = [
                 'wo_available' => (int) $statsRow->wo_available,
-                'consume'      => (int) $statsRow->consume,
-                'ods'          => (int) $statsRow->ods,
-                'closed'       => (int) $statsRow->closed,
+                'consume' => (int) $statsRow->consume,
+                'ods' => (int) $statsRow->ods,
+                'closed' => (int) $statsRow->closed,
             ];
 
             // Chart: Ambil data tiket untuk chart (limit 500, bukan semua)
@@ -65,44 +63,44 @@ class DashboardController extends Controller
             // Bar Chart: group by day
             $groupedByDay = $chartTickets->groupBy(fn($t) => Carbon::parse($t->created_at)->format('d'));
 
-            $barChartLabels   = [];
-            $barChartConsume  = [];
-            $barChartOds      = [];
-            $barChartClosed   = [];
+            $barChartLabels = [];
+            $barChartConsume = [];
+            $barChartOds = [];
+            $barChartClosed = [];
 
             for ($i = 9; $i >= 0; $i--) {
-                $dayLabel           = Carbon::now()->subDays($i)->format('d');
-                $barChartLabels[]   = $dayLabel;
-                $dayRows            = $groupedByDay[$dayLabel] ?? collect();
+                $dayLabel = Carbon::now()->subDays($i)->format('d');
+                $barChartLabels[] = $dayLabel;
+                $dayRows = $groupedByDay[$dayLabel] ?? collect();
 
-                $barChartConsume[]  = $dayRows->filter(fn($t) => strcasecmp($t->condition, 'In Progress') === 0)->count();
-                $barChartClosed[]   = $dayRows->filter(fn($t) => strcasecmp($t->condition, 'Closed') === 0)->count();
-                $barChartOds[]      = $dayRows->filter(fn($t) => strcasecmp($t->condition, 'Closed') === 0)->count();
+                $barChartConsume[] = $dayRows->filter(fn($t) => strcasecmp($t->condition, 'In Progress') === 0)->count();
+                $barChartClosed[] = $dayRows->filter(fn($t) => strcasecmp($t->condition, 'Closed') === 0)->count();
+                $barChartOds[] = $dayRows->filter(fn($t) => strcasecmp($t->condition, 'Closed') === 0)->count();
             }
 
             // Line Chart: group by hour (only today's tickets)
-            $todayTickets    = (clone $query)
+            $todayTickets = (clone $query)
                 ->select(['created_at'])
                 ->whereDate('created_at', Carbon::today())
                 ->get();
 
             // Gunakan format 'G' (tanpa leading zero) agar key konsisten dengan integer $i
-            $groupedByHour   = $todayTickets->groupBy(fn($t) => (int) Carbon::parse($t->created_at)->format('G'));
+            $groupedByHour = $todayTickets->groupBy(fn($t) => (int) Carbon::parse($t->created_at)->format('G'));
 
             $lineChartLabels = [];
-            $lineChartData   = [];
+            $lineChartData = [];
             for ($i = 0; $i <= 23; $i++) {
                 $lineChartLabels[] = str_pad($i, 2, '0', STR_PAD_LEFT);
-                $lineChartData[]   = isset($groupedByHour[$i]) ? $groupedByHour[$i]->count() : 0;
+                $lineChartData[] = isset($groupedByHour[$i]) ? $groupedByHour[$i]->count() : 0;
             }
 
             $chartData = [
-                'barLabels'  => $barChartLabels,
+                'barLabels' => $barChartLabels,
                 'barConsume' => $barChartConsume,
-                'barOds'     => $barChartOds,
-                'barClosed'  => $barChartClosed,
+                'barOds' => $barChartOds,
+                'barClosed' => $barChartClosed,
                 'lineLabels' => $lineChartLabels,
-                'lineData'   => $lineChartData,
+                'lineData' => $lineChartData,
             ];
 
             // Ambil tiket terbaru untuk tabel (limit 50 — bukan semua)

@@ -350,6 +350,11 @@
         <form method="GET" action="{{ route('admin.reports.tickets') }}" id="filterForm">
             <div class="filter-row">
                 <div class="filter-group">
+                    <label>Keyword</label>
+                    <input type="text" name="keyword" id="keyword"
+                           placeholder="Cari tiket (pelanggan, no telp, deskripsi...)" value="{{ $keyword ?? '' }}">
+                </div>
+                <div class="filter-group">
                     <label>ID Tiket</label>
                     <input type="text" name="ticket_id" id="ticket_id"
                            placeholder="Cari ID tiket..." value="{{ $ticketId }}">

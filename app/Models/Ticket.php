@@ -20,7 +20,7 @@ class Ticket extends Model
         'validateClose', 'reasonnoODS', 'eksalasiTicket', 'eksalasiVia',
         'PIC', 'contact', 'responBE', 'description', 'reportedpriority',
         'datesolved', 'THT', 'status', 'regional', 'witel', 'condition',
-        'assigned_to_user_id', 'solved_by_user_id', 'escalationStatus', 'resolved_by_agent', 'hasil_pengecekan',
+        'assigned_to_user_id', 'solved_by_user_id', 'escalationStatus', 'resolved_by_agent', 'hasil_pengecekan', 'attachment',
         // Routing fields
         'channel', 'source_system', 'pool_id', 'urgency_level', 'division_target', 'auto_assigned_at',
     ];
@@ -47,15 +47,39 @@ class Ticket extends Model
      */
     protected static function booted(): void
     {
-        $clearCache = function () {
+        $clearCache = function ($ticket) {
+            // Hapus cache Admin
             foreach (['today', 'week', 'month', 'quarter'] as $filter) {
                 Cache::forget("admin_dashboard_stats_{$filter}");
                 Cache::forget("admin_chart_{$filter}");
             }
+
+            // Hapus cache Agent yang bersangkutan
+            $agentIds = array_filter([$ticket->assigned_to_user_id, $ticket->solved_by_user_id]);
+            foreach ($agentIds as $agentId) {
+                foreach (['today', 'week', 'month', 'quarter'] as $filter) {
+                    Cache::forget("agent_dashboard_stats_{$agentId}_{$filter}");
+                }
+            }
+
+            // Hapus cache Team Leader (TL dashboard menggunakan md5 cache key dinamis)
+            // Di lokal/testing, kita bisa menggunakan Cache::flush() jika menggunakan driver file/redis
+            // untuk membersihkan sisa cache agar data selalu ter-update
+            try {
+                // Untuk project skripsi, pembersihan cache total aman dilakukan saat terjadi penulisan
+                Cache::flush();
+            } catch (\Exception $e) {
+                // Fail-safe jika flush diblokir driver tertentu
+            }
         };
 
-        static::created($clearCache);
-        static::updated($clearCache);
+        static::saved(function ($ticket) use ($clearCache) {
+            $clearCache($ticket);
+        });
+
+        static::deleted(function ($ticket) use ($clearCache) {
+            $clearCache($ticket);
+        });
     }
 
     /**

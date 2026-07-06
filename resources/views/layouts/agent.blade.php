@@ -1,42 +1,47 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    
+
     <title>XENA - {{ $title ?? 'Agent Dashboard' }}</title>
-    
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    
+
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
         body {
             font-family: 'Poppins', sans-serif;
             background: #F5F5F5;
             min-height: 100vh;
         }
+
         .header {
             background: #FFFFFF;
             padding: 20px 40px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
+
         .logo {
             font-size: 24px;
             font-weight: 700;
@@ -46,15 +51,18 @@
             background-clip: text;
             letter-spacing: 0.5px;
         }
+
         .header-right {
             display: flex;
             gap: 20px;
             align-items: center;
         }
+
         .time-filter {
             display: flex;
             gap: 15px;
         }
+
         .time-filter button {
             padding: 8px 16px;
             border: none;
@@ -65,14 +73,17 @@
             cursor: pointer;
             transition: all 0.2s;
         }
+
         .time-filter button:hover,
         .time-filter button.active {
             color: #1F4A5E;
             font-weight: 600;
         }
+
         .user-menu {
             position: relative;
         }
+
         .user-avatar {
             width: 40px;
             height: 40px;
@@ -86,34 +97,40 @@
             font-weight: 600;
             font-size: 16px;
         }
+
         .user-dropdown {
             position: absolute;
             top: 50px;
             right: 0;
             background: white;
             border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             min-width: 200px;
             display: none;
             z-index: 1000;
         }
+
         .user-dropdown.show {
             display: block;
         }
+
         .user-info {
             padding: 15px;
             border-bottom: 1px solid #E5E5E5;
         }
+
         .user-name {
             font-weight: 600;
             color: #333;
             font-size: 14px;
         }
+
         .user-role {
             font-size: 12px;
             color: #666;
             margin-top: 2px;
         }
+
         .logout-btn {
             width: 100%;
             padding: 12px 15px;
@@ -126,21 +143,26 @@
             text-align: left;
             transition: all 0.2s;
         }
+
         .logout-btn:hover {
             background: #FFF5F5;
         }
-        html, body {
+
+        html,
+        body {
             height: 100%;
             margin: 0;
             padding: 0;
             overflow: hidden;
         }
+
         .container {
             display: flex;
             height: 100vh;
             overflow: hidden;
             max-width: 100%;
         }
+
         .sidebar {
             width: 50px;
             background: #FFFFFF;
@@ -149,8 +171,9 @@
             flex-direction: column;
             align-items: center;
             gap: 25px;
-            box-shadow: 2px 0 4px rgba(0,0,0,0.05);
+            box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
         }
+
         .sidebar-icon {
             width: 30px;
             height: 30px;
@@ -162,10 +185,12 @@
             transition: all 0.2s;
             text-decoration: none;
         }
+
         .sidebar-icon:hover,
         .sidebar-icon.active {
             color: #1F4A5E;
         }
+
         .main-content {
             flex: 1;
             padding: 15px 15px 20px 15px;
@@ -175,21 +200,23 @@
             height: calc(100vh - 70px);
             margin-left: 20px;
         }
+
         {{ $customStyles ?? '' }}
     </style>
-    
+
     {{ $additionalStyles ?? '' }}
 </head>
+
 <body>
     <!-- Header -->
     <div class="header">
         <div class="logo">XENA</div>
         <div class="header-right">
             {{ $headerContent ?? '' }}
-            
+
             <!-- Notification Bell -->
             <x-notification-bell />
-            
+
             <div class="user-menu">
                 <div class="user-avatar" onclick="toggleDropdown()">
                     {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
@@ -228,7 +255,7 @@
         }
 
         // Close dropdown when clicking outside
-        window.onclick = function(event) {
+        window.onclick = function (event) {
             if (!event.target.matches('.user-avatar')) {
                 const dropdown = document.getElementById('userDropdown');
                 if (dropdown.classList.contains('show')) {
@@ -236,7 +263,7 @@
                 }
             }
         }
-        
+
         {{ $additionalScripts ?? '' }}
     </script>
 
@@ -245,17 +272,17 @@
 
     <script type="module">
         // Toast Function
-        window.showToast = function(message, type = 'info') {
+        window.showToast = function (message, type = 'info') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
-            
+
             // Style based on type
             let bgColor = '#1F4A5E';
-            
+
             if (type === 'success') { bgColor = '#10B981'; }
             if (type === 'error') { bgColor = '#EF4444'; }
             if (type === 'warning') { bgColor = '#F59E0B'; }
-            
+
             toast.style.cssText = `
                 background: ${bgColor};
                 color: white;
@@ -272,18 +299,18 @@
                 transform: translateX(120%);
                 transition: transform 0.3s ease-out;
             `;
-            
+
             toast.innerHTML = `
                 <span>${message}</span>
             `;
-            
+
             container.appendChild(toast);
-            
+
             // Animate in
             setTimeout(() => {
                 toast.style.transform = 'translateX(0)';
             }, 100);
-            
+
             // Remove after 5 seconds
             setTimeout(() => {
                 toast.style.transform = 'translateX(120%)';
@@ -308,7 +335,7 @@
             if (window.Echo) {
                 clearInterval(checkInterval);
                 console.log('Echo is initialized, starting listeners...');
-                
+
                 // Agent Listener
                 @if(auth()->check() && auth()->user()->role === 'agent')
                     window.Echo.private('agent.{{ auth()->id() }}')
@@ -337,4 +364,5 @@
         }, 100);
     </script>
 </body>
+
 </html>

@@ -143,6 +143,61 @@ class ReportControllerTest extends TestCase
     }
 
 
+    public function test_admin_can_filter_tickets_report_by_keyword()
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+        ]);
+
+        // Ticket A has namacust = 'Budi Santoso'
+        $ticketA = Ticket::create([
+            'datereport' => now(),
+            'jenisTicket' => 'INTERNET',
+            'notelpCust' => '081294135917',
+            'namacust' => 'Budi Santoso',
+            'status' => 'ASSIGNED',
+            'condition' => 'ASSIGNED',
+            'division_target' => 'besfixed',
+        ]);
+
+        // Ticket B has detailticket = 'Koneksi lambat dan putus-putus'
+        $ticketB = Ticket::create([
+            'datereport' => now(),
+            'jenisTicket' => 'INTERNET',
+            'notelpCust' => '081294135918',
+            'namacust' => 'Rina Wijaya',
+            'detailticket' => 'Koneksi lambat dan putus-putus',
+            'status' => 'Closed',
+            'condition' => 'Closed',
+            'division_target' => 'besfixed',
+        ]);
+
+        // Search for keyword 'Budi'
+        $response = $this->actingAs($admin)
+            ->get(route('admin.reports.tickets', [
+                'keyword' => 'Budi',
+            ]));
+
+        $response->assertOk();
+        $response->assertViewHas('tickets', function ($tickets) use ($ticketA, $ticketB) {
+            return $tickets->getCollection()->contains('idTicket', $ticketA->idTicket) &&
+                   !$tickets->getCollection()->contains('idTicket', $ticketB->idTicket);
+        });
+
+        // Search for keyword 'putus-putus'
+        $response = $this->actingAs($admin)
+            ->get(route('admin.reports.tickets', [
+                'keyword' => 'putus-putus',
+            ]));
+
+        $response->assertOk();
+        $response->assertViewHas('tickets', function ($tickets) use ($ticketA, $ticketB) {
+            return !$tickets->getCollection()->contains('idTicket', $ticketA->idTicket) &&
+                   $tickets->getCollection()->contains('idTicket', $ticketB->idTicket);
+        });
+    }
+
+
     public function test_admin_can_export_user_reports_to_excel()
     {
         $admin = User::factory()->create([

@@ -82,7 +82,15 @@ class TicketDetailController extends Controller
             'description'        => 'nullable|string|max:5000',
             'resolved_by_agent'  => 'nullable|string|max:255',
             'hasil_pengecekan'   => 'nullable|string|max:5000',
+            'attachment'         => 'nullable|file|mimes:pdf,png,jpg,jpeg|max:10240',
         ]);
+        
+        if ($request->hasFile('attachment')) {
+            $file = $request->file('attachment');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('attachments'), $fileName);
+            $validated['attachment'] = 'attachments/' . $fileName;
+        }
         
         $ticket->update($validated);
         

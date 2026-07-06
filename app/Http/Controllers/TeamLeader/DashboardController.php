@@ -16,8 +16,6 @@ class DashboardController extends Controller
         $timeFilter = $request->input('time_filter', 'today');
         $search     = $request->input('search');
 
-        // Fix P-2: Gunakan Cache 60 detik agar tidak overload saat 50+ user mengakses bersamaan.
-        // Cache key menyertakan parameter pencarian agar filter tetap berfungsi dinamis.
         $cacheKey = 'tl_dashboard_stats_' . md5($timeFilter . '_' . $search);
 
         [$stats, $chartData, $tickets] = Cache::remember($cacheKey, 60, function () use ($timeFilter, $search) {

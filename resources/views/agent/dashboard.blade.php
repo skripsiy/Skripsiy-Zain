@@ -591,7 +591,7 @@
                     </tr>
                 </thead>
                 <tbody id="ticketTableBody">
-                    @forelse($tickets->take(10) as $ticket)
+                    @forelse($tickets as $ticket)
                     <tr>
                         <td>IN{{ str_pad($ticket->idTicket, 8, '0', STR_PAD_LEFT) }}</td>
                         <td>{{ $ticket->topic ?? '-' }}</td>

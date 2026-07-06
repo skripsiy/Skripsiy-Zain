@@ -389,7 +389,7 @@
     <div class="view-toggle">
         <button class="toggle-btn active" onclick="switchView('overview')">Team Overview</button>
         <button class="toggle-btn" onclick="switchView('stats')">Team Stats</button>
-        <button class="toggle-btn" onclick="switchView('saltik')">Performance SALTIK</button>
+        {{-- <button class="toggle-btn" onclick="switchView('saltik')">Performance SALTIK</button> --}}
     </div>
 
     <!-- Team Stats View (4 Cards) -->

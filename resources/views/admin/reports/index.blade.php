@@ -1,13 +1,14 @@
 <x-agent-layout>
     <x-slot name="title">User Reports</x-slot>
     
+    <!-- [MODIFIKASI] Menu navigasi atas diselaraskan dengan Laporan Tiket (nav-tab active pada Laporan User) -->
     <x-slot name="headerContent">
         <div style="display:flex; gap:12px; align-items:center;">
-            <a href="{{ route('admin.reports.index') }}" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;background:#1F4A5E;color:#fff;text-decoration:none;">
+            <a href="{{ route('admin.reports.index') }}" class="nav-tab active">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
                 Laporan User
             </a>
-            <a href="{{ route('admin.reports.tickets') }}" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:500;color:#64748b;text-decoration:none;transition:all .2s;" onmouseover="this.style.background='#f1f5f9';this.style.color='#1F4A5E'" onmouseout="this.style.background='';this.style.color='#64748b'">
+            <a href="{{ route('admin.reports.tickets') }}" class="nav-tab">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
                 Laporan Tiket
             </a>
@@ -33,6 +34,22 @@
     </x-slot>
     
     <x-slot name="customStyles">
+        /* ───── Nav Tabs ───── */
+        .nav-tab {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #64748b;
+            text-decoration: none;
+            transition: all .2s;
+        }
+        .nav-tab:hover { background: #f1f5f9; color: #1F4A5E; }
+        .nav-tab.active { background: #1F4A5E; color: #fff; }
+
         .header-actions {
             display: flex;
             gap: 15px;
@@ -87,97 +104,32 @@
         .download-btn svg {
             flex-shrink: 0;
         }
-        
-        .users-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-        
-        .user-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-        }
-        
-        .user-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 20px rgba(44, 95, 124, 0.15);
-            border-color: #2C5F7C;
-        }
-        
-        .user-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        
-        .user-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #2C5F7C 0%, #1F4A5E 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 20px;
-            font-weight: 700;
-            flex-shrink: 0;
-        }
-        
-        .user-info {
-            flex: 1;
-            min-width: 0;
-        }
-        
-        .user-name {
-            font-size: 16px;
-            font-weight: 700;
-            color: #1F4A5E;
-            margin-bottom: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .user-role {
-            font-size: 12px;
-            color: #666;
-            text-transform: capitalize;
-        }
-        
-        .user-stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            padding-top: 15px;
-            border-top: 1px solid #E5E7EB;
-        }
-        
-        .stat-item {
+
+        /* [MODIFIKASI] Penyesuaian Style Badge Role sesuai wireframe */
+        .role-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: lowercase;
             text-align: center;
         }
-        
-        .stat-value {
-            font-size: 24px;
-            font-weight: 700;
-            color: #2C5F7C;
-            line-height: 1;
-            margin-bottom: 4px;
+
+        .role-agent {
+            background: #F3F4F6;
+            color: #374151;
+            border: 1px solid #E5E7EB;
         }
-        
-        .stat-label {
-            font-size: 11px;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        .role-team-leader {
+            background: #EFF6FF;
+            color: #1E40AF;
+            border: 1px solid #DBEAFE;
+        }
+        .role-admin {
+            background: #FEF2F2;
+            color: #991B1B;
+            border: 1px solid #FEE2E2;
         }
         
         /* Modal Styles */
@@ -209,7 +161,6 @@
             animation: slideUp 0.3s ease;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             
-            /* Hide scrollbar */
             scrollbar-width: none;
             -ms-overflow-style: none;
         }
@@ -228,17 +179,13 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #E5E7EB;
+            margin-bottom: 5px;
         }
         .modal-title {
             font-size: 20px;
             font-weight: 700;
             color: #1F4A5E;
         }
-        
-
         
         .close-modal {
             background: none;
@@ -303,7 +250,6 @@
             overflow-y: auto;
             padding-right: 10px;
             
-            /* Custom scrollbar */
             scrollbar-width: thin;
             scrollbar-color: #2C5F7C #E5E7EB;
         }
@@ -354,7 +300,7 @@
             color: #666;
         }
         
-        .ticket-status {
+        .status-badge {
             padding: 4px 12px;
             border-radius: 20px;
             font-size: 11px;
@@ -367,9 +313,14 @@
             color: #92400E;
         }
         
-        .status-in-progress {
+        .status-assigned {
             background: #DBEAFE;
             color: #1E40AF;
+        }
+        
+        .status-in-progress {
+            background: #FFF9C4;
+            color: #F57F17;
         }
         
         .status-solved {
@@ -379,6 +330,38 @@
         
         .status-closed {
             background: #E5E7EB;
+            color: #374151;
+        }
+
+        .condition-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+        .condition-closed {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+        .condition-expired {
+            background: #E5E7EB;
+            color: #4B5563;
+        }
+        .condition-in-progress {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+        .condition-dispatched {
+            background: #EFF6FF;
+            color: #1E40AF;
+        }
+        .condition-saltik {
+            background: #FAF5FF;
+            color: #6B21A8;
+        }
+        .condition-open {
+            background: #F3F4F6;
             color: #374151;
         }
         
@@ -402,58 +385,106 @@
         }
     </x-slot>
     
-    <div style="margin-bottom:16px;">
-        <div class="search-box" style="max-width:280px;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="m21 21-4.35-4.35"></path>
-            </svg>
-            <input type="text" id="searchInput" placeholder="Cari nama user...">
+    <!-- [MODIFIKASI] Bagian Judul Reports, Sub-judul, Kotak Pencarian, dan tombol Export Excel diselaraskan rapi -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap: 15px;">
+        <div style="margin-bottom:0;">
+            <h1 style="font-size: 24px; font-weight: 700; color: #0f172a;">Reports</h1>
+            <p style="font-size: 13px; color: #64748b; margin-top: 2px;">Daily performance report per user</p>
+        </div>
+        <div style="display:flex; gap:12px; align-items:center;">
+            <div class="search-box" style="max-width:280px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <input type="text" id="searchInput" placeholder="Cari nama user...">
+            </div>
+            
+            <a href="{{ route('admin.reports.export.users') }}" class="download-btn" style="padding: 9px 16px; font-size:13px; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Export Excel
+            </a>
         </div>
     </div>
 
-    <div class="users-grid" id="usersGrid">
-        @forelse($users as $user)
-
-        <div class="user-card" onclick="viewUserDetails({{ $user->id }})">
-            <div class="user-header">
-                <div class="user-avatar">
-                    {{ strtoupper(substr($user->name, 0, 1)) }}
-                </div>
-                <div class="user-info">
-                    <div class="user-name">{{ $user->name }}</div>
-                    <div class="user-role">{{ str_replace('_', ' ', $user->role) }}</div>
-                </div>
-            </div>
-            <div class="user-stats">
-                <div class="stat-item">
-                    <div class="stat-value">{{ $user->assigned_tickets }}</div>
-                    <div class="stat-label">Assigned</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">{{ $user->solved_tickets }}</div>
-                    <div class="stat-label">Solved</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">{{ $user->inbox_tickets }}</div>
-                    <div class="stat-label">Inbox</div>
-                </div>
-            </div>
+    @if(session('success'))
+        <div class="alert alert-success">
+            {{ session('success') }}
         </div>
-        @empty
-        <div class="empty-state" style="grid-column: 1 / -1;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
-            </svg>
-            <p>No users found</p>
+    @endif
+    
+    @if(session('error'))
+        <div class="alert alert-error" style="background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5;">
+            {{ session('error') }}
         </div>
-        @endforelse
+    @endif
+    
+    <!-- [MODIFIKASI] Mengubah card-grid (.users-grid) menjadi tabel tabular terstruktur sesuai wireframe referensi -->
+    <div class="table-card" style="background:#FFFFFF; border-radius:12px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.06); border: 1px solid #E5E7EB; margin-top:20px;">
+        <div style="font-size:15px; font-weight:700; color:#1e293b; margin-bottom:15px; padding-bottom:10px; border-bottom:1px solid #F3F4F6;">
+            User Performance — Today ({{ \Carbon\Carbon::now()->format('j M Y') }})
+        </div>
+        <div class="table-wrapper" style="overflow-x:auto; border:1px solid #E5E7EB; border-radius:10px;">
+            <table id="usersTable" style="width:100%; border-collapse:collapse; font-size:13px; min-width:950px;">
+                <thead>
+                    <tr style="background:#1F4A5E; color:#FFFFFF;">
+                        <th style="padding:12px 15px; text-align:left; font-weight:600; font-size:11px; text-transform:uppercase;">#</th>
+                        <th style="padding:12px 15px; text-align:left; font-weight:600; font-size:11px; text-transform:uppercase;">Name</th>
+                        <th style="padding:12px 15px; text-align:left; font-weight:600; font-size:11px; text-transform:uppercase;">Email</th>
+                        <th style="padding:12px 15px; text-align:left; font-weight:600; font-size:11px; text-transform:uppercase;">Role</th>
+                        <th style="padding:12px 15px; text-align:center; font-weight:600; font-size:11px; text-transform:uppercase;">Assigned (Today)</th>
+                        <th style="padding:12px 15px; text-align:center; font-weight:600; font-size:11px; text-transform:uppercase;">Solved (Today)</th>
+                        <th style="padding:12px 15px; text-align:center; font-weight:600; font-size:11px; text-transform:uppercase;">Inbox (Queued)</th>
+                        <th style="padding:12px 15px; text-align:left; font-weight:600; font-size:11px; text-transform:uppercase;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($users as $user)
+                    <tr style="border-bottom:1px solid #F3F4F6; transition: background 0.2s;" onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background=''">
+                        <td style="padding:12px 15px; font-weight:500;">{{ $loop->iteration }}</td>
+                        <td style="padding:12px 15px; font-weight:600; color:#1F4A5E;">{{ $user->name }}</td>
+                        <td style="padding:12px 15px; color:#4a5568;">{{ $user->email }}</td>
+                        <td style="padding:12px 15px;">
+                            @if($user->role === 'agent')
+                                <span class="role-badge role-agent">agent</span>
+                            @elseif($user->role === 'team_leader')
+                                <span class="role-badge role-team-leader">team_leader</span>
+                            @elseif($user->role === 'admin')
+                                <span class="role-badge role-admin">admin</span>
+                            @else
+                                <span class="role-badge" style="background:#F3F4F6; color:#374151;">{{ $user->role }}</span>
+                            @endif
+                        </td>
+                        <td style="padding:12px 15px; font-weight:600; text-align:center;">{{ $user->assigned_tickets }}</td>
+                        <td style="padding:12px 15px; font-weight:600; text-align:center;">{{ $user->solved_tickets }}</td>
+                        <td style="padding:12px 15px; font-weight:600; text-align:center;">{{ $user->inbox_tickets }}</td>
+                        <td style="padding:12px 15px;">
+                            <button class="btn-detail-view" onclick="viewUserDetails({{ $user->id }})" style="padding:6px 12px; border:1px solid #cbd5e1; background:#FFFFFF; color:#334155; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='#f1f5f9';this.style.borderColor='#94a3b8'" onmouseout="this.style.background='#FFFFFF';this.style.borderColor='#cbd5e1'">
+                                View Detail
+                            </button>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr class="empty-row">
+                        <td colspan="8" style="text-align: center; padding: 40px; color: #9CA3AF;">
+                            No users found
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
     
     <!-- User Details Modal -->
     <div id="userDetailsModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
+                <!-- [MODIFIKASI] Mengubah modal title dan tombol close -->
                 <h2 class="modal-title" id="modalUserName">User Details</h2>
                 <button class="close-modal" onclick="closeUserDetails()">&times;</button>
             </div>
@@ -467,17 +498,19 @@
     </div>
     
     <x-slot name="additionalScripts">
+        // [MODIFIKASI] Diubah untuk mendukung pencarian di baris tabel, bukan kartu grid
         // Search functionality
         document.getElementById('searchInput').addEventListener('keyup', function() {
             const searchValue = this.value.toLowerCase();
-            const userCards = document.querySelectorAll('.user-card');
+            const userRows = document.querySelectorAll('#usersTable tbody tr:not(.empty-row)');
             
-            userCards.forEach(card => {
-                const text = card.textContent.toLowerCase();
-                card.style.display = text.includes(searchValue) ? '' : 'none';
+            userRows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchValue) ? '' : 'none';
             });
         });
         
+        // [MODIFIKASI] AJAX detail user dengan data gabungan tiket dalam satu tabel terpadu sesuai wireframe
         // View user details
         async function viewUserDetails(userId) {
             const modal = document.getElementById('userDetailsModal');
@@ -490,75 +523,94 @@
                 const response = await fetch(`/admin/reports/user/${userId}`);
                 const data = await response.json();
                 
-                document.getElementById('modalUserName').textContent = data.user.name + ' - Ticket Report';
+                // Format judul: {Nama User} — Daily Detail
+                document.getElementById('modalUserName').textContent = data.user.name + ' — Daily Detail';
                 
-                let statusCountsHtml = '';
-                for (const [status, count] of Object.entries(data.status_counts || {})) {
-                    statusCountsHtml += `
-                        <div class="detail-stat-card">
-                            <div class="detail-stat-value">${count}</div>
-                            <div class="detail-stat-label">${status}</div>
-                        </div>
+                // Gabungkan tiket (inbox, assigned, solved) untuk tabel tunggal terpadu
+                const allTicketsMap = {};
+                (data.inbox_tickets || []).forEach(t => allTicketsMap[t.idTicket] = t);
+                (data.assigned_tickets || []).forEach(t => allTicketsMap[t.idTicket] = t);
+                (data.solved_tickets || []).forEach(t => allTicketsMap[t.idTicket] = t);
+                const combinedTickets = Object.values(allTicketsMap).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                
+                const ticketsHtml = combinedTickets.length > 0 ? combinedTickets.map(ticket => {
+                    const ticketCode = 'TK' + String(ticket.idTicket).padStart(6, '0');
+                    const dateStr = ticket.datereport ? ticket.datereport.substring(0, 10) : '-';
+                    const statusClass = 'status-' + ticket.status.toLowerCase().replace(' ', '-');
+                    const conditionClass = 'condition-' + (ticket.condition ? ticket.condition.toLowerCase().replace(' ', '-') : 'open');
+                    
+                    return `
+                        <tr style="border-bottom: 1px solid #E5E7EB; transition: background 0.2s;" onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background=''">
+                            <td style="padding:10px 12px; font-weight: 700; color: #1a202c;">${ticketCode}</td>
+                            <td style="padding:10px 12px;">${ticket.namacust || '-'}</td>
+                            <td style="padding:10px 12px;">
+                                <span class="status-badge ${statusClass}">${ticket.status}</span>
+                            </td>
+                            <td style="padding:10px 12px;">
+                                <span class="condition-badge ${conditionClass}">${ticket.condition || 'Open'}</span>
+                            </td>
+                            <td style="padding:10px 12px; color:#4a5568;">${dateStr}</td>
+                        </tr>
                     `;
-                }
+                }).join('') : `
+                    <tr>
+                        <td colspan="5" style="text-align:center; padding:30px; color:#9ca3af;">No tickets found for this user</td>
+                    </tr>
+                `;
+                
+                // Format tanggal hari ini: d M Y
+                const todayVal = new Date();
+                const formattedDate = todayVal.getDate() + ' ' + todayVal.toLocaleString('en-US', { month: 'short' }) + ' ' + todayVal.getFullYear();
                 
                 modalContent.innerHTML = `
-                    <div class="detail-stats">
-                        <div class="detail-stat-card">
-                            <div class="detail-stat-value">${data.assigned_count}</div>
-                            <div class="detail-stat-label">Total Assigned</div>
-                        </div>
-                        <div class="detail-stat-card">
-                            <div class="detail-stat-value">${data.solved_count}</div>
-                            <div class="detail-stat-label">Total Solved</div>
-                        </div>
-                        <div class="detail-stat-card">
-                            <div class="detail-stat-value">${data.inbox_count}</div>
-                            <div class="detail-stat-label">In Inbox</div>
-                        </div>
-                        ${statusCountsHtml}
+                    <div style="font-size:13px; color:#64748b; margin-top:-15px; margin-bottom:20px;">
+                        Breakdown for ${formattedDate}
                     </div>
                     
-                    <div class="tickets-section">
-                        <div class="section-title">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="12" cy="7" r="4"></circle>
-                            </svg>
-                            Inbox Tickets (${data.inbox_count})
+                    <!-- 3 Ringkasan angka di atas tabel (Assigned, Solved, Inbox) -->
+                    <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+                        <div style="padding: 12px 24px; border: 1.5px solid #CBD5E1; border-radius: 8px; font-size: 14px; font-weight: 600; background: #F8FAFC; color: #1E293B;">
+                            <span style="font-size: 20px; font-weight: 700; margin-right: 5px; color: #2C5F7C;">${data.assigned_count}</span> Assigned
                         </div>
-                        <div class="ticket-list">
-                            ${data.inbox_tickets.length > 0 ? data.inbox_tickets.map(ticket => `
-                                <div class="ticket-item">
-                                    <div class="ticket-info">
-                                        <div class="ticket-id">Ticket #${ticket.idTicket}</div>
-                                        <div class="ticket-detail">${ticket.namacust} - ${ticket.jenisTicket || 'N/A'}</div>
-                                    </div>
-                                    <span class="ticket-status status-${ticket.status.toLowerCase().replace(' ', '-')}">${ticket.status}</span>
-                                </div>
-                            `).join('') : '<div class="empty-state"><p>No inbox tickets</p></div>'}
+                        <div style="padding: 12px 24px; border: 1.5px solid #CBD5E1; border-radius: 8px; font-size: 14px; font-weight: 600; background: #F8FAFC; color: #1E293B;">
+                            <span style="font-size: 20px; font-weight: 700; margin-right: 5px; color: #10B981;">${data.solved_count}</span> Solved
+                        </div>
+                        <div style="padding: 12px 24px; border: 1.5px solid #CBD5E1; border-radius: 8px; font-size: 14px; font-weight: 600; background: #F8FAFC; color: #1E293B;">
+                            <span style="font-size: 20px; font-weight: 700; margin-right: 5px; color: #F59E0B;">${data.inbox_count}</span> Inbox
                         </div>
                     </div>
                     
-                    <div class="tickets-section">
-                        <div class="section-title">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="9 11 12 14 22 4"></polyline>
-                                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                    <!-- Tabel Tiket User Terpadu -->
+                    <div style="margin-top: 20px;">
+                        <div style="overflow-x: auto; border: 1px solid #E2E8F0; border-radius: 8px; max-height: 350px; overflow-y: auto;">
+                            <table style="width:100%; border-collapse:collapse; font-size:12px; min-width: 600px;">
+                                <thead style="background:#1F4A5E; color:#FFFFFF; position:sticky; top:0; z-index:10;">
+                                    <tr>
+                                        <th style="padding:10px 12px; text-align:left; font-weight:600; font-size:11px; text-transform:uppercase;">Ticket Code</th>
+                                        <th style="padding:10px 12px; text-align:left; font-weight:600; font-size:11px; text-transform:uppercase;">Customer</th>
+                                        <th style="padding:10px 12px; text-align:left; font-weight:600; font-size:11px; text-transform:uppercase;">Status</th>
+                                        <th style="padding:10px 12px; text-align:left; font-weight:600; font-size:11px; text-transform:uppercase;">Condition</th>
+                                        <th style="padding:10px 12px; text-align:left; font-weight:600; font-size:11px; text-transform:uppercase;">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${ticketsHtml}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Tombol Aksi Bawah Modal -->
+                    <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 25px; border-top: 1px solid #E2E8F0; padding-top: 20px;">
+                        <button class="btn-cancel" onclick="closeUserDetails()" style="flex:none; width:auto; padding: 10px 24px; font-size:13px; font-weight:600;">Close</button>
+                        <a href="/admin/reports/export/user-tickets/${data.user.id}" class="download-btn" style="padding: 10px 24px; font-size:13px; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:8px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
                             </svg>
-                            All Assigned Tickets (${data.assigned_count})
-                        </div>
-                        <div class="ticket-list">
-                            ${data.assigned_tickets.length > 0 ? data.assigned_tickets.map(ticket => `
-                                <div class="ticket-item">
-                                    <div class="ticket-info">
-                                        <div class="ticket-id">Ticket #${ticket.idTicket}</div>
-                                        <div class="ticket-detail">${ticket.namacust} - ${ticket.jenisTicket || 'N/A'}</div>
-                                    </div>
-                                    <span class="ticket-status status-${ticket.status.toLowerCase().replace(' ', '-')}">${ticket.status}</span>
-                                </div>
-                            `).join('') : '<div class="empty-state"><p>No assigned tickets</p></div>'}
-                        </div>
+                            Export User Tickets
+                        </a>
                     </div>
                 `;
             } catch (error) {

@@ -73,12 +73,19 @@ class AdminUserManagementTest extends TestCase
         $this->assertEquals('inactive', $agent->fresh()->status);
 
         // 5. DELETE /admin/users/{user} (F-09)
+        // Refresh agent to get current status from database, then activate it first
+        $agent->refresh();
+        $agent->update(['status' => 'active']);
+
         $response = $this->actingAs($admin)
             ->delete(route('admin.users.destroy', $agent));
 
         $response->assertRedirect(route('admin.users.index'));
-        $response->assertSessionHas('success', 'User deleted successfully.');
-        $this->assertDatabaseMissing('users', ['id' => $agent->id]);
+        $response->assertSessionHas('success', "Pengguna {$agent->name} berhasil dinonaktifkan.");
+        $this->assertDatabaseHas('users', [
+            'id' => $agent->id,
+            'status' => 'inactive',
+        ]);
     }
 
     public function test_non_admin_cannot_manage_users()

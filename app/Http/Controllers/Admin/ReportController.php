@@ -84,7 +84,7 @@ class ReportController extends Controller
     }
 
     /**
-     * Tampilkan laporan tiket menyeluruh dengan filter (F-25)
+     * Tampilkan laporan tiket menyeluruh dengan filter (F-10)
      */
     public function ticketsReport(Request $request)
     {
@@ -97,6 +97,7 @@ class ReportController extends Controller
         $status    = $request->get('status');
         $agentId   = $request->get('agent_id');
         $ticketId  = $request->get('ticket_id');
+        $keyword   = $request->get('keyword');
 
         // Query tiket
         $query = Ticket::query();
@@ -104,6 +105,16 @@ class ReportController extends Controller
         // Filter ticket ID
         if ($ticketId) {
             $query->where('idTicket', 'like', "%{$ticketId}%");
+        }
+
+        // Filter keyword (F-10)
+        if ($keyword) {
+            $query->where(function ($q) use ($keyword) {
+                foreach (['idTicket', 'namacust', 'notelpCust', 'idlaporan', 'detailticket', 'resume',
+                          'description', 'topic', 'topicDetail', 'PIC', 'noSC', 'klasifikasi', 'regional', 'witel'] as $col) {
+                    $q->orWhere($col, 'like', "%{$keyword}%");
+                }
+            });
         }
 
         // Filter tanggal masuk (datereport)
@@ -140,6 +151,14 @@ class ReportController extends Controller
         // Statistik ringkas dari hasil filter (tanpa paginate)
         $statsQuery = Ticket::query();
         if ($ticketId)  $statsQuery->where('idTicket', 'like', "%{$ticketId}%");
+        if ($keyword) {
+            $statsQuery->where(function ($q) use ($keyword) {
+                foreach (['idTicket', 'namacust', 'notelpCust', 'idlaporan', 'detailticket', 'resume',
+                          'description', 'topic', 'topicDetail', 'PIC', 'noSC', 'klasifikasi', 'regional', 'witel'] as $col) {
+                    $q->orWhere($col, 'like', "%{$keyword}%");
+                }
+            });
+        }
         if ($dateFrom)  $statsQuery->whereDate('datereport', '>=', $dateFrom);
         if ($dateTo)    $statsQuery->whereDate('datereport', '<=', $dateTo);
         if ($status) {
@@ -173,7 +192,7 @@ class ReportController extends Controller
         return view('admin.reports.tickets', compact(
             'tickets', 'agents', 'statusCounts',
             'totalTickets', 'closedCount', 'assignedCount', 'queuedCount',
-            'dateFrom', 'dateTo', 'status', 'agentId', 'ticketId'
+            'dateFrom', 'dateTo', 'status', 'agentId', 'ticketId', 'keyword'
         ));
     }
 

@@ -735,7 +735,7 @@
                 <tbody>
                     @forelse($allTickets as $ticket)
                         <tr
-                            data-date="{{ $ticket->datereport ? $ticket->datereport->format('Y-m-d') : ($ticket->created_at ? $ticket->created_at->format('Y-m-d') : '') }}"
+                            data-date="{{ ($ticket->datereport ?? $ticket->created_at) ? \Illuminate\Support\Carbon::parse($ticket->datereport ?? $ticket->created_at)->format('Y-m-d') : '' }}"
                             data-assigned="{{ ($ticket->assigned_to_user_id || in_array($ticket->status, ['ASSIGNED','In Progress','DISPATCHED'])) ? 'assigned' : 'unassigned' }}"
                         >
                             <td><strong>IN{{ str_pad($ticket->idTicket, 8, '0', STR_PAD_LEFT) }}</strong></td>

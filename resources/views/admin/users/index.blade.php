@@ -363,19 +363,12 @@
                         </td>
                         <td>
                             <div class="action-buttons">
-                                <button class="btn-action btn-edit" onclick="openEditModal({{ $user->id }}, '{{ $user->name }}', '{{ $user->role }}', '{{ $user->campaign }}', '{{ $user->site }}', '{{ $user->area }}', '{{ $user->status ?? 'active' }}')" title="Edit Role">
+                                <button class="btn-action btn-edit" onclick="openEditModal({{ $user->id }}, '{{ $user->name }}', '{{ $user->role }}', '{{ $user->campaign }}', '{{ $user->site }}', '{{ $user->area }}', '{{ $user->status ?? 'active' }}')" title="Edit Role" style="width: auto; padding: 0 12px; gap: 6px;">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                     </svg>
-                                </button>
-                                <button class="btn-action btn-delete" onclick="confirmDelete({{ $user->id }}, '{{ $user->name }}')" title="Delete User">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M3 6h18"></path>
-                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                        <line x1="10" y1="11" x2="10" y2="17"></line>
-                                        <line x1="14" y1="11" x2="14" y2="17"></line>
-                                    </svg>
+                                    <span>Edit</span>
                                 </button>
                             </div>
                         </td>
@@ -489,7 +482,6 @@
                     <select name="status" id="editStatus" class="form-select" required>
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
-                        <option value="suspend">Suspend</option>
                     </select>
                 </div>
                 <div class="form-actions">
@@ -500,11 +492,6 @@
         </div>
     </div>
     
-    <!-- Delete Confirmation (using form) -->
-    <form id="deleteForm" method="POST" style="display: none;">
-        @csrf
-        @method('DELETE')
-    </form>
     
     <x-slot name="additionalScripts">
         // Search functionality
@@ -535,6 +522,30 @@
             document.getElementById('editSite').value = site || '';
             document.getElementById('editArea').value = area || '';
             document.getElementById('editStatus').value = status || 'active';
+
+            // Lock dropdown ganti status (dan role) jika admin mengedit dirinya sendiri
+            const currentUserId = {{ auth()->id() }};
+            const statusSelect = document.getElementById('editStatus');
+            const roleSelect = document.getElementById('editRole');
+            
+            if (id === currentUserId) {
+                statusSelect.style.pointerEvents = 'none';
+                statusSelect.style.backgroundColor = '#f3f4f6';
+                statusSelect.tabIndex = -1;
+
+                roleSelect.style.pointerEvents = 'none';
+                roleSelect.style.backgroundColor = '#f3f4f6';
+                roleSelect.tabIndex = -1;
+            } else {
+                statusSelect.style.pointerEvents = 'auto';
+                statusSelect.style.backgroundColor = '';
+                statusSelect.removeAttribute('tabindex');
+
+                roleSelect.style.pointerEvents = 'auto';
+                roleSelect.style.backgroundColor = '';
+                roleSelect.removeAttribute('tabindex');
+            }
+
             document.getElementById('editRoleForm').action = `{{ url('admin/users') }}/${id}/role`;
             document.getElementById('editRoleModal').classList.add('active');
         }
@@ -543,14 +554,7 @@
             document.getElementById('editRoleModal').classList.remove('active');
         }
         
-        // Delete confirmation
-        function confirmDelete(id, name) {
-            if (confirm(`Are you sure you want to delete user "${name}"?`)) {
-                const form = document.getElementById('deleteForm');
-                form.action = `{{ url('admin/users') }}/${id}`;
-                form.submit();
-            }
-        }
+
         
         // Close modals when clicking outside
         window.onclick = function(event) {

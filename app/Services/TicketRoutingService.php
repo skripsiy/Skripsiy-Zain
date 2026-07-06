@@ -143,16 +143,22 @@ class TicketRoutingService
             return false; // Tidak ada agent online, biarkan di queue
         }
 
-        // Round-robin: ambil index dari cache, increment, wrap around
-        $cacheKey = "rr_index_global";
-        $index    = Cache::get($cacheKey, 0);
+        // Round-robin: ambil index dari database settings, increment, wrap around
+        $settingKey = "rr_index_global";
+        $setting    = \App\Models\Setting::firstOrCreate(
+            ['key' => $settingKey],
+            ['value' => '0']
+        );
+        $index = (int) $setting->value;
 
         if ($index >= $onlineAgents->count()) {
             $index = 0;
         }
 
         $agent = $onlineAgents[$index];
-        Cache::put($cacheKey, ($index + 1) % $onlineAgents->count(), 3600);
+        $setting->update([
+            'value' => (string) (($index + 1) % $onlineAgents->count())
+        ]);
 
         // Assign tiket ke agent menggunakan assigned_to_user_id
         $ticket->update([
