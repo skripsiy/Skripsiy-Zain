@@ -627,15 +627,9 @@
                     'saltik'   => 'background:#FEF3C7;color:#92400E',
                     default    => 'background:#F3F4F6;color:#374151',
                 };
-                $tlDivIcon = match($tlDiv) {
-                    'area'     => '🌐',
-                    'besfixed' => '🔧',
-                    'saltik'   => '💬',
-                    default    => '📋',
-                };
             @endphp
             <span style="{{ $tlDivClass }};padding:5px 16px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">
-                {{ $tlDivIcon }} Divisi {{ strtoupper($tlDiv) }}
+                Divisi {{ strtoupper($tlDiv) }}
             </span>
             @endif
         </div>
@@ -648,15 +642,24 @@
             <div class="stat-value">{{ $stats['dispatch_count'] }}</div>
         </div>
         <div class="stat-card">
-            <div class="stat-label">⭐ VVIP/Management</div>
+            <div class="stat-label" style="display: flex; align-items: center; gap: 6px;">
+                <span style="background:#92400E; width:8px; height:8px; border-radius:50%; display:inline-block;"></span>
+                VVIP/Management
+            </div>
             <div class="stat-value" style="color:#92400E;">{{ $stats['vvip_count'] }}</div>
         </div>
         <div class="stat-card">
-            <div class="stat-label">🟣 HVC</div>
+            <div class="stat-label" style="display: flex; align-items: center; gap: 6px;">
+                <span style="background:#6B46C1; width:8px; height:8px; border-radius:50%; display:inline-block;"></span>
+                HVC
+            </div>
             <div class="stat-value" style="color:#6B46C1;">{{ $stats['hvc_count'] }}</div>
         </div>
         <div class="stat-card">
-            <div class="stat-label">🔴 Super Emergency</div>
+            <div class="stat-label" style="display: flex; align-items: center; gap: 6px;">
+                <span style="background:#C53030; width:8px; height:8px; border-radius:50%; display:inline-block;"></span>
+                Super Emergency
+            </div>
             <div class="stat-value" style="color:#C53030;">{{ $stats['se_count'] }}</div>
         </div>
         <div class="stat-card">
@@ -743,14 +746,15 @@
                             <td>
                                 @php
                                     $urgBadge = match((int)($ticket->urgency_level ?? 1)) {
-                                        5 => ['label'=>'⭐ VVIP/Management','style'=>'background:#FEF3C7;color:#92400E;border:1px solid #F6AD55;'],
-                                        4 => ['label'=>'🟣 HVC','style'=>'background:#F5F0FF;color:#6B46C1;border:1px solid #B794F4;'],
-                                        3 => ['label'=>'🔴 Super Emergency','style'=>'background:#FFF5F5;color:#C53030;border:1px solid #FC8181;'],
-                                        2 => ['label'=>'🟡 Emergency','style'=>'background:#FFFBEA;color:#B7791F;border:1px solid #F6E05E;'],
-                                        default => ['label'=>'⚪ Low Emergency','style'=>'background:#EDF2F7;color:#4A5568;'],
+                                        5 => ['label'=>'VVIP/Management', 'color'=>'#92400E', 'style'=>'background:#FEF3C7;color:#92400E;border:1px solid #F6AD55;'],
+                                        4 => ['label'=>'HVC', 'color'=>'#6B46C1', 'style'=>'background:#F5F0FF;color:#6B46C1;border:1px solid #B794F4;'],
+                                        3 => ['label'=>'Super Emergency', 'color'=>'#C53030', 'style'=>'background:#FFF5F5;color:#C53030;border:1px solid #FC8181;'],
+                                        2 => ['label'=>'Emergency', 'color'=>'#B7791F', 'style'=>'background:#FFFBEA;color:#B7791F;border:1px solid #F6E05E;'],
+                                        default => ['label'=>'Low Emergency', 'color'=>'#4A5568', 'style'=>'background:#EDF2F7;color:#4A5568;'],
                                     };
                                 @endphp
-                                <span class="status-badge" style="{{ $urgBadge['style'] }}font-size:10px;">
+                                <span class="status-badge" style="{{ $urgBadge['style'] }}font-size:10px; display:inline-flex; align-items:center; gap:5px;">
+                                    <span style="background-color:{{ $urgBadge['color'] }}; width:6px; height:6px; border-radius:50%; display:inline-block;"></span>
                                     {{ $urgBadge['label'] }}
                                 </span>
                             </td>
@@ -815,7 +819,7 @@
                     @empty
                         <tr>
                             <td colspan="9" style="text-align: center; padding: 40px; color: #999;">
-                                🎉 Tidak ada tiket prioritas tinggi saat ini. Semua aman!
+                                Tidak ada tiket prioritas tinggi saat ini. Semua aman!
                             </td>
                         </tr>
                     @endforelse

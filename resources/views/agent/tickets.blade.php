@@ -601,14 +601,8 @@
                         'saltik'   => 'div-saltik',
                         default    => 'div-besfixed',
                     };
-                    $divIcon = match($agentDiv) {
-                        'area'     => '🌐',
-                        'besfixed' => '🔧',
-                        'saltik'   => '💬',
-                        default    => '📋',
-                    };
                 @endphp
-                <span class="division-banner {{ $divClass }}">{{ $divIcon }} {{ strtoupper($agentDiv) }}</span>
+                <span class="division-banner {{ $divClass }}">{{ strtoupper($agentDiv) }}</span>
             </div>
             <div class="header-actions">
                 <form method="GET" action="{{ route('agent.tickets') }}" class="search-box">

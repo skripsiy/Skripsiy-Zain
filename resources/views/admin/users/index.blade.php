@@ -428,11 +428,22 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Campaign</label>
-                    <input type="text" name="campaign" class="form-input">
+                    <select name="campaign" class="form-select">
+                        <option value="">Select Campaign</option>
+                        <option value="besfixed">Besfixed</option>
+                        <option value="saltik">Saltik</option>
+                        <option value="C4">C4</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Area</label>
-                    <input type="text" name="area" class="form-input">
+                    <select name="area" class="form-select">
+                        <option value="">Select Area</option>
+                        <option value="Pulau Sumatra">Pulau Sumatra</option>
+                        <option value="Pulau Jawa dan Bali">Pulau Jawa dan Bali</option>
+                        <option value="Kalimantan">Kalimantan</option>
+                        <option value="Sulawesi, Maluku, Papua">Sulawesi, Maluku, Papua</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Site</label>
@@ -474,11 +485,22 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Campaign</label>
-                    <input type="text" name="campaign" id="editCampaign" class="form-input">
+                    <select name="campaign" id="editCampaign" class="form-select">
+                        <option value="">Select Campaign</option>
+                        <option value="besfixed">Besfixed</option>
+                        <option value="saltik">Saltik</option>
+                        <option value="C4">C4</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Area</label>
-                    <input type="text" name="area" id="editArea" class="form-input">
+                    <select name="area" id="editArea" class="form-select">
+                        <option value="">Select Area</option>
+                        <option value="Pulau Sumatra">Pulau Sumatra</option>
+                        <option value="Pulau Jawa dan Bali">Pulau Jawa dan Bali</option>
+                        <option value="Kalimantan">Kalimantan</option>
+                        <option value="Sulawesi, Maluku, Papua">Sulawesi, Maluku, Papua</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Site</label>

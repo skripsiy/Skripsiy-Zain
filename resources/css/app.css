@@ -1,3 +1,63 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Global Disabled Form Elements Styling */
+input:disabled, 
+select:disabled, 
+textarea:disabled,
+.form-input:disabled, 
+.form-select:disabled, 
+.v2-input:disabled, 
+.v2-select:disabled, 
+.v2-textarea:disabled {
+    background-color: #F3F4F6 !important;
+    color: #9CA3AF !important;
+    cursor: not-allowed !important;
+    border-color: #E5E7EB !important;
+    opacity: 1 !important; /* Overrides default browser opacity fade for disabled inputs */
+}
+
+/* Custom Select Arrow Styling */
+.form-select, .v2-select, .entries-select, .filter-group select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+    background-position: right 12px center !important;
+    background-repeat: no-repeat !important;
+    background-size: 1.25em 1.25em !important;
+    padding-right: 36px !important;
+}
+
+/* Rank Badge Styling (Leaderboard) */
+.rank-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 700;
+}
+.rank-badge.gold {
+    background: #FEF3C7;
+    color: #92400E;
+    border: 1px solid #F59E0B;
+}
+.rank-badge.silver {
+    background: #F1F5F9;
+    color: #475569;
+    border: 1px solid #CBD5E1;
+}
+.rank-badge.bronze {
+    background: #FEF2F2;
+    color: #9B1C1C;
+    border: 1px solid #F8B4B4;
+}
+.rank-badge.number {
+    background: transparent;
+    color: #64748B;
+    font-weight: 500;
+}

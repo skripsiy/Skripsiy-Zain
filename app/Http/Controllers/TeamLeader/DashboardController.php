@@ -41,12 +41,22 @@ class DashboardController extends Controller
             // Filter Pencarian
             if (!empty($search)) {
                 $query->where(function ($q) use ($search) {
-                    $q->where('idTicket', 'like', "%{$search}%")
-                      ->orWhere('namacust', 'like', "%{$search}%")
-                      ->orWhere('idlaporan', 'like', "%{$search}%")
-                      ->orWhere('topic', 'like', "%{$search}%")
+                    $q->where('tickets.idTicket', 'like', "%{$search}%")
+                      ->orWhere('tickets.idlaporan', 'like', "%{$search}%")
+                      ->orWhereHas('customer', function ($q2) use ($search) {
+                          $q2->where('name', 'like', "%{$search}%");
+                      })
                       ->orWhereHas('assignedTo', function ($q2) use ($search) {
                           $q2->where('name', 'like', "%{$search}%");
+                      })
+                      ->orWhereHas('category', function ($q2) use ($search) {
+                          $q2->where('name', 'like', "%{$search}%")
+                               ->orWhereHas('parent', function ($p1) use ($search) {
+                                   $p1->where('name', 'like', "%{$search}%")
+                                      ->orWhereHas('parent', function ($p2) use ($search) {
+                                          $p2->where('name', 'like', "%{$search}%");
+                                      });
+                               });
                       });
                 });
             }

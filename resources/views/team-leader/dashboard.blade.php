@@ -679,8 +679,16 @@
                             @endphp
                             @forelse($saltikLeaderboard as $agentName => $resolvedCount)
                                 <tr>
-                                    <td style="padding: 8px 10px; font-weight: bold;">
-                                        @if($rank == 1) 🥇 @elseif($rank == 2) 🥈 @elseif($rank == 3) 🥉 @else #{{ $rank }} @endif
+                                    <td style="padding: 8px 10px; font-weight: bold; display: flex; align-items: center; justify-content: center;">
+                                        @if($rank == 1)
+                                            <span class="rank-badge gold">1</span>
+                                        @elseif($rank == 2)
+                                            <span class="rank-badge silver">2</span>
+                                        @elseif($rank == 3)
+                                            <span class="rank-badge bronze">3</span>
+                                        @else
+                                            <span class="rank-badge number">#{{ $rank }}</span>
+                                        @endif
                                     </td>
                                     <td style="padding: 8px 10px; font-weight: 500;">{{ $agentName }}</td>
                                     <td style="padding: 8px 10px; text-align: right; font-weight: bold; color: #FF9800;">{{ $resolvedCount }}</td>

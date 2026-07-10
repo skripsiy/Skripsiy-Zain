@@ -26,11 +26,16 @@ class TicketController extends Controller
                 $exactId = (int) preg_replace('/^IN0*/i', '', $search);
                 $query->where('idTicket', $exactId);
             } else {
-                // Jika format bebas, cari berdasarkan nama, regional, atau witel secara parsial
                 $query->where(function ($q) use ($search) {
-                    $q->where('namacust', 'like', "%{$search}%")
-                      ->orWhere('regional', 'like', "%{$search}%")
-                      ->orWhere('witel', 'like', "%{$search}%");
+                    $q->whereHas('customer', function ($q2) use ($search) {
+                          $q2->where('name', 'like', "%{$search}%");
+                      })
+                      ->orWhereHas('witelRelation', function ($q2) use ($search) {
+                          $q2->where('name', 'like', "%{$search}%")
+                             ->orWhereHas('area', function ($q3) use ($search) {
+                                 $q3->where('name', 'like', "%{$search}%");
+                             });
+                      });
                 });
             }
 

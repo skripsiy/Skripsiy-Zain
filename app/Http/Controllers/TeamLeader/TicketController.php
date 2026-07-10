@@ -18,10 +18,20 @@ class TicketController extends Controller
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
             $query->where(function($q) use ($search) {
-                $q->where('idTicket', 'like', "%{$search}%")
-                  ->orWhere('namacust', 'like', "%{$search}%")
-                  ->orWhere('idlaporan', 'like', "%{$search}%")
-                  ->orWhere('topic', 'like', "%{$search}%");
+                $q->where('tickets.idTicket', 'like', "%{$search}%")
+                  ->orWhere('tickets.idlaporan', 'like', "%{$search}%")
+                  ->orWhereHas('customer', function($subQuery) use ($search) {
+                      $subQuery->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('category', function($subQuery) use ($search) {
+                      $subQuery->where('name', 'like', "%{$search}%")
+                               ->orWhereHas('parent', function($p1) use ($search) {
+                                   $p1->where('name', 'like', "%{$search}%")
+                                      ->orWhereHas('parent', function($p2) use ($search) {
+                                          $p2->where('name', 'like', "%{$search}%");
+                                      });
+                               });
+                  });
             });
         }
 

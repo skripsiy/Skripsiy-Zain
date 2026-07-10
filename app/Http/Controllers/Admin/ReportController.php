@@ -110,10 +110,37 @@ class ReportController extends Controller
         // Filter keyword (F-10)
         if ($keyword) {
             $query->where(function ($q) use ($keyword) {
-                foreach (['idTicket', 'namacust', 'notelpCust', 'idlaporan', 'detailticket', 'resume',
-                          'description', 'topic', 'topicDetail', 'PIC', 'noSC', 'klasifikasi', 'regional', 'witel'] as $col) {
-                    $q->orWhere($col, 'like', "%{$keyword}%");
+                foreach (['idTicket', 'idlaporan', 'detailticket', 'resume', 'description', 'noSC'] as $col) {
+                    $q->orWhere('tickets.' . $col, 'like', "%{$keyword}%");
                 }
+                $q->orWhereHas('customer', function ($subQuery) use ($keyword) {
+                    $subQuery->where('name', 'like', "%{$keyword}%")
+                             ->orWhere('phone_number', 'like', "%{$keyword}%");
+                });
+                $q->orWhereHas('escalations', function ($subQuery) use ($keyword) {
+                    $subQuery->where('escalated_to', 'like', "%{$keyword}%")
+                             ->orWhere('escalated_via', 'like', "%{$keyword}%")
+                             ->orWhere('contact', 'like', "%{$keyword}%")
+                             ->orWhere('status', 'like', "%{$keyword}%");
+                });
+                $q->orWhereHas('category', function ($subQuery) use ($keyword) {
+                    $subQuery->where('name', 'like', "%{$keyword}%")
+                             ->orWhereHas('parent', function ($p1) use ($keyword) {
+                                 $p1->where('name', 'like', "%{$keyword}%")
+                                    ->orWhereHas('parent', function ($p2) use ($keyword) {
+                                        $p2->where('name', 'like', "%{$keyword}%")
+                                           ->orWhereHas('parent', function ($p3) use ($keyword) {
+                                               $p3->where('name', 'like', "%{$keyword}%");
+                                           });
+                                    });
+                             });
+                });
+                $q->orWhereHas('witelRelation', function ($subQuery) use ($keyword) {
+                    $subQuery->where('name', 'like', "%{$keyword}%")
+                             ->orWhereHas('area', function ($a) use ($keyword) {
+                                 $a->where('name', 'like', "%{$keyword}%");
+                             });
+                });
             });
         }
 
@@ -153,10 +180,37 @@ class ReportController extends Controller
         if ($ticketId)  $statsQuery->where('idTicket', 'like', "%{$ticketId}%");
         if ($keyword) {
             $statsQuery->where(function ($q) use ($keyword) {
-                foreach (['idTicket', 'namacust', 'notelpCust', 'idlaporan', 'detailticket', 'resume',
-                          'description', 'topic', 'topicDetail', 'PIC', 'noSC', 'klasifikasi', 'regional', 'witel'] as $col) {
-                    $q->orWhere($col, 'like', "%{$keyword}%");
+                foreach (['idTicket', 'idlaporan', 'detailticket', 'resume', 'description', 'noSC'] as $col) {
+                    $q->orWhere('tickets.' . $col, 'like', "%{$keyword}%");
                 }
+                $q->orWhereHas('customer', function ($subQuery) use ($keyword) {
+                    $subQuery->where('name', 'like', "%{$keyword}%")
+                             ->orWhere('phone_number', 'like', "%{$keyword}%");
+                });
+                $q->orWhereHas('escalations', function ($subQuery) use ($keyword) {
+                    $subQuery->where('escalated_to', 'like', "%{$keyword}%")
+                             ->orWhere('escalated_via', 'like', "%{$keyword}%")
+                             ->orWhere('contact', 'like', "%{$keyword}%")
+                             ->orWhere('status', 'like', "%{$keyword}%");
+                });
+                $q->orWhereHas('category', function ($subQuery) use ($keyword) {
+                    $subQuery->where('name', 'like', "%{$keyword}%")
+                             ->orWhereHas('parent', function ($p1) use ($keyword) {
+                                 $p1->where('name', 'like', "%{$keyword}%")
+                                    ->orWhereHas('parent', function ($p2) use ($keyword) {
+                                        $p2->where('name', 'like', "%{$keyword}%")
+                                           ->orWhereHas('parent', function ($p3) use ($keyword) {
+                                               $p3->where('name', 'like', "%{$keyword}%");
+                                           });
+                                    });
+                             });
+                });
+                $q->orWhereHas('witelRelation', function ($subQuery) use ($keyword) {
+                    $subQuery->where('name', 'like', "%{$keyword}%")
+                             ->orWhereHas('area', function ($a) use ($keyword) {
+                                 $a->where('name', 'like', "%{$keyword}%");
+                             });
+                });
             });
         }
         if ($dateFrom)  $statsQuery->whereDate('datereport', '>=', $dateFrom);
