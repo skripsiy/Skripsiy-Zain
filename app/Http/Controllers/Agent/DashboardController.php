@@ -135,7 +135,7 @@ class DashboardController extends Controller
             // Fix P-1 & P-2: Eager load relasi assignedTo & batasi kolom yang ditarik dari database
             $tickets = (clone $query)
                 ->with(['assignedTo'])
-                ->select(['idTicket', 'topic', 'assigned_to_user_id', 'condition', 'created_at'])
+                ->select(['idTicket', 'category_id', 'assigned_to_user_id', 'condition', 'created_at'])
                 ->orderBy('created_at', 'desc')
                 ->limit(10)
                 ->get();
