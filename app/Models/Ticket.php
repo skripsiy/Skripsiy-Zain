@@ -11,6 +11,9 @@ class Ticket extends Model
 {
     use LogsActivity;
 
+    public $temp_category_path;
+    public $temp_escalation_data;
+
     protected $primaryKey = 'idTicket';
 
     protected $with = ['customer', 'witelRelation.area', 'category'];

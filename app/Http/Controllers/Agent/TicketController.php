@@ -62,8 +62,10 @@ class TicketController extends Controller
                       });
             } else {
                 // Active Tickets: kondisi masih open/in-progress/queued/assigned
-                $query->whereIn('condition', ['Open', 'In Progress', 'QUEUED', 'ASSIGNED'])
+                $query->where(function ($q) {
+                    $q->whereIn('condition', ['Open', 'In Progress', 'QUEUED', 'ASSIGNED'])
                       ->orWhereNull('condition');
+                });
             }
         }
 

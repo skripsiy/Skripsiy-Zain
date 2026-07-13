@@ -42,4 +42,12 @@ class TicketPolicy
     {
         return $user->role === 'admin';
     }
+
+    /**
+     * Determine whether the user can dispatch the ticket to a team.
+     */
+    public function dispatchToTeam(User $user, Ticket $ticket): bool
+    {
+        return $user->isTeamLeader();
+    }
 }

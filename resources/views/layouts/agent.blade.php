@@ -307,11 +307,11 @@
                 transition: transform 0.3s ease-out;
             `;
 
-            toast.innerHTML = `
-                <span>${message}</span>
-            `;
+            const textSpan = document.createElement('span');
+        textSpan.textContent = message;
+        toast.appendChild(textSpan);
 
-            container.appendChild(toast);
+        container.appendChild(toast);
 
             // Animate in
             setTimeout(() => {

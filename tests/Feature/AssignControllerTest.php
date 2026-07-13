@@ -23,6 +23,10 @@ class AssignControllerTest extends TestCase
             'role' => 'agent',
             'status' => 'active',
         ]);
+        $agent->workSessions()->create([
+            'work_date' => today(),
+            'status' => 'online',
+        ]);
 
         // 3. Create a queued ticket
         $ticket = Ticket::create([
@@ -79,6 +83,10 @@ class AssignControllerTest extends TestCase
             'role' => 'agent',
             'status' => 'active',
         ]);
+        $agent->workSessions()->create([
+            'work_date' => today(),
+            'status' => 'online',
+        ]);
 
         // 1. Create an unassigned (queued) ticket
         $unassignedTicket = Ticket::create([
@@ -112,5 +120,43 @@ class AssignControllerTest extends TestCase
             return $allTickets->contains('idTicket', $unassignedTicket->idTicket) &&
                    $allTickets->contains('idTicket', $assignedTicket->idTicket);
         });
+    }
+
+    public function test_team_leader_cannot_assign_ticket_to_inactive_or_offline_agent()
+    {
+        $teamLeader = User::factory()->create([
+            'role' => 'team_leader',
+        ]);
+
+        $agent = User::factory()->create([
+            'role' => 'agent',
+            'status' => 'active',
+        ]);
+        // Sesi kerja offline/tidak dimulai
+        $agent->workSessions()->create([
+            'work_date' => today(),
+            'status' => 'offline',
+        ]);
+
+        $ticket = Ticket::create([
+            'datereport' => now(),
+            'jenisTicket' => 'INTERNET',
+            'notelpCust' => '081294135917',
+            'namacust' => 'Pelanggan Baru',
+            'status' => 'QUEUED',
+            'condition' => 'QUEUED',
+        ]);
+
+        $response = $this->actingAs($teamLeader)
+            ->from(route('team-leader.assign'))
+            ->post(route('team-leader.assign.ticket', $ticket), [
+                'agent_id' => $agent->id,
+            ]);
+
+        $response->assertRedirect(route('team-leader.assign'));
+        $response->assertSessionHasErrors(['agent_id']);
+        
+        $ticket->refresh();
+        $this->assertNull($ticket->assigned_to_user_id);
     }
 }

@@ -803,8 +803,13 @@
                                         <svg class="agent-caret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                                         <div class="agent-dropdown">
                                             @foreach($agents as $agent)
-                                                <div class="agent-option" data-id="{{ $agent->id }}" data-name="{{ $agent->name }}">
-                                                    {{ $agent->name }}
+                                                <div class="agent-option" data-id="{{ $agent->id }}" data-name="{{ $agent->name }}" style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                                                    <span>{{ $agent->name }}</span>
+                                                    @if($agent->work_status === 'online')
+                                                        <span class="status-badge" style="background:#D1FAE5;color:#065F46;border:1px solid #10B981;padding:2px 8px;border-radius:9999px;font-size:10px;font-weight:600;pointer-events:none;">Online</span>
+                                                    @elseif($agent->work_status === 'aux')
+                                                        <span class="status-badge" style="background:#FEF3C7;color:#92400E;border:1px solid #F59E0B;padding:2px 8px;border-radius:9999px;font-size:10px;font-weight:600;pointer-events:none;">AUX</span>
+                                                    @endif
                                                 </div>
                                             @endforeach
                                             <div class="agent-no-results" style="display:none;">No agent found</div>
@@ -829,6 +834,17 @@
     </div>
     
     <x-slot name="additionalScripts">
+        // Helper to escape HTML to prevent XSS
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
         // Toast Notification Function
         function showToast(title, message, type = 'success') {
             const container = document.getElementById('toastContainer');
@@ -839,8 +855,8 @@
             toast.innerHTML = `
                 <div class="toast-icon">✓</div>
                 <div class="toast-content">
-                    <div class="toast-title">${title}</div>
-                    <div class="toast-message">${message}</div>
+                    <div class="toast-title">${escapeHtml(title)}</div>
+                    <div class="toast-message">${escapeHtml(message)}</div>
                 </div>
                 <button class="toast-close" onclick="closeToast(this)">×</button>
             `;
@@ -864,6 +880,13 @@
         // Show toast if there's a success message
         @if(session('success'))
             showToast('Success!', '{{ session('success') }}', 'success');
+        @endif
+
+        // Show toast if there are validation errors
+        @if($errors->any())
+            @foreach($errors->all() as $error)
+                showToast('Error!', '{{ $error }}', 'error');
+            @endforeach
         @endif
         
         // ── Combined filter logic ────────────────────────────────────────────

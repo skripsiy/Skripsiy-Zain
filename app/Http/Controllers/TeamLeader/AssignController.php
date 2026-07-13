@@ -39,14 +39,20 @@ class AssignController extends Controller
             ->get();
 
         // ── Agent aktif secara global ──
-        // Fix P-1: Gunakan withExists() untuk menghindari N+1 query
-        // (sebelumnya loop filter memanggil workSessions() 1x per agent)
-        $agents = User::where('role', 'agent')
+        $agents = User::select('users.*')
+            ->where('role', 'agent')
             ->where('status', 'active')
-            ->withExists(['workSessions as is_online_today' => function ($query) {
-                $query->where('work_date', today())
-                      ->where('status', 'online');
-            }])
+            ->whereHas('workSessions', function ($q) {
+                $q->where('work_date', today())
+                  ->whereIn('status', ['online', 'aux']);
+            })
+            ->addSelect(['work_status' => \App\Models\AgentWorkSession::select('status')
+                ->whereColumn('user_id', 'users.id')
+                ->where('work_date', today())
+                ->whereIn('status', ['online', 'aux'])
+                ->orderByDesc('id')
+                ->limit(1)
+            ])
             ->orderBy('name')
             ->get();
 
@@ -56,8 +62,8 @@ class AssignController extends Controller
             'vvip_count'     => $dispatchTickets->where('urgency_level', 5)->count(),
             'hvc_count'      => $dispatchTickets->where('urgency_level', 4)->count(),
             'se_count'       => $dispatchTickets->where('urgency_level', 3)->count(),
-            // Fix P-1: Tidak lagi N+1, cukup filter kolom virtual is_online_today
-            'agents_online'  => $agents->where('is_online_today', true)->count(),
+            'agents_online'  => $agents->where('work_status', 'online')->count(),
+            'agents_aux'     => $agents->where('work_status', 'aux')->count(),
         ];
 
         return view('team-leader.assign', compact(
@@ -73,6 +79,18 @@ class AssignController extends Controller
 
         // Fix R-1: Gunakan findOrFail agar 404 jika agent tidak ditemukan
         $agent = User::findOrFail($request->agent_id);
+
+        // Validasi ulang status aktif/sesi kerja agent
+        $isActiveNow = $agent->role === 'agent'
+            && $agent->status === 'active'
+            && $agent->workSessions()
+                ->where('work_date', today())
+                ->whereIn('status', ['online', 'aux'])
+                ->exists();
+
+        if (! $isActiveNow) {
+            return back()->withErrors(['agent_id' => 'Agent tersebut sedang tidak aktif. Pilih agent yang online/AUX.']);
+        }
 
         // Fix R-1: Bungkus update data penting dengan DB::transaction()
         // Jika update gagal di tengah jalan, semua perubahan otomatis di-rollback

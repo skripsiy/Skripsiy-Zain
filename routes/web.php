@@ -45,12 +45,9 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::get('/reports/export/user-tickets/{user}', [App\Http\Controllers\Admin\ReportController::class, 'exportUserTickets'])->name('reports.export.user-tickets');
 });
 
-// Route Agent Dashboard (Bypass Auth untuk Load Test JMeter)
-Route::get('/agent/dashboard', [App\Http\Controllers\Agent\DashboardController::class, 'index'])->name('agent.dashboard');
-
 // Agent Routes
 Route::middleware(['auth', 'verified', 'role:agent'])->prefix('agent')->name('agent.')->group(function () {
-    // Route::get('/dashboard', [App\Http\Controllers\Agent\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [App\Http\Controllers\Agent\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/filter-tickets', [App\Http\Controllers\Agent\DashboardController::class, 'filterTickets'])->name('dashboard.filter-tickets');
     Route::get('/tickets', [App\Http\Controllers\Agent\TicketController::class, 'index'])->name('tickets');
     Route::get('/tickets/{id}', [App\Http\Controllers\Agent\TicketDetailController::class, 'show'])->name('ticket.detail');

@@ -49,13 +49,29 @@ class TeamLeaderTicketTest extends TestCase
         // 4. Update Ticket Info (F-15)
         $response = $this->actingAs($teamLeader)
             ->post(route('team-leader.ticket.update', $ticket->idTicket), [
+                'resume' => 'Resolved',
+                'klasifikasi' => 'Technical',
+                'topic' => 'Internet Issue',
+                'topicDetail' => 'Slow Connection',
+                'noSC' => 'SC001',
+                'statusSC' => 'Closed',
+                'validateClose' => 'Yes',
+                'reasonnoODS' => 'Customer Request',
+                'eksalasiTicket' => 'Yes',
+                'eksalasiVia' => 'Email',
+                'PIC' => 'Agent 1',
+                'contact' => 'Phone',
+                'responBE' => 'Responded',
                 'description' => 'Updated ticket details by TL',
-                'resume' => 'Updated resume',
             ]);
 
         $response->assertRedirect(route('team-leader.ticket.detail', $ticket->idTicket));
-        $response->assertSessionHas('success', 'Ticket updated successfully!');
+        $response->assertSessionHas('success', 'Tiket berhasil di-dispatch ke tim terkait.');
         $this->assertEquals('Updated ticket details by TL', $ticket->fresh()->description);
+        $this->assertEquals('DISPATCHED', $ticket->fresh()->status);
+        $this->assertEquals('Dispatched', $ticket->fresh()->condition);
+        $this->assertCount(1, $ticket->fresh()->escalations);
+        $this->assertEquals('Agent 1', $ticket->fresh()->pic);
 
         // 5. Update Ticket Status to Closed (F-15)
         $response = $this->actingAs($teamLeader)

@@ -233,6 +233,17 @@
     let userId = {{ auth()->id() }};
     let userRole = '{{ auth()->user()->role }}';
 
+    // Helper to escape HTML to prevent XSS
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     // Toggle notification dropdown
     function toggleNotifications() {
         const dropdown = document.getElementById('notificationDropdown');
@@ -288,9 +299,9 @@
                             </svg>
                         </div>
                         <div class="notification-content">
-                            <div class="notification-title">${notif.title}</div>
-                            <div class="notification-message">${notif.message} - ${notif.ticket_type || 'N/A'}</div>
-                            <div class="notification-time">${notif.created_at}</div>
+                            <div class="notification-title">${escapeHtml(notif.title)}</div>
+                            <div class="notification-message">${escapeHtml(notif.message)} - ${escapeHtml(notif.ticket_type) || 'N/A'}</div>
+                            <div class="notification-time">${escapeHtml(notif.created_at)}</div>
                         </div>
                     </div>
                 `).join('');
@@ -359,9 +370,9 @@
                     </svg>
                 </div>
                 <div class="notification-content">
-                    <div class="notification-title">${notification.title}</div>
-                    <div class="notification-message">${notification.message} - ${notification.ticket_type || 'N/A'}</div>
-                    <div class="notification-time">${notification.created_at || 'Just now'}</div>
+                    <div class="notification-title">${escapeHtml(notification.title)}</div>
+                    <div class="notification-message">${escapeHtml(notification.message)} - ${escapeHtml(notification.ticket_type) || 'N/A'}</div>
+                    <div class="notification-time">${escapeHtml(notification.created_at || 'Just now')}</div>
                 </div>
             </div>
         `;
@@ -394,8 +405,8 @@
                 </svg>
             </div>
             <div class="toast-content">
-                <div class="toast-title">${notification.title}</div>
-                <div class="toast-message">${notification.message}</div>
+                <div class="toast-title">${escapeHtml(notification.title)}</div>
+                <div class="toast-message">${escapeHtml(notification.message)}</div>
             </div>
         `;
 

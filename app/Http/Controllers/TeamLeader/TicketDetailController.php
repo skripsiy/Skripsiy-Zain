@@ -4,8 +4,12 @@ namespace App\Http\Controllers\TeamLeader;
 
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
+use App\Models\TicketEscalation;
+use App\Http\Requests\TeamLeader\DispatchTicketRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class TicketDetailController extends Controller
 {
@@ -20,33 +24,58 @@ class TicketDetailController extends Controller
         return view('team-leader.ticket-detail', compact('ticket', 'activities'));
     }
 
-    public function update(Request $request, $id)
+    public function update(DispatchTicketRequest $request, $id)
     {
         $ticket = Ticket::where('idTicket', $id)->firstOrFail();
+        $validated = $request->validated();
 
-        // Validate the request
-        $validated = $request->validate([
-            'resume' => 'nullable|string',
-            'klasifikasi' => 'nullable|string',
-            'topic' => 'nullable|string',
-            'topicDetail' => 'nullable|string',
-            'noSC' => 'nullable|string',
-            'statusSC' => 'nullable|string',
-            'validateClose' => 'nullable|string',
-            'reasonnoODS' => 'nullable|string',
-            'eksalasiTicket' => 'nullable|string',
-            'eksalasiVia' => 'nullable|string',
-            'PIC' => 'nullable|string',
-            'contact' => 'nullable|string',
-            'responBE' => 'nullable|string',
-            'description' => 'nullable|string',
-        ]);
+        DB::transaction(function () use ($ticket, $validated, $request) {
+            // a. Buat record eskalasi baru
+            TicketEscalation::create([
+                'ticket_id'     => $ticket->idTicket,
+                'escalated_to'  => $validated['PIC'],
+                'escalated_via' => $validated['eksalasiVia'],
+                'contact'       => $validated['contact'],
+                'respon_be'     => $validated['responBE'],
+                'status'        => 'Dispatched',
+            ]);
 
-        // Update ticket
-        $ticket->update($validated);
+            // b. Update field TICKET-LEVEL saja pada $ticket + transisi status
+            $ticket->fill([
+                'resume'        => $validated['resume'],
+                'klasifikasi'   => $validated['klasifikasi'],
+                'topic'         => $validated['topic'],
+                'topicDetail'   => $validated['topicDetail'],
+                'noSC'          => $validated['noSC'],
+                'statusSC'      => $validated['statusSC'],
+                'validateClose' => $validated['validateClose'],
+                'reasonnoODS'   => $validated['reasonnoODS'],
+                'description'   => $validated['description'],
+                'status'        => 'DISPATCHED',
+                'condition'     => 'Dispatched',
+            ]);
+
+            // c. Attachment (opsional) - simpan aman via Storage disk 'public'
+            if ($request->hasFile('attachment')) {
+                $f = $request->file('attachment');
+                $name = 'ticket_' . $ticket->idTicket . '_' . time() . '.' . $f->getClientOriginalExtension();
+                $ticket->attachment = $f->storeAs('attachments', $name, 'public');
+            }
+
+            $ticket->save();
+        });
+
+        // Setelah transaksi: dispatch App\Events\TicketDispatched bila ada
+        try {
+            if (class_exists(\App\Events\TicketDispatched::class)) {
+                event(new \App\Events\TicketDispatched($ticket, auth()->user()->name));
+            }
+        } catch (\Exception $e) {
+            Log::warning('Failed to dispatch TicketDispatched event: ' . $e->getMessage());
+        }
 
         return redirect()->route('team-leader.ticket.detail', $id)
-            ->with('success', 'Ticket updated successfully!');
+            ->with('success', 'Tiket berhasil di-dispatch ke tim terkait.');
     }
 
     public function updateStatus(Request $request, $id)

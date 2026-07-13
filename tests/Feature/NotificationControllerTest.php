@@ -60,4 +60,24 @@ class NotificationControllerTest extends TestCase
         // Verify count is now 0
         $this->assertEquals(0, $agent->fresh()->unreadNotifications()->count());
     }
+
+    public function test_notification_bell_contains_escape_html_remediation()
+    {
+        $agent = User::factory()->create([
+            'role' => 'agent',
+            'status' => 'active',
+        ]);
+
+        $view = $this->actingAs($agent)
+            ->view('components.notification-bell');
+
+        $view->assertSee('function escapeHtml(str)');
+        $view->assertSee('escapeHtml(notif.title)');
+        $view->assertSee('escapeHtml(notif.message)');
+        $view->assertSee('escapeHtml(notif.ticket_type)');
+        $view->assertSee('escapeHtml(notif.created_at)');
+        $view->assertSee('escapeHtml(notification.title)');
+        $view->assertSee('escapeHtml(notification.message)');
+        $view->assertSee('escapeHtml(notification.ticket_type)');
+    }
 }

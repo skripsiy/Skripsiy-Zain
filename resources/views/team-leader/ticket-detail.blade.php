@@ -411,13 +411,27 @@
                     <div class="card-title">Ticket Content (Read-only)</div>
 
                     {{-- *** Form 1: field viewer — fields are disabled for TL (unchanged) *** --}}
-                    <form method="POST" action="{{ route('team-leader.ticket.update', $ticket->idTicket) }}">
+                    @php
+                        $isDisabled = in_array($ticket->condition, ['Closed', 'Dispatched', 'EXPIRED', 'Saltik']) ? 'disabled' : '';
+                    @endphp
+
+                    @if($errors->any())
+                    <div class="alert" style="background:#FEE2E2;color:#991B1B;border:1px solid #EF4444;margin-bottom:14px;font-size:13px;">
+                        <ul style="list-style-type: none; padding: 0; margin: 0;">
+                            @foreach($errors->all() as $error)
+                                <li>• {{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    @endif
+
+                    <form id="dispatch-form" method="POST" action="{{ route('team-leader.ticket.update', $ticket->idTicket) }}" enctype="multipart/form-data">
                         @csrf
 
                         <div class="form-grid">
                             <div class="form-group">
                                 <label class="form-label">Resume</label>
-                                <select name="resume" class="form-select" disabled>
+                                <select name="resume" class="form-select" {{ $isDisabled }}>
                                     <option value="">Select</option>
                                     <option value="Resolved" {{ $ticket->resume == 'Resolved' ? 'selected' : '' }}>Resolved</option>
                                     <option value="Pending"  {{ $ticket->resume == 'Pending'  ? 'selected' : '' }}>Pending</option>
@@ -425,7 +439,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Classification</label>
-                                <select name="klasifikasi" class="form-select" disabled>
+                                <select name="klasifikasi" class="form-select" {{ $isDisabled }}>
                                     <option value="">Select</option>
                                     <option value="Technical"     {{ $ticket->klasifikasi == 'Technical'     ? 'selected' : '' }}>Technical</option>
                                     <option value="Non-Technical" {{ $ticket->klasifikasi == 'Non-Technical' ? 'selected' : '' }}>Non-Technical</option>
@@ -436,7 +450,7 @@
                         <div class="form-grid">
                             <div class="form-group">
                                 <label class="form-label">Topic</label>
-                                <select name="topic" class="form-select" disabled>
+                                <select name="topic" class="form-select" {{ $isDisabled }}>
                                     <option value="">Select</option>
                                     <option value="Internet Issue" {{ $ticket->topic == 'Internet Issue' ? 'selected' : '' }}>Internet Issue</option>
                                     <option value="Phone Issue"    {{ $ticket->topic == 'Phone Issue'    ? 'selected' : '' }}>Phone Issue</option>
@@ -444,7 +458,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Topic Detail</label>
-                                <select name="topicDetail" class="form-select" disabled>
+                                <select name="topicDetail" class="form-select" {{ $isDisabled }}>
                                     <option value="">Select</option>
                                     <option value="Slow Connection" {{ $ticket->topicDetail == 'Slow Connection' ? 'selected' : '' }}>Slow Connection</option>
                                     <option value="No Connection"   {{ $ticket->topicDetail == 'No Connection'   ? 'selected' : '' }}>No Connection</option>
@@ -455,14 +469,14 @@
                         <div class="form-grid-4">
                             <div class="form-group">
                                 <label class="form-label">No SC/Track ID</label>
-                                <select name="noSC" class="form-select" disabled>
+                                <select name="noSC" class="form-select" {{ $isDisabled }}>
                                     <option value="">Select</option>
                                     <option value="SC001" {{ $ticket->noSC == 'SC001' ? 'selected' : '' }}>SC001</option>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Status SC/Track ID</label>
-                                <select name="statusSC" class="form-select" disabled>
+                                <select name="statusSC" class="form-select" {{ $isDisabled }}>
                                     <option value="">Select</option>
                                     <option value="Open"   {{ $ticket->statusSC == 'Open'   ? 'selected' : '' }}>Open</option>
                                     <option value="Closed" {{ $ticket->statusSC == 'Closed' ? 'selected' : '' }}>Closed</option>
@@ -470,7 +484,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Validasi Close</label>
-                                <select name="validateClose" class="form-select" disabled>
+                                <select name="validateClose" class="form-select" {{ $isDisabled }}>
                                     <option value="">Select</option>
                                     <option value="Yes" {{ $ticket->validateClose == 'Yes' ? 'selected' : '' }}>Yes</option>
                                     <option value="No"  {{ $ticket->validateClose == 'No'  ? 'selected' : '' }}>No</option>
@@ -478,7 +492,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Reason Not ODS</label>
-                                <select name="reasonnoODS" class="form-select" disabled>
+                                <select name="reasonnoODS" class="form-select" {{ $isDisabled }}>
                                     <option value="">Select</option>
                                     <option value="Customer Request" {{ $ticket->reasonnoODS == 'Customer Request' ? 'selected' : '' }}>Customer Request</option>
                                 </select>
@@ -488,7 +502,7 @@
                         <div class="form-grid">
                             <div class="form-group">
                                 <label class="form-label">Eskalasi Tiket</label>
-                                <select name="eksalasiTicket" class="form-select" disabled>
+                                <select name="eksalasiTicket" class="form-select" {{ $isDisabled }}>
                                     <option value="">Select</option>
                                     <option value="Yes" {{ $ticket->eksalasiTicket == 'Yes' ? 'selected' : '' }}>Yes</option>
                                     <option value="No"  {{ $ticket->eksalasiTicket == 'No'  ? 'selected' : '' }}>No</option>
@@ -496,7 +510,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Eskalasi via</label>
-                                <select name="eksalasiVia" class="form-select" disabled>
+                                <select name="eksalasiVia" class="form-select" {{ $isDisabled }}>
                                     <option value="">Select</option>
                                     <option value="Email" {{ $ticket->eksalasiVia == 'Email' ? 'selected' : '' }}>Email</option>
                                     <option value="Phone" {{ $ticket->eksalasiVia == 'Phone' ? 'selected' : '' }}>Phone</option>
@@ -507,14 +521,14 @@
                         <div class="form-grid">
                             <div class="form-group">
                                 <label class="form-label">PIC</label>
-                                <select name="PIC" class="form-select" disabled>
+                                <select name="PIC" class="form-select" {{ $isDisabled }}>
                                     <option value="">Select</option>
                                     <option value="Agent 1" {{ $ticket->PIC == 'Agent 1' ? 'selected' : '' }}>Agent 1</option>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Kontak</label>
-                                <select name="contact" class="form-select" disabled>
+                                <select name="contact" class="form-select" {{ $isDisabled }}>
                                     <option value="">Select</option>
                                     <option value="Phone" {{ $ticket->contact == 'Phone' ? 'selected' : '' }}>Phone</option>
                                 </select>
@@ -523,7 +537,7 @@
 
                         <div class="form-group" style="margin-bottom:14px;">
                             <label class="form-label">Respon Backend</label>
-                            <select name="responBE" class="form-select" disabled>
+                            <select name="responBE" class="form-select" {{ $isDisabled }}>
                                 <option value="">Select</option>
                                 <option value="Responded" {{ $ticket->responBE == 'Responded' ? 'selected' : '' }}>Responded</option>
                             </select>
@@ -531,15 +545,15 @@
 
                         <div class="form-group" style="margin-bottom:14px;">
                             <label class="form-label">Deskripsi</label>
-                            <textarea name="description" class="form-textarea" placeholder="Deskripsi" disabled>{{ $ticket->detailticket }}</textarea>
+                            <textarea name="description" class="form-textarea" placeholder="Deskripsi" {{ $isDisabled }}>{{ $ticket->detailticket }}</textarea>
                         </div>
 
-                        {{-- Attach button (disabled for TL) — updated for design consistency --}}
+                        {{-- Attach button — updated for design consistency --}}
                         <div style="display:flex;justify-content:flex-end;">
-                            <label class="btn btn-submit" style="cursor: not-allowed; display: inline-flex; align-items: center; gap: 6px; margin: 0; background: #1F4A5E; color: white; opacity: 0.5; pointer-events: none;">
+                            <label class="btn btn-submit" style="display: inline-flex; align-items: center; gap: 6px; margin: 0; background: #1F4A5E; color: white; {{ $isDisabled ? 'opacity: 0.5; cursor: not-allowed; pointer-events: none;' : 'cursor: pointer;' }}">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
                                 Attach (PDF, PNG, JPG)
-                                <input type="file" name="attachment" style="display: none;" disabled>
+                                <input type="file" name="attachment" style="display: none;" {{ $isDisabled }}>
                             </label>
                         </div>
                     </form>
@@ -552,22 +566,22 @@
                             <div class="quick-actions-row">
                                 <button type="submit" name="action" value="closed"
                                     class="btn btn-closed"
-                                    {{ in_array($ticket->condition, ['Closed', 'Dispatched', 'EXPIRED', 'Saltik']) ? 'disabled' : '' }}>
+                                    {{ $isDisabled }}>
                                     CLOSED
                                 </button>
                                 <button type="submit" name="action" value="saltik"
                                     class="btn btn-saltik"
-                                    {{ in_array($ticket->condition, ['Closed', 'Dispatched', 'EXPIRED', 'Saltik']) ? 'disabled' : '' }}>
+                                    {{ $isDisabled }}>
                                     SALTIK
                                 </button>
                                 <button type="submit" name="action" value="expired"
                                     class="btn btn-expired"
-                                    {{ in_array($ticket->condition, ['Closed', 'Dispatched', 'EXPIRED', 'Saltik']) ? 'disabled' : '' }}>
+                                    {{ $isDisabled }}>
                                     EXPIRED
                                 </button>
-                                <button type="submit" name="action" value="dispatch"
+                                <button type="submit" form="dispatch-form"
                                     class="btn btn-dispatch"
-                                    {{ in_array($ticket->condition, ['Closed', 'Dispatched', 'EXPIRED', 'Saltik']) ? 'disabled' : '' }}>
+                                    {{ $isDisabled }}>
                                     DISPATCH
                                 </button>
                             </div>
