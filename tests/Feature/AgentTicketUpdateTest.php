@@ -93,4 +93,60 @@ class AgentTicketUpdateTest extends TestCase
         $response->assertSessionHas('error');
         $this->assertNotEquals('Cheeky agent trying to write', $ticket->fresh()->description);
     }
+
+    public function test_agent_can_update_with_valid_classification_and_pic()
+    {
+        $agent = User::factory()->create([
+            'role' => 'agent',
+            'status' => 'active',
+        ]);
+
+        $ticket = Ticket::create([
+            'datereport' => now(),
+            'jenisTicket' => 'INTERNET',
+            'notelpCust' => '081294135917',
+            'namacust' => 'Customer A',
+            'status' => 'ASSIGNED',
+            'condition' => 'ASSIGNED',
+            'assigned_to_user_id' => $agent->id,
+            'division_target' => 'besfixed',
+        ]);
+
+        $response = $this->actingAs($agent)
+            ->post(route('agent.ticket.update', $ticket->idTicket), [
+                'klasifikasi' => 'Technical',
+                'PIC' => 'TEKNISI',
+            ]);
+
+        $response->assertRedirect(route('agent.ticket.detail', $ticket->idTicket));
+        $response->assertSessionHas('success');
+        $this->assertEquals('TEKNISI', $ticket->fresh()->pic);
+    }
+
+    public function test_agent_cannot_update_with_invalid_pic_for_classification()
+    {
+        $agent = User::factory()->create([
+            'role' => 'agent',
+            'status' => 'active',
+        ]);
+
+        $ticket = Ticket::create([
+            'datereport' => now(),
+            'jenisTicket' => 'INTERNET',
+            'notelpCust' => '081294135917',
+            'namacust' => 'Customer A',
+            'status' => 'ASSIGNED',
+            'condition' => 'ASSIGNED',
+            'assigned_to_user_id' => $agent->id,
+            'division_target' => 'besfixed',
+        ]);
+
+        $response = $this->actingAs($agent)
+            ->post(route('agent.ticket.update', $ticket->idTicket), [
+                'klasifikasi' => 'Technical',
+                'PIC' => 'BESFIXED', // Invalid for Technical classification
+            ]);
+
+        $response->assertSessionHasErrors(['PIC']);
+    }
 }

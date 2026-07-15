@@ -47,7 +47,7 @@ class TicketDetailController extends Controller
                 'topic'         => $validated['topic'],
                 'topicDetail'   => $validated['topicDetail'],
                 'noSC'          => $validated['noSC'],
-                'statusSC'      => $validated['statusSC'],
+                'statusSC'      => $validated['statusSC'] ?? null,
                 'validateClose' => $validated['validateClose'],
                 'reasonnoODS'   => $validated['reasonnoODS'],
                 'description'   => $validated['description'],

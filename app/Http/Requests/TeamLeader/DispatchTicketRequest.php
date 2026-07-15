@@ -4,6 +4,7 @@ namespace App\Http\Requests\TeamLeader;
 
 use App\Models\Ticket;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class DispatchTicketRequest extends FormRequest
 {
@@ -25,18 +26,27 @@ class DispatchTicketRequest extends FormRequest
      */
     public function rules(): array
     {
+        $klasifikasi = $this->input('klasifikasi');
+        
+        $validTeams = [];
+        if (strtolower($klasifikasi) === 'technical') {
+            $validTeams = array_keys(config('teams.technical'));
+        } else {
+            $validTeams = array_keys(config('teams.non_technical'));
+        }
+
         return [
             'resume'         => 'required|string|max:2000',
-            'klasifikasi'    => 'required|string|max:255',
+            'klasifikasi'    => 'required|string|in:Technical,Non-Technical',
             'topic'          => 'required|string|max:255',
             'topicDetail'    => 'required|string|max:255',
             'noSC'           => 'required|string|max:100',
-            'statusSC'       => 'required|string|max:50',
+            'statusSC'       => 'nullable|string|max:50',
             'validateClose'  => 'required|string|max:255',
             'reasonnoODS'    => 'required|string|max:1000',
             'eksalasiTicket' => 'required|string|max:255',
             'eksalasiVia'    => 'required|string|max:255',
-            'PIC'            => 'required|string|max:255',
+            'PIC'            => ['required', Rule::in($validTeams)],
             'contact'        => 'required|string|max:50',
             'responBE'       => 'required|string|max:2000',
             'description'    => 'required|string|max:5000',
@@ -56,6 +66,7 @@ class DispatchTicketRequest extends FormRequest
             'file'     => 'Kolom :attribute harus berupa file/berkas.',
             'mimes'    => 'Kolom :attribute harus berformat pdf, png, jpg, atau jpeg.',
             'attachment.max' => 'Ukuran file lampiran maksimal 10 MB.',
+            'PIC.in'   => 'Tim terkait yang dipilih tidak valid.',
         ];
     }
 
@@ -75,7 +86,7 @@ class DispatchTicketRequest extends FormRequest
             'reasonnoODS'    => 'Reason Not ODS',
             'eksalasiTicket' => 'Eskalasi Tiket',
             'eksalasiVia'    => 'Eskalasi Via',
-            'PIC'            => 'PIC',
+            'PIC'            => 'Tim Terkait',
             'contact'        => 'Kontak',
             'responBE'       => 'Respon Backend',
             'description'    => 'Deskripsi',

@@ -428,124 +428,25 @@
                     <form id="dispatch-form" method="POST" action="{{ route('team-leader.ticket.update', $ticket->idTicket) }}" enctype="multipart/form-data">
                         @csrf
 
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label class="form-label">Resume</label>
-                                <select name="resume" class="form-select" {{ $isDisabled }}>
-                                    <option value="">Select</option>
-                                    <option value="Resolved" {{ $ticket->resume == 'Resolved' ? 'selected' : '' }}>Resolved</option>
-                                    <option value="Pending"  {{ $ticket->resume == 'Pending'  ? 'selected' : '' }}>Pending</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Classification</label>
-                                <select name="klasifikasi" class="form-select" {{ $isDisabled }}>
-                                    <option value="">Select</option>
-                                    <option value="Technical"     {{ $ticket->klasifikasi == 'Technical'     ? 'selected' : '' }}>Technical</option>
-                                    <option value="Non-Technical" {{ $ticket->klasifikasi == 'Non-Technical' ? 'selected' : '' }}>Non-Technical</option>
-                                </select>
-                            </div>
-                        </div>
+                        {{-- Include shared fields --}}
+                        @include('tickets._fields')
 
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label class="form-label">Topic</label>
-                                <select name="topic" class="form-select" {{ $isDisabled }}>
-                                    <option value="">Select</option>
-                                    <option value="Internet Issue" {{ $ticket->topic == 'Internet Issue' ? 'selected' : '' }}>Internet Issue</option>
-                                    <option value="Phone Issue"    {{ $ticket->topic == 'Phone Issue'    ? 'selected' : '' }}>Phone Issue</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Topic Detail</label>
-                                <select name="topicDetail" class="form-select" {{ $isDisabled }}>
-                                    <option value="">Select</option>
-                                    <option value="Slow Connection" {{ $ticket->topicDetail == 'Slow Connection' ? 'selected' : '' }}>Slow Connection</option>
-                                    <option value="No Connection"   {{ $ticket->topicDetail == 'No Connection'   ? 'selected' : '' }}>No Connection</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="form-grid-4">
-                            <div class="form-group">
-                                <label class="form-label">No SC/Track ID</label>
-                                <select name="noSC" class="form-select" {{ $isDisabled }}>
-                                    <option value="">Select</option>
-                                    <option value="SC001" {{ $ticket->noSC == 'SC001' ? 'selected' : '' }}>SC001</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Status SC/Track ID</label>
-                                <select name="statusSC" class="form-select" {{ $isDisabled }}>
-                                    <option value="">Select</option>
-                                    <option value="Open"   {{ $ticket->statusSC == 'Open'   ? 'selected' : '' }}>Open</option>
-                                    <option value="Closed" {{ $ticket->statusSC == 'Closed' ? 'selected' : '' }}>Closed</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Validasi Close</label>
-                                <select name="validateClose" class="form-select" {{ $isDisabled }}>
-                                    <option value="">Select</option>
-                                    <option value="Yes" {{ $ticket->validateClose == 'Yes' ? 'selected' : '' }}>Yes</option>
-                                    <option value="No"  {{ $ticket->validateClose == 'No'  ? 'selected' : '' }}>No</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Reason Not ODS</label>
-                                <select name="reasonnoODS" class="form-select" {{ $isDisabled }}>
-                                    <option value="">Select</option>
-                                    <option value="Customer Request" {{ $ticket->reasonnoODS == 'Customer Request' ? 'selected' : '' }}>Customer Request</option>
-                                </select>
-                            </div>
-                        </div>
-
+                        {{-- Row 2: Role-specific fields (eksalasiTicket, PIC) --}}
                         <div class="form-grid">
                             <div class="form-group">
                                 <label class="form-label">Eskalasi Tiket</label>
                                 <select name="eksalasiTicket" class="form-select" {{ $isDisabled }}>
                                     <option value="">Select</option>
-                                    <option value="Yes" {{ $ticket->eksalasiTicket == 'Yes' ? 'selected' : '' }}>Yes</option>
-                                    <option value="No"  {{ $ticket->eksalasiTicket == 'No'  ? 'selected' : '' }}>No</option>
+                                    <option value="Yes" {{ old('eksalasiTicket', $ticket->eksalasiTicket) == 'Yes' ? 'selected' : '' }}>Yes</option>
+                                    <option value="No"  {{ old('eksalasiTicket', $ticket->eksalasiTicket) == 'No'  ? 'selected' : '' }}>No</option>
                                 </select>
                             </div>
-                            <div class="form-group">
-                                <label class="form-label">Eskalasi via</label>
-                                <select name="eksalasiVia" class="form-select" {{ $isDisabled }}>
-                                    <option value="">Select</option>
-                                    <option value="Email" {{ $ticket->eksalasiVia == 'Email' ? 'selected' : '' }}>Email</option>
-                                    <option value="Phone" {{ $ticket->eksalasiVia == 'Phone' ? 'selected' : '' }}>Phone</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="form-grid">
                             <div class="form-group">
                                 <label class="form-label">PIC</label>
-                                <select name="PIC" class="form-select" {{ $isDisabled }}>
-                                    <option value="">Select</option>
-                                    <option value="Agent 1" {{ $ticket->PIC == 'Agent 1' ? 'selected' : '' }}>Agent 1</option>
+                                <select name="PIC" required class="form-select" {{ $isDisabled }}>
+                                    <option value="">- Pilih Tim Terkait -</option>
                                 </select>
                             </div>
-                            <div class="form-group">
-                                <label class="form-label">Kontak</label>
-                                <select name="contact" class="form-select" {{ $isDisabled }}>
-                                    <option value="">Select</option>
-                                    <option value="Phone" {{ $ticket->contact == 'Phone' ? 'selected' : '' }}>Phone</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="form-group" style="margin-bottom:14px;">
-                            <label class="form-label">Respon Backend</label>
-                            <select name="responBE" class="form-select" {{ $isDisabled }}>
-                                <option value="">Select</option>
-                                <option value="Responded" {{ $ticket->responBE == 'Responded' ? 'selected' : '' }}>Responded</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group" style="margin-bottom:14px;">
-                            <label class="form-label">Deskripsi</label>
-                            <textarea name="description" class="form-textarea" placeholder="Deskripsi" {{ $isDisabled }}>{{ $ticket->detailticket }}</textarea>
                         </div>
 
                         {{-- Attach button — updated for design consistency --}}
@@ -629,5 +530,51 @@
         </div>{{-- /main-content --}}
     </div>{{-- /container --}}
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const klasifikasiSelect = document.querySelector('select[name="klasifikasi"]');
+            const picSelect = document.querySelector('select[name="PIC"]');
+            
+            if (klasifikasiSelect && picSelect) {
+                const teams = {
+                    'technical': @json(config('teams.technical')),
+                    'non-technical': @json(config('teams.non_technical'))
+                };
+                
+                const currentPic = "{{ old('PIC', $ticket->PIC) }}";
+
+                function updatePicOptions() {
+                    const val = klasifikasiSelect.value.toLowerCase();
+                    
+                    // Save selection if it matches current group selection
+                    const selectedVal = picSelect.value || currentPic;
+                    
+                    picSelect.innerHTML = '<option value="">- Pilih Tim Terkait -</option>';
+                    
+                    let options = {};
+                    if (val === 'technical') {
+                        options = teams.technical;
+                    } else if (val === 'non-technical') {
+                        options = teams['non-technical'];
+                    }
+                    
+                    Object.entries(options).forEach(([code, label]) => {
+                        const opt = document.createElement('option');
+                        opt.value = code;
+                        opt.textContent = label;
+                        if (code === selectedVal) {
+                            opt.selected = true;
+                        }
+                        picSelect.appendChild(opt);
+                    });
+                }
+                
+                klasifikasiSelect.addEventListener('change', updatePicOptions);
+                
+                // Run on initial load
+                updatePicOptions();
+            }
+        });
+    </script>
 </body>
 </html>

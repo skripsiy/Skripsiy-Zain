@@ -7,6 +7,7 @@ use App\Models\Ticket;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class TicketDetailController extends Controller
 {
@@ -67,7 +68,7 @@ class TicketDetailController extends Controller
         
         $validated = $request->validate([
             'resume'             => 'nullable|string|max:2000',
-            'klasifikasi'        => 'nullable|string|max:255',
+            'klasifikasi'        => 'nullable|string|in:Technical,Non-Technical',
             'topic'              => 'nullable|string|max:255',
             'topicDetail'        => 'nullable|string|max:255',
             'noSC'               => 'nullable|string|max:100',
@@ -76,13 +77,23 @@ class TicketDetailController extends Controller
             'reasonnoODS'        => 'nullable|string|max:1000',
             'eksalasiTicket'     => 'nullable|string|max:255',
             'eksalasiVia'        => 'nullable|string|max:255',
-            'PIC'                => 'nullable|string|max:255',
+            'PIC'                => [
+                'nullable',
+                'string',
+                Rule::in(
+                    strtolower($request->input('klasifikasi')) === 'technical' 
+                        ? array_keys(config('teams.technical')) 
+                        : array_keys(config('teams.non_technical'))
+                )
+            ],
             'contact'            => 'nullable|string|max:50',
             'responBE'           => 'nullable|string|max:2000',
             'description'        => 'nullable|string|max:5000',
             'resolved_by_agent'  => 'nullable|string|max:255',
             'hasil_pengecekan'   => 'nullable|string|max:5000',
             'attachment'         => 'nullable|file|mimes:pdf,png,jpg,jpeg|max:10240',
+        ], [
+            'PIC.in' => 'Tim terkait yang dipilih tidak valid.'
         ]);
         
         if ($request->hasFile('attachment')) {

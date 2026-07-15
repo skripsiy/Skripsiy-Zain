@@ -499,31 +499,18 @@
                     <form method="POST" action="{{ route('agent.ticket.update', $ticket->idTicket) }}" id="ticketDetailForm" enctype="multipart/form-data">
                         @csrf
 
-                        {{-- Row 1: Resume + Hasil Pengecekan (agent-only) --}}
+                        {{-- Row 1: Agent-only fields --}}
                         <div class="form-grid">
-                            <div class="form-group">
-                                <label class="form-label">Resume</label>
-                                <input type="text" name="resume" class="form-input"
-                                    value="{{ $ticket->resume }}"
-                                    placeholder="Masukkan resume"
-                                    {{ (!$canEdit || $ticket->condition == 'Closed') ? 'disabled' : '' }}>
-                            </div>
-                            {{-- CHANGED: marked as agent-only per wireframe --}}
                             <div class="form-group">
                                 <label class="form-label-agent">
                                     Hasil Inputan / Hasil Pengecekan
                                     <span class="agent-only-tag">Agent only</span>
                                 </label>
                                 <input type="text" name="hasil_pengecekan" class="form-input"
-                                    value="{{ $ticket->hasil_pengecekan }}"
+                                    value="{{ old('hasil_pengecekan', $ticket->hasil_pengecekan) }}"
                                     placeholder="Masukkan hasil pengecekan"
                                     {{ (!$canEdit || $ticket->condition == 'Closed') ? 'disabled' : '' }}>
                             </div>
-                        </div>
-
-                        {{-- Row 2: Resolved by Agent (agent-only) + Eskalasi via --}}
-                        <div class="form-grid">
-                            {{-- CHANGED: marked as agent-only per wireframe --}}
                             <div class="form-group">
                                 <label class="form-label-agent">
                                     Resolved by Agent
@@ -532,180 +519,34 @@
                                 <select name="resolved_by_agent" class="form-select"
                                     {{ (!$canEdit || $ticket->condition == 'Closed') ? 'disabled' : '' }}>
                                     <option value="">Select</option>
-                                    <option value="Succes Resolved" {{ $ticket->resolved_by_agent == 'Succes Resolved' ? 'selected' : '' }}>Succes Resolved</option>
-                                    <option value="Gagal Resolved"  {{ $ticket->resolved_by_agent == 'Gagal Resolved'  ? 'selected' : '' }}>Gagal Resolved</option>
-                                    <option value="No Action"       {{ $ticket->resolved_by_agent == 'No Action'       ? 'selected' : '' }}>No Action</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Eskalasi via</label>
-                                <select name="eksalasiVia" class="form-select"
-                                    {{ (!$canEdit || $ticket->condition == 'Closed') ? 'disabled' : '' }}>
-                                    <option value="">Select</option>
-                                    <option value="Telp"         {{ $ticket->eksalasiVia == 'Telp'         ? 'selected' : '' }}>Telp</option>
-                                    <option value="Telegram"     {{ $ticket->eksalasiVia == 'Telegram'     ? 'selected' : '' }}>Telegram</option>
-                                    <option value="WA"           {{ $ticket->eksalasiVia == 'WA'           ? 'selected' : '' }}>WA</option>
-                                    <option value="Grup internal" {{ $ticket->eksalasiVia == 'Grup internal'? 'selected' : '' }}>Grup internal</option>
-                                    <option value="Grup Solver"  {{ $ticket->eksalasiVia == 'Grup Solver'  ? 'selected' : '' }}>Grup Solver</option>
+                                    <option value="Succes Resolved" {{ old('resolved_by_agent', $ticket->resolved_by_agent) == 'Succes Resolved' ? 'selected' : '' }}>Succes Resolved</option>
+                                    <option value="Gagal Resolved"  {{ old('resolved_by_agent', $ticket->resolved_by_agent) == 'Gagal Resolved'  ? 'selected' : '' }}>Gagal Resolved</option>
+                                    <option value="No Action"       {{ old('resolved_by_agent', $ticket->resolved_by_agent) == 'No Action'       ? 'selected' : '' }}>No Action</option>
                                 </select>
                             </div>
                         </div>
 
-                        {{-- Row 3: Status Call + Reason Not ODS --}}
+                        {{-- Include shared fields --}}
+                        @include('tickets._fields')
+
+                        {{-- Row 2: Role-specific fields (eksalasiTicket, PIC) --}}
                         <div class="form-grid">
-                            <div class="form-group">
-                                <label class="form-label">Status Call (Kontak)</label>
-                                <select name="contact" class="form-select"
-                                    {{ (!$canEdit || $ticket->condition == 'Closed') ? 'disabled' : '' }}>
-                                    <option value="">Select</option>
-                                    <option value="Contacted" {{ $ticket->contact == 'Contacted' ? 'selected' : '' }}>Contacted</option>
-                                    <option value="Rna"       {{ $ticket->contact == 'Rna'       ? 'selected' : '' }}>Rna</option>
-                                    <option value="Busy"      {{ $ticket->contact == 'Busy'      ? 'selected' : '' }}>Busy</option>
-                                    <option value="Rejected"  {{ $ticket->contact == 'Rejected'  ? 'selected' : '' }}>Rejected</option>
-                                    <option value="Mailbox"   {{ $ticket->contact == 'Mailbox'   ? 'selected' : '' }}>Mailbox</option>
-                                    <option value="Rechedule" {{ $ticket->contact == 'Rechedule' ? 'selected' : '' }}>Rechedule</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Reason Not ODS</label>
-                                <select name="reasonnoODS" class="form-select"
-                                    {{ (!$canEdit || $ticket->condition == 'Closed') ? 'disabled' : '' }}>
-                                    <option value="">Select</option>
-                                    <option value="PEOPLE - Menunggu Konfirmasi Dari Pelanggan"           {{ $ticket->reasonnoODS == 'PEOPLE - Menunggu Konfirmasi Dari Pelanggan'           ? 'selected' : '' }}>PEOPLE - Menunggu Konfirmasi Dari Pelanggan</option>
-                                    <option value="PEOPLE - Pelanggan Belum Melunasi Tagihan"            {{ $ticket->reasonnoODS == 'PEOPLE - Pelanggan Belum Melunasi Tagihan'            ? 'selected' : '' }}>PEOPLE - Pelanggan Belum Melunasi Tagihan</option>
-                                    <option value="PEOPLE - Pelanggan Belum Upload Berkas"               {{ $ticket->reasonnoODS == 'PEOPLE - Pelanggan Belum Upload Berkas'               ? 'selected' : '' }}>PEOPLE - Pelanggan Belum Upload Berkas</option>
-                                    <option value="PEOPLE - Pelanggan Reschedule"                        {{ $ticket->reasonnoODS == 'PEOPLE - Pelanggan Reschedule'                        ? 'selected' : '' }}>PEOPLE - Pelanggan Reschedule</option>
-                                    <option value="PEOPLE - Pelanggan Sulit Dihubungi"                   {{ $ticket->reasonnoODS == 'PEOPLE - Pelanggan Sulit Dihubungi'                   ? 'selected' : '' }}>PEOPLE - Pelanggan Sulit Dihubungi</option>
-                                    <option value="PEOPLE - Pelanggan Tetap Ingin Di visit"              {{ $ticket->reasonnoODS == 'PEOPLE - Pelanggan Tetap Ingin Di visit'              ? 'selected' : '' }}>PEOPLE - Pelanggan Tetap Ingin Di visit</option>
-                                    <option value="PEOPLE - Pelanggan Tidak Ada Dilokasi"                {{ $ticket->reasonnoODS == 'PEOPLE - Pelanggan Tidak Ada Dilokasi'                ? 'selected' : '' }}>PEOPLE - Pelanggan Tidak Ada Dilokasi</option>
-                                    <option value="PEOPLE - Teknisi Full Order"                          {{ $ticket->reasonnoODS == 'PEOPLE - Teknisi Full Order'                          ? 'selected' : '' }}>PEOPLE - Teknisi Full Order</option>
-                                    <option value="PEOPLE - Unit Solver No Respon"                       {{ $ticket->reasonnoODS == 'PEOPLE - Unit Solver No Respon'                       ? 'selected' : '' }}>PEOPLE - Unit Solver No Respon</option>
-                                    <option value="PEOPLE - Mapping KIP Tidak Sesuai"                    {{ $ticket->reasonnoODS == 'PEOPLE - Mapping KIP Tidak Sesuai'                    ? 'selected' : '' }}>PEOPLE - Mapping KIP Tidak Sesuai</option>
-                                    <option value="PROSES - Status Order Tidak Sesuai"                   {{ $ticket->reasonnoODS == 'PROSES - Status Order Tidak Sesuai'                   ? 'selected' : '' }}>PROSES - Status Order Tidak Sesuai</option>
-                                    <option value="PROSES - Workzone Kosong"                             {{ $ticket->reasonnoODS == 'PROSES - Workzone Kosong'                             ? 'selected' : '' }}>PROSES - Workzone Kosong</option>
-                                    <option value="PROSES - Ada Permintaan Berlangsung"                  {{ $ticket->reasonnoODS == 'PROSES - Ada Permintaan Berlangsung'                  ? 'selected' : '' }}>PROSES - Ada Permintaan Berlangsung</option>
-                                    <option value="PROSES - Alamat Tidak Sesuai"                         {{ $ticket->reasonnoODS == 'PROSES - Alamat Tidak Sesuai'                         ? 'selected' : '' }}>PROSES - Alamat Tidak Sesuai</option>
-                                    <option value="PROSES - GAMAS"                                       {{ $ticket->reasonnoODS == 'PROSES - GAMAS'                                       ? 'selected' : '' }}>PROSES - GAMAS</option>
-                                    <option value="PROSES - ODP Full"                                    {{ $ticket->reasonnoODS == 'PROSES - ODP Full'                                    ? 'selected' : '' }}>PROSES - ODP Full</option>
-                                    <option value="PROSES - Mandeg UFO"                                  {{ $ticket->reasonnoODS == 'PROSES - Mandeg UFO'                                  ? 'selected' : '' }}>PROSES - Mandeg UFO</option>
-                                    <option value="PROSES - Mandeg IT"                                   {{ $ticket->reasonnoODS == 'PROSES - Mandeg IT'                                   ? 'selected' : '' }}>PROSES - Mandeg IT</option>
-                                    <option value="TOOLS - Labor WO belum Completed"                     {{ $ticket->reasonnoODS == 'TOOLS - Labor WO belum Completed'                     ? 'selected' : '' }}>TOOLS - Labor WO belum Completed</option>
-                                    <option value="TOOLS - UNSPEC"                                       {{ $ticket->reasonnoODS == 'TOOLS - UNSPEC'                                       ? 'selected' : '' }}>TOOLS - UNSPEC</option>
-                                    <option value="TOOLS - Tidak Bisa Takeownership"                     {{ $ticket->reasonnoODS == 'TOOLS - Tidak Bisa Takeownership'                     ? 'selected' : '' }}>TOOLS - Tidak Bisa Takeownership</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        {{-- Row 4: Respon Backend + Classification --}}
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label class="form-label">Respon Backend</label>
-                                <select name="responBE" class="form-select"
-                                    {{ (!$canEdit || $ticket->condition == 'Closed') ? 'disabled' : '' }}>
-                                    <option value="">Select</option>
-                                    <option value="Balas chat & Memberi Update Progress"             {{ $ticket->responBE == 'Balas chat & Memberi Update Progress'             ? 'selected' : '' }}>Balas chat &amp; Memberi Update Progress</option>
-                                    <option value="Hanya di Read saja"                              {{ $ticket->responBE == 'Hanya di Read saja'                              ? 'selected' : '' }}>Hanya di Read saja</option>
-                                    <option value="Membalas chat tapi lama (Lowrespon)"             {{ $ticket->responBE == 'Membalas chat tapi lama (Lowrespon)'             ? 'selected' : '' }}>Membalas chat tapi lama (Lowrespon)</option>
-                                    <option value="Hanya Membalas Chat (Fast Respon)"               {{ $ticket->responBE == 'Hanya Membalas Chat (Fast Respon)'               ? 'selected' : '' }}>Hanya Membalas Chat (Fast Respon)</option>
-                                    <option value="Menjawab Telp dan memberi Update"                {{ $ticket->responBE == 'Menjawab Telp dan memberi Update'                ? 'selected' : '' }}>Menjawab Telp dan memberi Update</option>
-                                    <option value="Respon Menolak Kordinasi"                        {{ $ticket->responBE == 'Respon Menolak Kordinasi'                        ? 'selected' : '' }}>Respon Menolak Kordinasi</option>
-                                    <option value="Tidak menerima koord C4"                         {{ $ticket->responBE == 'Tidak menerima koord C4'                         ? 'selected' : '' }}>Tidak menerima koord C4</option>
-                                    <option value="Tanpa Koordinasi"                                {{ $ticket->responBE == 'Tanpa Koordinasi'                                ? 'selected' : '' }}>Tanpa Koordinasi</option>
-                                    <option value="Tidak Membalas Chat"                             {{ $ticket->responBE == 'Tidak Membalas Chat'                             ? 'selected' : '' }}>Tidak Membalas Chat</option>
-                                    <option value="Tidak Menjawab Telp"                             {{ $ticket->responBE == 'Tidak Menjawab Telp'                             ? 'selected' : '' }}>Tidak Menjawab Telp</option>
-                                    <option value="Menjawab Telp Saja"                              {{ $ticket->responBE == 'Menjawab Telp Saja'                              ? 'selected' : '' }}>Menjawab Telp Saja</option>
-                                    <option value="Membalas chat namun tidak memberi update progress" {{ $ticket->responBE == 'Membalas chat namun tidak memberi update progress' ? 'selected' : '' }}>Membalas chat namun tidak memberi update progress</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Classification</label>
-                                <select name="klasifikasi" class="form-select"
-                                    {{ (!$canEdit || $ticket->condition == 'Closed') ? 'disabled' : '' }}>
-                                    <option value="">Select</option>
-                                    <option value="Technical"     {{ $ticket->klasifikasi == 'Technical'     ? 'selected' : '' }}>Technical</option>
-                                    <option value="Non-Technical" {{ $ticket->klasifikasi == 'Non-Technical' ? 'selected' : '' }}>Non-Technical</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        {{-- Row 5: Topic + Topic Detail + No SC + Status SC --}}
-                        <div class="form-grid-4">
-                            <div class="form-group">
-                                <label class="form-label">Topic</label>
-                                <select name="topic" class="form-select"
-                                    {{ (!$canEdit || $ticket->condition == 'Closed') ? 'disabled' : '' }}>
-                                    <option value="">Select</option>
-                                    <option value="Internet Issue" {{ $ticket->topic == 'Internet Issue' ? 'selected' : '' }}>Internet Issue</option>
-                                    <option value="Phone Issue"    {{ $ticket->topic == 'Phone Issue'    ? 'selected' : '' }}>Phone Issue</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Topic Detail</label>
-                                <select name="topicDetail" class="form-select"
-                                    {{ (!$canEdit || $ticket->condition == 'Closed') ? 'disabled' : '' }}>
-                                    <option value="">Select</option>
-                                    <option value="Slow Connection" {{ $ticket->topicDetail == 'Slow Connection' ? 'selected' : '' }}>Slow Connection</option>
-                                    <option value="No Connection"   {{ $ticket->topicDetail == 'No Connection'   ? 'selected' : '' }}>No Connection</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">No SC/Track ID</label>
-                                <select name="noSC" class="form-select"
-                                    {{ (!$canEdit || $ticket->condition == 'Closed') ? 'disabled' : '' }}>
-                                    <option value="">Select</option>
-                                    <option value="SC001" {{ $ticket->noSC == 'SC001' ? 'selected' : '' }}>SC001</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Status SC/Track ID</label>
-                                <select name="statusSC" class="form-select"
-                                    {{ (!$canEdit || $ticket->condition == 'Closed') ? 'disabled' : '' }}>
-                                    <option value="">Select</option>
-                                    <option value="Open"   {{ $ticket->statusSC == 'Open'   ? 'selected' : '' }}>Open</option>
-                                    <option value="Closed" {{ $ticket->statusSC == 'Closed' ? 'selected' : '' }}>Closed</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        {{-- Row 6: Validasi Close + Eskalasi Tiket + PIC --}}
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label class="form-label">Validasi Close</label>
-                                <select name="validateClose" class="form-select"
-                                    {{ (!$canEdit || $ticket->condition == 'Closed') ? 'disabled' : '' }}>
-                                    <option value="">Select</option>
-                                    <option value="Yes" {{ $ticket->validateClose == 'Yes' ? 'selected' : '' }}>Yes</option>
-                                    <option value="No"  {{ $ticket->validateClose == 'No'  ? 'selected' : '' }}>No</option>
-                                </select>
-                            </div>
                             <div class="form-group">
                                 <label class="form-label">Eskalasi Tiket</label>
                                 <select name="eksalasiTicket" class="form-select"
                                     {{ (!$canEdit || $ticket->condition == 'Closed') ? 'disabled' : '' }}>
                                     <option value="">Select</option>
-                                    <option value="Yes" {{ $ticket->eksalasiTicket == 'Yes' ? 'selected' : '' }}>Yes</option>
-                                    <option value="No"  {{ $ticket->eksalasiTicket == 'No'  ? 'selected' : '' }}>No</option>
+                                    <option value="Yes" {{ old('eksalasiTicket', $ticket->eksalasiTicket) == 'Yes' ? 'selected' : '' }}>Yes</option>
+                                    <option value="No"  {{ old('eksalasiTicket', $ticket->eksalasiTicket) == 'No'  ? 'selected' : '' }}>No</option>
                                 </select>
                             </div>
-                        </div>
-
-                        <div class="form-grid">
                             <div class="form-group">
                                 <label class="form-label">PIC</label>
                                 <select name="PIC" class="form-select"
                                     {{ (!$canEdit || $ticket->condition == 'Closed') ? 'disabled' : '' }}>
-                                    <option value="">Select</option>
-                                    <option value="Agent 1" {{ $ticket->PIC == 'Agent 1' ? 'selected' : '' }}>Agent 1</option>
+                                    <option value="">- Pilih Tim Terkait -</option>
                                 </select>
                             </div>
-                        </div>
-
-                        {{-- Deskripsi textarea (unchanged, full-width) --}}
-                        <div class="form-group" style="margin-bottom:14px;">
-                            <label class="form-label">Deskripsi</label>
-                            <textarea name="description" class="form-textarea"
-                                placeholder="Deskripsi"
-                                {{ (!$canEdit || $ticket->condition == 'Closed') ? 'disabled' : '' }}>{{ $ticket->description }}</textarea>
                         </div>
 
                         {{-- CHANGED: Quick Actions moved here (inside the same form for submit) --}}
@@ -857,5 +698,51 @@
         });
     </script>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const klasifikasiSelect = document.querySelector('select[name="klasifikasi"]');
+            const picSelect = document.querySelector('select[name="PIC"]');
+            
+            if (klasifikasiSelect && picSelect) {
+                const teams = {
+                    'technical': @json(config('teams.technical')),
+                    'non-technical': @json(config('teams.non_technical'))
+                };
+                
+                const currentPic = "{{ old('PIC', $ticket->PIC) }}";
+
+                function updatePicOptions() {
+                    const val = klasifikasiSelect.value.toLowerCase();
+                    
+                    // Save selection if it matches current group selection
+                    const selectedVal = picSelect.value || currentPic;
+                    
+                    picSelect.innerHTML = '<option value="">- Pilih Tim Terkait -</option>';
+                    
+                    let options = {};
+                    if (val === 'technical') {
+                        options = teams.technical;
+                    } else if (val === 'non-technical') {
+                        options = teams['non-technical'];
+                    }
+                    
+                    Object.entries(options).forEach(([code, label]) => {
+                        const opt = document.createElement('option');
+                        opt.value = code;
+                        opt.textContent = label;
+                        if (code === selectedVal) {
+                            opt.selected = true;
+                        }
+                        picSelect.appendChild(opt);
+                    });
+                }
+                
+                klasifikasiSelect.addEventListener('change', updatePicOptions);
+                
+                // Run on initial load
+                updatePicOptions();
+            }
+        });
+    </script>
 </body>
 </html>
