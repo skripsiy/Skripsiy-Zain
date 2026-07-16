@@ -16,7 +16,7 @@ class SyncTelkomselTickets extends Command
      *
      * @var string
      */
-    protected $signature = 'tickets:sync-telkomsel';
+    protected $signature = 'tickets:sync-telkomsel {--force-mock : Force run local mock resolver even in non-local environments}';
 
     /**
      * The console command description.
@@ -30,17 +30,31 @@ class SyncTelkomselTickets extends Command
      */
     public function handle()
     {
+        // Cegah mock berjalan di non-lokal kecuali menggunakan --force-mock
+        if (! app()->environment('local') && ! $this->option('force-mock')) {
+            $this->warn('Sync nyata belum diimplementasikan; mock dilewati di environment ini.');
+            return self::SUCCESS;
+        }
+
         $this->info('Memulai sinkronisasi tiket DISPATCHED dengan Telkomsel...');
 
         // Ambil tiket yang kondisinya Dispatched / DISPATCHED
-        $dispatchedTickets = Ticket::whereIn('condition', ['Dispatched', 'DISPATCHED'])
-            ->where('condition', '!=', 'Closed')
-            ->get();
+        $query = Ticket::whereIn('condition', ['Dispatched', 'DISPATCHED'])
+            ->where('condition', '!=', 'Closed');
+
+        // Hanya sentuh tiket bertanda simulasi (is_simulated) jika kolom tersebut ada di DB
+        if (\Illuminate\Support\Facades\Schema::hasColumn('tickets', 'is_simulated')) {
+            $query->where('is_simulated', true);
+        }
+
+        $dispatchedTickets = $query->get();
 
         if ($dispatchedTickets->isEmpty()) {
             $this->info('Tidak ada tiket dengan status DISPATCHED yang perlu disinkronkan.');
             return Command::SUCCESS;
         }
+
+        // TODO: Integrasikan API Telkomsel asli di sini untuk lingkungan produksi (lihat Opsi A & B di bawah)
 
         /*
         // ====================================================================================

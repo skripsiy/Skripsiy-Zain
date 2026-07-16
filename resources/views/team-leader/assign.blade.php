@@ -763,6 +763,7 @@
                                 @php
                                     $ticketDate = $ticket->datereport ?? $ticket->created_at;
                                     $daysWaiting = $ticketDate ? (int) \Carbon\Carbon::parse($ticketDate)->diffInDays(now()) : null;
+                                    $isSlaBreached = $ticketDate ? \Carbon\Carbon::parse($ticketDate)->lte(now()->subHours(6)) : false;
                                 @endphp
                                 <div class="date-entry">
                                     <span class="date-text">{{ $ticketDate ? \Carbon\Carbon::parse($ticketDate)->format('d M Y') : '-' }}</span>
@@ -778,6 +779,11 @@
                                     @else
                                         <span class="age-pill age-critical">{{ $daysWaiting }} hari lalu</span>
                                     @endif
+                                @endif
+                                @if($isSlaBreached)
+                                    <span class="age-pill age-critical" style="margin-top: 4px; display: inline-flex; align-items: center; gap: 3px;">
+                                        ⚠️ SLA! / Nyangkut
+                                    </span>
                                 @endif
                             </td>
                             <td>

@@ -76,7 +76,9 @@ class CheckSlaTickets extends Command
         // Ambil tiket yang statusnya BUKAN Closed DAN sudah lewat 6 jam dari datereport/created_at
         $tiketNyangkut = Ticket::where('condition', '!=', 'Closed')
             ->where('datereport', '<=', $batasWaktu)
-            // ->where('sla_notified', false) // Flag opsional agar tidak spam notif berkali-kali
+            ->where(function ($q) {
+                $q->whereNull('sla_notified')->orWhere('sla_notified', false);
+            })
             ->get();
 
         if ($tiketNyangkut->isEmpty()) {
@@ -85,20 +87,22 @@ class CheckSlaTickets extends Command
         }
 
         foreach ($tiketNyangkut as $ticket) {
-            /*
-            // ====================================================================================
-            // LOGIKA DISPATCH / PENGIRIMAN NOTIFIKASI
-            // ====================================================================================
-            // Contoh 1: Notifikasi internal sistem (Database Notification Laravel)
-            // Notification::send($teamLeaders, new TicketSlaBreachNotification($ticket));
-            
-            // Contoh 2: Kirim email/WhatsApp API ke tim dispatch
-            // dispatch(new SendWhatsAppNotificationJob($ticket->assignedTo?->name, "Tiket {$ticket->idTicket} telah melewati SLA 6 Jam!"));
-            
-            // Contoh 3: Update flag agar tidak diproses berulang-ulang
-            // $ticket->update(['sla_notified' => true]);
-            // ====================================================================================
-            */
+            // Kirim notifikasi ke Team Leader divisi terkait
+            $teamLeaders = \App\Models\User::where('role', 'team_leader')
+                ->whereRaw('LOWER(campaign) = ?', [strtolower($ticket->division_target)])
+                ->get();
+
+            // Fallback: kirim ke seluruh team_leader jika tidak ada mapping divisi TL
+            if ($teamLeaders->isEmpty()) {
+                $teamLeaders = \App\Models\User::where('role', 'team_leader')->get();
+            }
+
+            if ($teamLeaders->isNotEmpty()) {
+                \Illuminate\Support\Facades\Notification::send($teamLeaders, new \App\Notifications\SlaBreachNotification($ticket));
+            }
+
+            // Update flag agar tidak diproses berulang-ulang
+            $ticket->update(['sla_notified' => true]);
             
             Log::warning("SLA BREACH ALERT: Tiket {$ticket->idTicket} telah melewati batas 6 jam!");
         }

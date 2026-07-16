@@ -28,7 +28,7 @@ class Ticket extends Model
         'assigned_to_user_id', 'solved_by_user_id', 'escalationStatus', 'resolved_by_agent', 'hasil_pengecekan', 'attachment',
         'customer_id', 'witel_id', 'category_id',
         // Routing fields
-        'channel', 'source_system', 'pool_id', 'urgency_level', 'division_target', 'auto_assigned_at',
+        'channel', 'source_system', 'pool_id', 'urgency_level', 'division_target', 'auto_assigned_at', 'sla_notified',
     ];
 
     protected $casts = [
@@ -521,6 +521,22 @@ class Ticket extends Model
             'saltik'   => 'Saltik',
             default    => '-',
         };
+    }
+
+    /**
+     * Accessor untuk solvedby (legacy string column)
+     */
+    public function getSolvedbyAttribute()
+    {
+        if ($this->condition === 'Closed' && is_null($this->solved_by_user_id)) {
+            return 'System Auto Sync (Mock)';
+        }
+
+        $solvedBy = $this->relationLoaded('solvedBy')
+            ? $this->getRelation('solvedBy')
+            : $this->solvedBy()->getResults();
+
+        return $solvedBy ? $solvedBy->name : null;
     }
 }
 

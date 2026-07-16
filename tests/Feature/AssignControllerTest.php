@@ -159,4 +159,95 @@ class AssignControllerTest extends TestCase
         $ticket->refresh();
         $this->assertNull($ticket->assigned_to_user_id);
     }
+
+    public function test_dispatch_tickets_does_not_have_six_hours_restriction()
+    {
+        $teamLeader = User::factory()->create([
+            'role' => 'team_leader',
+        ]);
+
+        // Create a new unassigned VVIP ticket (created just now)
+        $ticket = Ticket::create([
+            'datereport' => now(),
+            'jenisTicket' => 'INTERNET',
+            'namacust' => 'New VVIP Customer',
+            'urgency_level' => 5,
+            'status' => 'QUEUED',
+            'condition' => 'QUEUED',
+            'division_target' => 'besfixed',
+        ]);
+
+        $response = $this->actingAs($teamLeader)
+            ->get(route('team-leader.assign'));
+
+        $response->assertOk();
+        $response->assertViewHas('stats', function ($stats) {
+            return $stats['dispatch_count'] === 1 && $stats['vvip_count'] === 1;
+        });
+    }
+
+    public function test_sla_breach_badge_is_rendered()
+    {
+        $teamLeader = User::factory()->create([
+            'role' => 'team_leader',
+        ]);
+
+        // Create an unassigned ticket created 7 hours ago
+        $ticket = Ticket::create([
+            'datereport' => now()->subHours(7),
+            'jenisTicket' => 'INTERNET',
+            'namacust' => 'Old Customer',
+            'urgency_level' => 3,
+            'status' => 'QUEUED',
+            'condition' => 'QUEUED',
+            'division_target' => 'besfixed',
+        ]);
+
+        $response = $this->actingAs($teamLeader)
+            ->get(route('team-leader.assign'));
+
+        $response->assertOk();
+        $response->assertSee('SLA! / Nyangkut');
+    }
+
+    public function test_assigned_and_closed_tickets_are_excluded_from_dispatch_tickets()
+    {
+        $teamLeader = User::factory()->create([
+            'role' => 'team_leader',
+        ]);
+
+        $agent = User::factory()->create([
+            'role' => 'agent',
+            'status' => 'active',
+        ]);
+
+        // Create a closed ticket
+        Ticket::create([
+            'datereport' => now(),
+            'jenisTicket' => 'INTERNET',
+            'namacust' => 'Closed Customer',
+            'status' => 'Closed',
+            'condition' => 'Closed',
+            'division_target' => 'besfixed',
+        ]);
+
+        // Create an assigned ticket
+        Ticket::create([
+            'datereport' => now(),
+            'jenisTicket' => 'INTERNET',
+            'namacust' => 'Assigned Customer',
+            'status' => 'ASSIGNED',
+            'condition' => 'ASSIGNED',
+            'assigned_to_user_id' => $agent->id,
+            'division_target' => 'besfixed',
+        ]);
+
+        $response = $this->actingAs($teamLeader)
+            ->get(route('team-leader.assign'));
+
+        $response->assertOk();
+        $response->assertViewHas('stats', function ($stats) {
+            return $stats['dispatch_count'] === 0;
+        });
+    }
 }

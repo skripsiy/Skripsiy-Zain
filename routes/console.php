@@ -30,6 +30,7 @@ Schedule::command('tickets:check-sla')
 Schedule::command('tickets:sync-telkomsel')
         ->hourly()
         ->withoutOverlapping()
+        ->environments('local')
         ->appendOutputTo(storage_path('logs/telkomsel-sync.log'));
 
 // ====================================================================================

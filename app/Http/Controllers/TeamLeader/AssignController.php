@@ -17,15 +17,11 @@ class AssignController extends Controller
         $tl       = auth()->user();
         $tlDiv    = strtolower($tl->campaign ?? '');
 
-        // ── Loker Dispatch TL: tiket unassigned & belum closed >= 6 jam ──
+        // ── Loker Dispatch TL: tiket unassigned & belum closed ──
         $dispatchTickets = Ticket::where('condition', '!=', 'Closed')
             ->where(function ($q) {
                 $q->whereNull('assigned_to_user_id')
                   ->orWhereIn('condition', ['QUEUED', 'UNASSIGNED']);
-            })
-            ->where(function ($q) {
-                $q->where('created_at', '<=', now()->subHours(6))
-                  ->orWhere('datereport', '<=', now()->subHours(6));
             })
             ->orderByRaw("urgency_level DESC")          // VVIP → HVC → SE → Emergency → Low
             ->orderBy('created_at', 'asc')              // usia terlama dulu

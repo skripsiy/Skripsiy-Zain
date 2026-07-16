@@ -123,42 +123,61 @@ class TicketRoutingService
     }
 
     /**
-     * Auto-assign tiket ke agent online secara global (round-robin).
-     * Maksimal 10 agent yang aktif per hari.
+     * Auto-assign tiket ke agent online secara per-divisi (round-robin).
      */
     public function autoAssignToAgent(Ticket $ticket): bool
     {
-        // Ambil agent yang online hari ini secara global (case-insensitive)
+        // Ambil divisi target, fallback ke 'besfixed' jika kosong
+        $division = $ticket->division_target;
+        if (empty($division)) {
+            $division = 'besfixed';
+        }
+
+        // Ambil agent yang online hari ini berdasarkan divisi target (case-insensitive)
         $onlineAgents = User::where('role', 'agent')
             ->where('status', 'active')
+            ->whereRaw('LOWER(campaign) = ?', [strtolower($division)])
             ->whereHas('workSessions', function ($q) {
                 $q->where('work_date', today())
                   ->where('status', 'online');
             })
             ->orderBy('id')
-            ->take(10)
             ->get();
 
         if ($onlineAgents->isEmpty()) {
             return false; // Tidak ada agent online, biarkan di queue
         }
 
-        // Round-robin: ambil index dari database settings, increment, wrap around
-        $settingKey = "rr_index_global";
-        $setting    = \App\Models\Setting::firstOrCreate(
+        // Round-robin: ambil index per divisi dari database settings dengan lock atomik
+        $settingKey = "rr_index_" . strtolower($division);
+
+        // Pastikan record setting untuk division ini sudah ada di DB untuk menghindari gap-lock deadlocks
+        \App\Models\Setting::firstOrCreate(
             ['key' => $settingKey],
             ['value' => '0']
         );
-        $index = (int) $setting->value;
 
-        if ($index >= $onlineAgents->count()) {
-            $index = 0;
-        }
+        $index = \Illuminate\Support\Facades\DB::transaction(function () use ($settingKey, $onlineAgents) {
+            $setting = \App\Models\Setting::where('key', $settingKey)
+                ->lockForUpdate()
+                ->first();
+
+            $currentVal = (int) $setting->value;
+            $count = $onlineAgents->count();
+
+            if ($currentVal >= $count) {
+                $currentVal = 0;
+            }
+
+            $nextVal = ($currentVal + 1) % $count;
+            $setting->update([
+                'value' => (string) $nextVal
+            ]);
+
+            return $currentVal;
+        });
 
         $agent = $onlineAgents[$index];
-        $setting->update([
-            'value' => (string) (($index + 1) % $onlineAgents->count())
-        ]);
 
         // Assign tiket ke agent menggunakan assigned_to_user_id
         $ticket->update([
