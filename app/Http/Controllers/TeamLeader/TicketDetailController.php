@@ -118,7 +118,11 @@ class TicketDetailController extends Controller
                     'status' => 'DISPATCHED',
                     'condition' => 'Dispatched'
                 ]);
-                broadcast(new \App\Events\TicketDispatched($ticket, auth()->user()->name))->toOthers();
+                try {
+                    broadcast(new \App\Events\TicketDispatched($ticket, auth()->user()->name))->toOthers();
+                } catch (\Exception $e) {
+                    \Log::warning('Failed to dispatch TicketDispatched event in updateStatus: ' . $e->getMessage());
+                }
                 $message = 'Ticket has been dispatched successfully!';
                 break;
                 

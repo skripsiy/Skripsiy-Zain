@@ -13,7 +13,7 @@
     </div>
     <div class="form-group">
         <label class="form-label">Eskalasi via</label>
-        <select name="eksalasiVia" class="form-select" {{ $fieldDisabled }}>
+        <select name="eksalasiVia" class="form-select" {{ $fieldDisabled }} {{ (old('eksalasiTicket', $ticket->eksalasiTicket) !== 'Yes') ? 'disabled' : '' }}>
             <option value="">Select</option>
             @foreach (config('tickets.eksalasiVia') as $key => $val)
                 <option value="{{ $key }}" @selected(old('eksalasiVia', $ticket->eksalasiVia) === $key)>{{ $val }}</option>
@@ -35,7 +35,7 @@
     </div>
     <div class="form-group">
         <label class="form-label">Reason Not ODS</label>
-        <select name="reasonnoODS" class="form-select" {{ $fieldDisabled }}>
+        <select name="reasonnoODS" class="form-select" {{ $fieldDisabled }} {{ (old('statusSC', $ticket->statusSC) !== 'Open') ? 'disabled' : '' }}>
             <option value="">Select</option>
             @foreach (config('tickets.reasonnoODS') as $key => $val)
                 <option value="{{ $key }}" @selected(old('reasonnoODS', $ticket->reasonnoODS) === $key)>{{ $val }}</option>
@@ -79,11 +79,15 @@
     </div>
     <div class="form-group">
         <label class="form-label">Topic Detail</label>
-        <select name="topicDetail" class="form-select" {{ $fieldDisabled }}>
+        <select name="topicDetail" class="form-select" {{ $fieldDisabled }} {{ !old('topic', $ticket->topic) ? 'disabled' : '' }}>
             <option value="">Select</option>
-            @foreach (config('tickets.topicDetail') as $key => $val)
-                <option value="{{ $key }}" @selected(old('topicDetail', $ticket->topicDetail) === $key)>{{ $val }}</option>
-            @endforeach
+            @if($currentTopic = old('topic', $ticket->topic))
+                @if(isset(config('tickets.topicDetail')[$currentTopic]))
+                    @foreach (config('tickets.topicDetail')[$currentTopic] as $key => $val)
+                        <option value="{{ $key }}" @selected(old('topicDetail', $ticket->topicDetail) === $key)>{{ $val }}</option>
+                    @endforeach
+                @endif
+            @endif
         </select>
     </div>
     <div class="form-group">

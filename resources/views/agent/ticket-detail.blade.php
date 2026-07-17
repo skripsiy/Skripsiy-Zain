@@ -517,7 +517,7 @@
                                     <span class="agent-only-tag">Agent only</span>
                                 </label>
                                 <select name="resolved_by_agent" class="form-select"
-                                    {{ (!$canEdit || $ticket->condition == 'Closed') ? 'disabled' : '' }}>
+                                    {{ ($ticket->resolved_by_agent == 'Succes Resolved' || !$canEdit || $ticket->condition == 'Closed') ? 'disabled' : '' }}>
                                     <option value="">Select</option>
                                     <option value="Succes Resolved" {{ old('resolved_by_agent', $ticket->resolved_by_agent) == 'Succes Resolved' ? 'selected' : '' }}>Succes Resolved</option>
                                     <option value="Gagal Resolved"  {{ old('resolved_by_agent', $ticket->resolved_by_agent) == 'Gagal Resolved'  ? 'selected' : '' }}>Gagal Resolved</option>
@@ -553,7 +553,7 @@
                         <div class="quick-actions-section">
                             <div class="quick-actions-title">Quick Actions</div>
                             <div class="quick-actions-row">
-                                <label class="btn btn-submit" style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px; margin: 0; background: #2C3E50; color: white; {{ !$canEdit ? 'opacity: 0.5; pointer-events: none;' : '' }}">
+                                <label id="attachBtnLabel" class="btn btn-submit" style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px; margin: 0; background: #2C3E50; color: white; {{ !$canEdit ? 'opacity: 0.5; pointer-events: none;' : '' }}">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
                                     Attach (PDF, PNG, JPG)
                                     <input type="file" name="attachment" accept=".pdf,.png,.jpg,.jpeg" style="display: none;" onchange="this.form.submit()" {{ !$canEdit ? 'disabled' : '' }}>
@@ -654,94 +654,215 @@
             }).catch(err => { console.error('Failed to copy text: ', err); });
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const form        = document.getElementById('ticketDetailForm');
-            const dispatchBtn = document.getElementById('btnDispatch');
-            if (!form || !dispatchBtn) return;
 
-            // Cek apakah form dalam mode Read-Only / Disabled dari Blade/Backend
-            const isReadOnly = dispatchBtn.hasAttribute('disabled');
-
-            // Hanya aktifkan validasi form jika tidak dalam mode Read-Only
-            if (!isReadOnly) {
-                const inputs = form.querySelectorAll('input:not([type="hidden"]), select, textarea');
-
-                function validateFields() {
-                    let allFilled = true;
-                    inputs.forEach(input => {
-                        // Lewati input pencarian atau deskripsi (opsional)
-                        if (input.name === 'search' || input.name === 'description') return;
-                        if (!input.value || input.value.trim() === '') {
-                            allFilled = false;
-                        }
-                    });
-                    dispatchBtn.disabled = !allFilled;
-                    if (!allFilled) {
-                        dispatchBtn.style.opacity  = '0.5';
-                        dispatchBtn.style.cursor   = 'not-allowed';
-                        dispatchBtn.title = 'Semua field harus diisi sebelum melakukan Dispatch';
-                    } else {
-                        dispatchBtn.style.opacity  = '1';
-                        dispatchBtn.style.cursor   = 'pointer';
-                        dispatchBtn.title = '';
-                    }
-                }
-
-                // Jalankan saat pertama load
-                validateFields();
-                // Pantau setiap ada ketikan / perubahan dropdown
-                inputs.forEach(input => {
-                    input.addEventListener('input',  validateFields);
-                    input.addEventListener('change', validateFields);
-                });
-            }
-        });
     </script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('ticketDetailForm');
+            if (!form) return;
+
+            const resolvedSelect = document.querySelector('select[name="resolved_by_agent"]');
+            const validateCloseSelect = document.querySelector('select[name="validateClose"]');
+            const descTextarea = document.querySelector('textarea[name="description"]');
+            
             const klasifikasiSelect = document.querySelector('select[name="klasifikasi"]');
             const picSelect = document.querySelector('select[name="PIC"]');
             
-            if (klasifikasiSelect && picSelect) {
-                const teams = {
-                    'technical': @json(config('teams.technical')),
-                    'non-technical': @json(config('teams.non_technical'))
-                };
-                
-                const currentPic = "{{ old('PIC', $ticket->PIC) }}";
+            const topicSelect = document.querySelector('select[name="topic"]');
+            const topicDetailSelect = document.querySelector('select[name="topicDetail"]');
+            
+            const eksalasiTicketSelect = document.querySelector('select[name="eksalasiTicket"]');
+            const eksalasiViaSelect = document.querySelector('select[name="eksalasiVia"]');
+            
+            const statusScSelect = document.querySelector('select[name="statusSC"]');
+            const reasonNoOdsSelect = document.querySelector('select[name="reasonnoODS"]');
 
-                function updatePicOptions() {
-                    const val = klasifikasiSelect.value.toLowerCase();
-                    
-                    // Save selection if it matches current group selection
-                    const selectedVal = picSelect.value || currentPic;
-                    
-                    picSelect.innerHTML = '<option value="">- Pilih Tim Terkait -</option>';
-                    
-                    let options = {};
-                    if (val === 'technical') {
-                        options = teams.technical;
-                    } else if (val === 'non-technical') {
-                        options = teams['non-technical'];
-                    }
-                    
-                    Object.entries(options).forEach(([code, label]) => {
-                        const opt = document.createElement('option');
-                        opt.value = code;
-                        opt.textContent = label;
-                        if (code === selectedVal) {
-                            opt.selected = true;
-                        }
-                        picSelect.appendChild(opt);
-                    });
+            const actionButtons = {
+                closed: form.querySelector('button[value="closed"]'),
+                saltik: form.querySelector('button[value="saltik"]'),
+                expired: form.querySelector('button[value="expired"]'),
+                dispatch: form.querySelector('button[value="dispatch"]'),
+            };
+
+            const teams = {
+                'technical': @json(config('teams.technical')) || {},
+                'non-technical': @json(config('teams.non_technical')) || {}
+            };
+            const topicDetailsConfig = @json(config('tickets.topicDetail')) || {};
+
+            const currentPic = "{{ old('PIC', $ticket->PIC) }}";
+            const currentTopicDetail = "{{ old('topicDetail', $ticket->topicDetail) }}";
+
+            // 1. Classification -> PIC
+            function updatePicOptions() {
+                if (!klasifikasiSelect || !picSelect) return;
+                const isResolvedSuccess = resolvedSelect && resolvedSelect.value === 'Succes Resolved';
+                if (isResolvedSuccess) return;
+
+                const val = klasifikasiSelect.value.toLowerCase();
+                const selectedVal = picSelect.value || currentPic;
+                
+                picSelect.innerHTML = '<option value="">- Pilih Tim Terkait -</option>';
+                
+                let options = {};
+                if (val === 'technical') {
+                    options = teams.technical;
+                    picSelect.disabled = false;
+                } else if (val === 'non-technical') {
+                    options = teams['non-technical'];
+                    picSelect.disabled = false;
+                } else {
+                    picSelect.disabled = true;
+                    picSelect.value = '';
                 }
                 
-                klasifikasiSelect.addEventListener('change', updatePicOptions);
-                
-                // Run on initial load
-                updatePicOptions();
+                Object.entries(options).forEach(([code, label]) => {
+                    const opt = document.createElement('option');
+                    opt.value = code;
+                    opt.textContent = label;
+                    if (code === selectedVal) {
+                        opt.selected = true;
+                    }
+                    picSelect.appendChild(opt);
+                });
             }
+
+            // 2. Topic -> Topic Detail
+            function updateTopicOptions() {
+                if (!topicSelect || !topicDetailSelect) return;
+                const isResolvedSuccess = resolvedSelect && resolvedSelect.value === 'Succes Resolved';
+                if (isResolvedSuccess) return;
+
+                const topicVal = topicSelect.value;
+                const selectedVal = topicDetailSelect.value || currentTopicDetail;
+                
+                topicDetailSelect.innerHTML = '<option value="">Select</option>';
+                
+                if (topicVal && topicDetailsConfig[topicVal]) {
+                    topicDetailSelect.disabled = false;
+                    Object.entries(topicDetailsConfig[topicVal]).forEach(([key, val]) => {
+                        const opt = document.createElement('option');
+                        opt.value = key;
+                        opt.textContent = val;
+                        if (key === selectedVal) {
+                            opt.selected = true;
+                        }
+                        topicDetailSelect.appendChild(opt);
+                    });
+                } else {
+                    topicDetailSelect.disabled = true;
+                    topicDetailSelect.value = '';
+                }
+            }
+
+            // 3. Eskalasi Tiket -> Eskalasi via
+            function updateEksalasiOptions() {
+                if (!eksalasiTicketSelect || !eksalasiViaSelect) return;
+                const isResolvedSuccess = resolvedSelect && resolvedSelect.value === 'Succes Resolved';
+                if (isResolvedSuccess) return;
+
+                if (eksalasiTicketSelect.value === 'Yes') {
+                    eksalasiViaSelect.disabled = false;
+                } else {
+                    eksalasiViaSelect.disabled = true;
+                    eksalasiViaSelect.value = '';
+                }
+            }
+
+            // 4. Status Call -> Reason Not ODS
+            function updateOdsOptions() {
+                if (!statusScSelect || !reasonNoOdsSelect) return;
+                const isResolvedSuccess = resolvedSelect && resolvedSelect.value === 'Succes Resolved';
+                if (isResolvedSuccess) return;
+
+                if (statusScSelect.value === 'Open') {
+                    reasonNoOdsSelect.disabled = false;
+                } else {
+                    reasonNoOdsSelect.disabled = true;
+                    reasonNoOdsSelect.value = '';
+                }
+            }
+
+            // 5. Resolved by Agent Control
+            function updateResolvedByAgentDeps() {
+                if (!resolvedSelect) return;
+                const isSuccess = resolvedSelect.value === 'Succes Resolved';
+                
+                const allInputs = form.querySelectorAll('input:not([type="hidden"]), select, textarea');
+                
+                allInputs.forEach(input => {
+                    if (input.name === 'resolved_by_agent' || input.name === 'description') {
+                        return; // keep these enabled/as is
+                    }
+                    
+                    if (isSuccess) {
+                        if (input.name === 'validateClose') {
+                            input.disabled = false;
+                        } else {
+                            input.disabled = true;
+                        }
+                    } else {
+                        if (input.name === 'validateClose') {
+                            input.disabled = true;
+                            input.value = '';
+                        } else {
+                            input.disabled = false;
+                        }
+                    }
+                });
+
+                // Trigger standard sub-field evaluations if not success resolved
+                if (!isSuccess) {
+                    updatePicOptions();
+                    updateTopicOptions();
+                    updateEksalasiOptions();
+                    updateOdsOptions();
+                }
+
+                // Button controls
+                const attachBtnLabel = document.getElementById('attachBtnLabel');
+                if (isSuccess) {
+                    if (actionButtons.expired) actionButtons.expired.disabled = true;
+                    if (actionButtons.dispatch) actionButtons.dispatch.disabled = true;
+                    if (actionButtons.closed) actionButtons.closed.disabled = false;
+                    if (actionButtons.saltik) actionButtons.saltik.disabled = false;
+                    if (attachBtnLabel) {
+                        attachBtnLabel.style.opacity = '0.5';
+                        attachBtnLabel.style.pointerEvents = 'none';
+                        const attachInput = attachBtnLabel.querySelector('input');
+                        if (attachInput) attachInput.disabled = true;
+                    }
+                } else {
+                    if (actionButtons.expired) actionButtons.expired.disabled = false;
+                    if (actionButtons.dispatch) actionButtons.dispatch.disabled = false;
+                    if (actionButtons.closed) actionButtons.closed.disabled = false;
+                    if (actionButtons.saltik) actionButtons.saltik.disabled = false;
+                    if (attachBtnLabel) {
+                        attachBtnLabel.style.opacity = '1';
+                        attachBtnLabel.style.pointerEvents = 'auto';
+                        const attachInput = attachBtnLabel.querySelector('input');
+                        if (attachInput) attachInput.disabled = false;
+                    }
+                }
+            }
+
+            // Event Listeners
+            if (klasifikasiSelect) klasifikasiSelect.addEventListener('change', updatePicOptions);
+            if (topicSelect) topicSelect.addEventListener('change', updateTopicOptions);
+            if (eksalasiTicketSelect) eksalasiTicketSelect.addEventListener('change', updateEksalasiOptions);
+            if (statusScSelect) statusScSelect.addEventListener('change', updateOdsOptions);
+            if (resolvedSelect) resolvedSelect.addEventListener('change', updateResolvedByAgentDeps);
+
+            // Initial load execution
+            updateResolvedByAgentDeps();
+
+            // Enable fields before submit to ensure disabled values are sent
+            form.addEventListener('submit', function () {
+                form.querySelectorAll('input, select, textarea').forEach(input => {
+                    input.disabled = false;
+                });
+            });
         });
     </script>
 </body>

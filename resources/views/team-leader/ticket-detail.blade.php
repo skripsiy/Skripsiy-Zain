@@ -532,48 +532,130 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('dispatch-form');
+            if (!form) return;
+
             const klasifikasiSelect = document.querySelector('select[name="klasifikasi"]');
             const picSelect = document.querySelector('select[name="PIC"]');
             
-            if (klasifikasiSelect && picSelect) {
-                const teams = {
-                    'technical': @json(config('teams.technical')),
-                    'non-technical': @json(config('teams.non_technical'))
-                };
-                
-                const currentPic = "{{ old('PIC', $ticket->PIC) }}";
+            const topicSelect = document.querySelector('select[name="topic"]');
+            const topicDetailSelect = document.querySelector('select[name="topicDetail"]');
+            
+            const eksalasiTicketSelect = document.querySelector('select[name="eksalasiTicket"]');
+            const eksalasiViaSelect = document.querySelector('select[name="eksalasiVia"]');
+            
+            const statusScSelect = document.querySelector('select[name="statusSC"]');
+            const reasonNoOdsSelect = document.querySelector('select[name="reasonnoODS"]');
 
-                function updatePicOptions() {
-                    const val = klasifikasiSelect.value.toLowerCase();
-                    
-                    // Save selection if it matches current group selection
-                    const selectedVal = picSelect.value || currentPic;
-                    
-                    picSelect.innerHTML = '<option value="">- Pilih Tim Terkait -</option>';
-                    
-                    let options = {};
-                    if (val === 'technical') {
-                        options = teams.technical;
-                    } else if (val === 'non-technical') {
-                        options = teams['non-technical'];
-                    }
-                    
-                    Object.entries(options).forEach(([code, label]) => {
-                        const opt = document.createElement('option');
-                        opt.value = code;
-                        opt.textContent = label;
-                        if (code === selectedVal) {
-                            opt.selected = true;
-                        }
-                        picSelect.appendChild(opt);
-                    });
+            const teams = {
+                'technical': @json(config('teams.technical')) || {},
+                'non-technical': @json(config('teams.non_technical')) || {}
+            };
+            const topicDetailsConfig = @json(config('tickets.topicDetail')) || {};
+
+            const currentPic = "{{ old('PIC', $ticket->PIC) }}";
+            const currentTopicDetail = "{{ old('topicDetail', $ticket->topicDetail) }}";
+
+            // 1. Classification -> PIC
+            function updatePicOptions() {
+                if (!klasifikasiSelect || !picSelect) return;
+
+                const val = klasifikasiSelect.value.toLowerCase();
+                const selectedVal = picSelect.value || currentPic;
+                
+                picSelect.innerHTML = '<option value="">- Pilih Tim Terkait -</option>';
+                
+                let options = {};
+                if (val === 'technical') {
+                    options = teams.technical;
+                    picSelect.disabled = false;
+                } else if (val === 'non-technical') {
+                    options = teams['non-technical'];
+                    picSelect.disabled = false;
+                } else {
+                    picSelect.disabled = true;
+                    picSelect.value = '';
                 }
                 
-                klasifikasiSelect.addEventListener('change', updatePicOptions);
-                
-                // Run on initial load
-                updatePicOptions();
+                Object.entries(options).forEach(([code, label]) => {
+                    const opt = document.createElement('option');
+                    opt.value = code;
+                    opt.textContent = label;
+                    if (code === selectedVal) {
+                        opt.selected = true;
+                    }
+                    picSelect.appendChild(opt);
+                });
             }
+
+            // 2. Topic -> Topic Detail
+            function updateTopicOptions() {
+                if (!topicSelect || !topicDetailSelect) return;
+
+                const topicVal = topicSelect.value;
+                const selectedVal = topicDetailSelect.value || currentTopicDetail;
+                
+                topicDetailSelect.innerHTML = '<option value="">Select</option>';
+                
+                if (topicVal && topicDetailsConfig[topicVal]) {
+                    topicDetailSelect.disabled = false;
+                    Object.entries(topicDetailsConfig[topicVal]).forEach(([key, val]) => {
+                        const opt = document.createElement('option');
+                        opt.value = key;
+                        opt.textContent = val;
+                        if (key === selectedVal) {
+                            opt.selected = true;
+                        }
+                        topicDetailSelect.appendChild(opt);
+                    });
+                } else {
+                    topicDetailSelect.disabled = true;
+                    topicDetailSelect.value = '';
+                }
+            }
+
+            // 3. Eskalasi Tiket -> Eskalasi via
+            function updateEksalasiOptions() {
+                if (!eksalasiTicketSelect || !eksalasiViaSelect) return;
+
+                if (eksalasiTicketSelect.value === 'Yes') {
+                    eksalasiViaSelect.disabled = false;
+                } else {
+                    eksalasiViaSelect.disabled = true;
+                    eksalasiViaSelect.value = '';
+                }
+            }
+
+            // 4. Status Call -> Reason Not ODS
+            function updateOdsOptions() {
+                if (!statusScSelect || !reasonNoOdsSelect) return;
+
+                if (statusScSelect.value === 'Open') {
+                    reasonNoOdsSelect.disabled = false;
+                } else {
+                    reasonNoOdsSelect.disabled = true;
+                    reasonNoOdsSelect.value = '';
+                }
+            }
+
+            // Event Listeners
+            if (klasifikasiSelect) klasifikasiSelect.addEventListener('change', updatePicOptions);
+            if (topicSelect) topicSelect.addEventListener('change', updateTopicOptions);
+            if (eksalasiTicketSelect) eksalasiTicketSelect.addEventListener('change', updateEksalasiOptions);
+            if (statusScSelect) statusScSelect.addEventListener('change', updateOdsOptions);
+
+            // Initial load execution
+            updatePicOptions();
+            updateTopicOptions();
+            updateEksalasiOptions();
+            updateOdsOptions();
+
+            // Enable fields before submit to ensure disabled values are sent
+            form.addEventListener('submit', function () {
+                form.querySelectorAll('input, select, textarea').forEach(input => {
+                    input.disabled = false;
+                });
+            });
         });
     </script>
 </body>

@@ -117,33 +117,75 @@ class TicketDetailController extends Controller
             return redirect()->route('agent.ticket.detail', $id)->with('error', 'Akses ditolak: Anda tidak dapat mengubah status tiket yang tidak di-assign ke Anda atau sudah ditutup/dispatched/saltik.');
         }
 
-        // Fix S-5: Validasi 'action' dengan enum in: agar hanya nilai yang diizinkan lolos
+        // Validate action first
         $request->validate([
             'action' => 'required|string|in:submit,expired,closed,saltik,dispatch',
         ]);
 
+        // Validate other form fields (all nullable)
+        $validated = $request->validate([
+            'resume'             => 'nullable|string|max:2000',
+            'klasifikasi'        => 'nullable|string|in:Technical,Non-Technical',
+            'topic'              => 'nullable|string|max:255',
+            'topicDetail'        => 'nullable|string|max:255',
+            'noSC'               => 'nullable|string|max:100',
+            'statusSC'           => 'nullable|string|max:50',
+            'validateClose'      => 'nullable|string|max:255',
+            'reasonnoODS'        => 'nullable|string|max:1000',
+            'eksalasiTicket'     => 'nullable|string|max:255',
+            'eksalasiVia'        => 'nullable|string|max:255',
+            'PIC'                => [
+                'nullable',
+                'string',
+                Rule::in(
+                    strtolower($request->input('klasifikasi')) === 'technical' 
+                        ? array_keys(config('teams.technical')) 
+                        : array_keys(config('teams.non_technical'))
+                )
+            ],
+            'contact'            => 'nullable|string|max:50',
+            'responBE'           => 'nullable|string|max:2000',
+            'description'        => 'nullable|string|max:5000',
+            'resolved_by_agent'  => 'nullable|string|max:255',
+            'hasil_pengecekan'   => 'nullable|string|max:5000',
+            'attachment'         => 'nullable|file|mimes:pdf,png,jpg,jpeg|max:10240',
+        ], [
+            'PIC.in' => 'Tim terkait yang dipilih tidak valid.'
+        ]);
+
         $action = $request->input('action');
 
-        // Fix R-2: Bungkus semua perubahan status dengan DB::transaction()
-        // Jika ada error di tengah proses, semua perubahan otomatis di-rollback
-        DB::transaction(function () use ($ticket, $action) {
+        // Handle attachment file upload if present
+        if ($request->hasFile('attachment')) {
+            $file = $request->file('attachment');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('attachments'), $fileName);
+            $validated['attachment'] = 'attachments/' . $fileName;
+        }
+
+        // Bungkus semua perubahan data & status dengan DB::transaction()
+        DB::transaction(function () use ($ticket, $action, $validated) {
+            // Fill all details
+            $ticket->fill($validated);
+
+            // Fill status and condition based on action
             switch ($action) {
                 case 'submit':
-                    $ticket->update([
+                    $ticket->fill([
                         'status'    => 'In Progress',
                         'condition' => 'In Progress'
                     ]);
                     break;
 
                 case 'expired':
-                    $ticket->update([
+                    $ticket->fill([
                         'status'    => 'Closed',
                         'condition' => 'EXPIRED'
                     ]);
                     break;
 
                 case 'closed':
-                    $ticket->update([
+                    $ticket->fill([
                         'status'            => 'Closed',
                         'condition'         => 'Closed',
                         'datesolved'        => now(),
@@ -152,7 +194,7 @@ class TicketDetailController extends Controller
                     break;
 
                 case 'saltik':
-                    $ticket->update([
+                    $ticket->fill([
                         'status'            => 'Closed',
                         'condition'         => 'Saltik',
                         'datesolved'        => now(),
@@ -161,12 +203,15 @@ class TicketDetailController extends Controller
                     break;
 
                 case 'dispatch':
-                    $ticket->update([
+                    $ticket->fill([
                         'status'    => 'DISPATCHED',
                         'condition' => 'Dispatched'
                     ]);
                     break;
             }
+
+            // Save all changes in one single database write
+            $ticket->save();
         });
 
         // Event dispatch di luar transaction (boleh gagal, tidak rollback data tiket)
