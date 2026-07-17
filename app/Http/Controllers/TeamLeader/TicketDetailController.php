@@ -68,7 +68,7 @@ class TicketDetailController extends Controller
         // Setelah transaksi: dispatch App\Events\TicketDispatched bila ada
         try {
             if (class_exists(\App\Events\TicketDispatched::class)) {
-                event(new \App\Events\TicketDispatched($ticket, auth()->user()->name));
+                broadcast(new \App\Events\TicketDispatched($ticket, auth()->user()->name))->toOthers();
             }
         } catch (\Exception $e) {
             Log::warning('Failed to dispatch TicketDispatched event: ' . $e->getMessage());
@@ -118,7 +118,7 @@ class TicketDetailController extends Controller
                     'status' => 'DISPATCHED',
                     'condition' => 'Dispatched'
                 ]);
-                event(new \App\Events\TicketDispatched($ticket, auth()->user()->name));
+                broadcast(new \App\Events\TicketDispatched($ticket, auth()->user()->name))->toOthers();
                 $message = 'Ticket has been dispatched successfully!';
                 break;
                 

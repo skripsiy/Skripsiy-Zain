@@ -395,89 +395,136 @@
 
     // Show toast notification
     function showToastNotification(notification) {
+        // We will create the toast using safe textContent setters to completely prevent XSS
         const toast = document.createElement('div');
-        toast.className = 'toast-notification';
-        toast.innerHTML = `
-            <div class="toast-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                </svg>
-            </div>
-            <div class="toast-content">
-                <div class="toast-title">${escapeHtml(notification.title)}</div>
-                <div class="toast-message">${escapeHtml(notification.message)}</div>
-            </div>
-        `;
-
-        // Add toast styles if not exists
-        if (!document.getElementById('toast-styles')) {
-            const style = document.createElement('style');
-            style.id = 'toast-styles';
-            style.textContent = `
-                .toast-notification {
-                    position: fixed;
-                    top: 20px;
-                    right: 20px;
-                    background: white;
-                    border-radius: 12px;
-                    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    padding: 16px 20px;
-                    z-index: 10000;
-                    animation: slideInRight 0.3s ease;
-                    cursor: pointer;
-                    max-width: 350px;
-                }
-                @keyframes slideInRight {
-                    from {
-                        opacity: 0;
-                        transform: translateX(100px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateX(0);
-                    }
-                }
-                .toast-icon {
-                    width: 40px;
-                    height: 40px;
-                    border-radius: 50%;
-                    background: linear-gradient(135deg, #2C5F7C 0%, #1F4A5E 100%);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: white;
-                    flex-shrink: 0;
-                }
-                .toast-content {
-                    flex: 1;
-                }
-                .toast-title {
-                    font-size: 14px;
-                    font-weight: 600;
-                    color: #1F4A5E;
-                }
-                .toast-message {
-                    font-size: 12px;
-                    color: #666;
-                    margin-top: 2px;
-                }
-            `;
-            document.head.appendChild(style);
+        
+        // Urgency color: >=3 red, 2 warning (orange), others green
+        let borderLeftColor = '#10B981'; // Green
+        const urgencyVal = notification.urgency !== undefined && notification.urgency !== null ? parseInt(notification.urgency) : 1;
+        if (urgencyVal >= 3) {
+            borderLeftColor = '#EF4444'; // Red
+        } else if (urgencyVal === 2) {
+            borderLeftColor = '#F59E0B'; // Orange
         }
 
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-left: 6px solid ${borderLeftColor};
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 16px;
+            z-index: 10000;
+            width: 320px;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            transform: translateX(120%);
+            transition: transform 0.3s ease-out;
+        `;
+
+        // Close button
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = '×';
+        closeBtn.style.cssText = `
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #9CA3AF;
+            cursor: pointer;
+            line-height: 1;
+        `;
+        closeBtn.addEventListener('click', (event) => {
+            event.stopPropagation(); // Prevent triggering the click to view ticket
+            toast.style.transform = 'translateX(120%)';
+            setTimeout(() => toast.remove(), 300);
+        });
+
+        // Title
+        const title = document.createElement('p');
+        title.style.cssText = 'font-weight: 700; font-size: 14px; color: #1E293B; margin: 0; padding-right: 15px;';
+        title.textContent = notification.title ?? 'Tiket baru di-assign';
+
+        // Message / Body
+        const body = document.createElement('p');
+        body.style.cssText = 'font-size: 12px; color: #4B5563; margin: 0;';
+        
+        let messageText = notification.message ?? '';
+        if (notification.customer_name || notification.ticket_type) {
+            messageText = `${notification.customer_name ?? '-'} - ${notification.ticket_type ?? ''}`;
+        }
+        body.textContent = messageText;
+
+        // Buttons wrapper
+        const btns = document.createElement('div');
+        btns.style.cssText = 'display: flex; justify-content: flex-end; margin-top: 4px;';
+
+        // "Buka" button
+        const btn = document.createElement('button');
+        btn.textContent = 'Buka';
+        btn.style.cssText = `
+            background: #1F4A5E;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        `;
+        btn.addEventListener('mouseover', () => btn.style.background = '#153543');
+        btn.addEventListener('mouseout', () => btn.style.background = '#1F4A5E');
+        btn.addEventListener('click', (event) => {
+            event.stopPropagation();
+            viewTicket(notification.ticket_id);
+        });
+
+        btns.appendChild(btn);
+        toast.append(closeBtn, title, body, btns);
         document.body.appendChild(toast);
 
-        // Auto remove after 5 seconds
+        // Animate in
         setTimeout(() => {
-            toast.style.animation = 'slideOutRight 0.3s ease forwards';
-            setTimeout(() => toast.remove(), 300);
-        }, 5000);
+            toast.style.transform = 'translateX(0)';
+        }, 100);
 
-        // Click to view ticket
+        // Play beep sound using Web Audio API
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5 note
+            gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            
+            oscillator.start();
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.4);
+            oscillator.stop(audioCtx.currentTime + 0.4);
+        } catch (e) {
+            console.log('Web Audio notification error:', e);
+        }
+
+        // Auto remove after 6 seconds
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.style.transform = 'translateX(120%)';
+                setTimeout(() => toast.remove(), 300);
+            }
+        }, 6000);
+
+        // Click to view ticket when clicking anywhere on toast
         toast.addEventListener('click', () => {
             viewTicket(notification.ticket_id);
         });
@@ -515,7 +562,87 @@
         }
     });
 
-    // Real-time notifications with Laravel Reverb
+
+
+    // ── Smart Polling: detect new notifications and show toast automatically ──
+    let lastKnownCount = -1;          // -1 = not yet initialized
+    let lastKnownTimestamp = null;     // ISO8601 of the most recent notification we've seen
+    let echoConnected = false;
+
+    // Poll for new notifications (primary mechanism — works without Reverb)
+    async function pollNotifications() {
+        try {
+            const response = await fetch('/notifications/unread', {
+                headers: { 'Accept': 'application/json' }
+            });
+
+            if (response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+
+            const data = await response.json();
+            const newCount = data.count ?? 0;
+            const notifications = data.notifications ?? [];
+
+            // Update badge
+            const badge = document.getElementById('notificationBadge');
+            const bell = document.getElementById('notificationBell');
+            if (newCount > 0) {
+                badge.textContent = newCount > 99 ? '99+' : newCount;
+                badge.style.display = 'flex';
+                bell.classList.add('has-notifications');
+            } else {
+                badge.style.display = 'none';
+                bell.classList.remove('has-notifications');
+            }
+
+            // On first load, just record the state (don't show toasts for existing notifs)
+            if (lastKnownCount === -1) {
+                lastKnownCount = newCount;
+                if (notifications.length > 0) {
+                    lastKnownTimestamp = notifications[0].timestamp ?? null;
+                }
+                return;
+            }
+
+            // If count increased, we have new notifications — show toast for each new one
+            if (newCount > lastKnownCount && notifications.length > 0) {
+                const newNotifs = [];
+
+                for (const notif of notifications) {
+                    // If we have a timestamp marker, only show notifs newer than it
+                    if (lastKnownTimestamp && notif.timestamp && notif.timestamp <= lastKnownTimestamp) {
+                        break;
+                    }
+                    newNotifs.push(notif);
+                }
+
+                // Show in chronological order (oldest first) so toasts stack naturally
+                newNotifs.reverse().forEach(notif => {
+                    addNewNotification(notif);
+                });
+            }
+
+            // Update trackers
+            lastKnownCount = newCount;
+            if (notifications.length > 0) {
+                lastKnownTimestamp = notifications[0].timestamp ?? null;
+            }
+
+        } catch (error) {
+            console.error('Error polling notifications:', error);
+        }
+    }
+
+    // Start polling as primary mechanism
+    function startNotificationPolling() {
+        pollNotifications(); // Initial check
+        // Poll every 5 seconds for near-real-time responsiveness
+        notificationCheckInterval = setInterval(pollNotifications, 5000);
+    }
+
+    // Real-time notifications with Laravel Echo/Reverb (enhancement on top of polling)
     function initReverbNotifications() {
         let checkCount = 0;
         const checkInterval = setInterval(() => {
@@ -525,7 +652,7 @@
                 setupEchoListeners();
             } else if (checkCount > 100) { // Check for up to 10 seconds
                 clearInterval(checkInterval);
-                console.error('Laravel Echo failed to initialize after 10 seconds.');
+                console.log('Laravel Echo not available — relying on polling for notifications.');
             }
         }, 100);
     }
@@ -534,24 +661,22 @@
         // Listen for private channel based on user role
         const channelName = userRole === 'agent' ? `agent.${userId}` : `${userRole}.${userId}`;
 
-        console.log('Listening on channel:', channelName);
+        console.log('Echo connected. Listening on channel:', channelName);
+        echoConnected = true;
 
         window.Echo.private(channelName)
             .listen('.ticket.assigned', (e) => {
                 console.log('Real-time notification received:', e);
+                // Immediately show toast + badge (don't wait for poll)
                 addNewNotification(e);
+                // Bump the lastKnownCount so the next poll doesn't double-fire
+                lastKnownCount++;
             })
             .listen('TicketAssigned', (e) => {
                 console.log('TicketAssigned event received:', e);
                 addNewNotification(e);
+                lastKnownCount++;
             });
-    }
-
-    // Start polling as fallback
-    function startNotificationPolling() {
-        updateNotificationBadge(); // Initial check
-        // Check every 30 seconds as fallback
-        notificationCheckInterval = setInterval(updateNotificationBadge, 30000);
     }
 
     // Start when page loads

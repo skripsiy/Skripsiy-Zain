@@ -114,4 +114,42 @@ class BroadcastingAuthTest extends TestCase
 
         $response->assertStatus(403);
     }
+
+    /**
+     * Test 6: Event TicketAssigned memiliki channel, nama event (broadcastAs), dan payload (broadcastWith) yang sesuai.
+     */
+    public function test_ticket_assigned_event_broadcasting()
+    {
+        $ticket = \App\Models\Ticket::create([
+            'namacust' => 'Test Customer Name',
+            'jenisTicket' => 'Non-Technical',
+            'status' => 'OPEN',
+            'condition' => 'OPEN',
+            'datereport' => now(),
+            'customer_id' => 1,
+            'category_id' => 1,
+        ]);
+        $ticket->updateQuietly(['urgency_level' => 4]);
+        $ticket->refresh();
+        $agentId = 55;
+
+        $event = new \App\Events\TicketAssigned($ticket, $agentId);
+
+        // Assert broadcast channel
+        $channels = $event->broadcastOn();
+        $this->assertCount(1, $channels);
+        $this->assertInstanceOf(\Illuminate\Broadcasting\PrivateChannel::class, $channels[0]);
+        $this->assertEquals('private-agent.55', $channels[0]->name);
+
+        // Assert custom broadcast name
+        $this->assertEquals('ticket.assigned', $event->broadcastAs());
+
+        // Assert broadcast payload
+        $payload = $event->broadcastWith();
+        $this->assertEquals($ticket->idTicket, $payload['id']);
+        $this->assertEquals('Tiket baru untukmu', $payload['title']);
+        $this->assertEquals('Test Customer Name', $payload['customer_name']);
+        $this->assertEquals('Non-Technical', $payload['ticket_type']);
+        $this->assertEquals(4, $payload['urgency']);
+    }
 }

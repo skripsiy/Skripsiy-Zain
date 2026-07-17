@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="user-id" content="{{ auth()->id() }}">
 
     <title>XENA - {{ $title ?? 'Agent Dashboard' }}</title>
 
@@ -330,10 +331,14 @@
 
         // Display session success or error messages as toasts
         @if(session('success'))
-            window.showToast("{{ session('success') }}", 'success');
+            if (typeof window.disableGlobalSuccessToast === 'undefined' || !window.disableGlobalSuccessToast) {
+                window.showToast("{{ session('success') }}", 'success');
+            }
         @endif
         @if(session('error'))
-            window.showToast("{{ session('error') }}", 'error');
+            if (typeof window.disableGlobalErrorToast === 'undefined' || !window.disableGlobalErrorToast) {
+                window.showToast("{{ session('error') }}", 'error');
+            }
         @endif
 
         // Listen for events
@@ -343,19 +348,6 @@
             if (window.Echo) {
                 clearInterval(checkInterval);
                 console.log('Echo is initialized, starting listeners...');
-
-                // Agent Listener
-                @if(auth()->check() && auth()->user()->role === 'agent')
-                    window.Echo.private('agent.{{ auth()->id() }}')
-                        .listen('TicketAssigned', (e) => {
-                            console.log('Ticket Assigned:', e);
-                            window.showToast(e.message, 'success');
-                            // Optional: Reload page or update UI if on dashboard
-                            if (window.location.pathname.includes('dashboard') || window.location.pathname.includes('tickets')) {
-                                setTimeout(() => window.location.reload(), 2000);
-                            }
-                        });
-                @endif
 
                 // Team Leader Listener
                 @if(auth()->check() && auth()->user()->role === 'team_leader')

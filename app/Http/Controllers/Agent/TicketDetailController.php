@@ -172,7 +172,7 @@ class TicketDetailController extends Controller
         // Event dispatch di luar transaction (boleh gagal, tidak rollback data tiket)
         if ($action === 'dispatch') {
             try {
-                event(new \App\Events\TicketDispatched($ticket, auth()->user()->name));
+                broadcast(new \App\Events\TicketDispatched($ticket, auth()->user()->name))->toOthers();
             } catch (\Exception $e) {
                 Log::warning('TicketDispatched event failed', [
                     'ticket_id' => $ticket->idTicket,

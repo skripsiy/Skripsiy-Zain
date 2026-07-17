@@ -883,6 +883,10 @@
             }, 300);
         }
         
+        // Disable layout's global success/error toasts so they don't override or double with our custom ones
+        window.disableGlobalSuccessToast = true;
+        window.disableGlobalErrorToast = true;
+
         // Show toast if there's a success message
         @if(session('success'))
             showToast('Success!', '{{ session('success') }}', 'success');

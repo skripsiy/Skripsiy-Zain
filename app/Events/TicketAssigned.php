@@ -7,11 +7,11 @@ use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class TicketAssigned implements ShouldBroadcast
+class TicketAssigned implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -39,17 +39,24 @@ class TicketAssigned implements ShouldBroadcast
         ];
     }
 
+    /**
+     * The event's broadcast name.
+     */
+    public function broadcastAs(): string
+    {
+        return 'ticket.assigned';
+    }
+
     public function broadcastWith(): array
     {
         return [
             'id' => $this->ticket->idTicket,
-            'type' => 'ticket_assigned',
-            'title' => 'New Ticket Assigned',
+            'title' => 'Tiket baru untukmu',
             'message' => "You have been assigned a new ticket: {$this->ticket->idTicket}",
             'ticket_id' => $this->ticket->idTicket,
             'customer_name' => $this->ticket->namacust,
             'ticket_type' => $this->ticket->jenisTicket,
-            'created_at' => now()->toIso8601String(),
+            'urgency' => $this->ticket->urgency_level,
         ];
     }
 }

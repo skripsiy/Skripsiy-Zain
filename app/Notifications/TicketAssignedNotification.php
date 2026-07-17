@@ -7,9 +7,8 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 
-class TicketAssignedNotification extends Notification implements ShouldBroadcast
+class TicketAssignedNotification extends Notification
 {
-    use Queueable;
 
     public $ticket;
     public $user;
@@ -22,7 +21,7 @@ class TicketAssignedNotification extends Notification implements ShouldBroadcast
 
     public function via($notifiable)
     {
-        return ['database', 'broadcast'];
+        return ['database'];
     }
 
     public function toBroadcast($notifiable)
