@@ -758,6 +758,17 @@
                 });
         }
 
+        // Helper to escape HTML to prevent XSS
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
         // Update table with filtered data
         function updateTable(tickets) {
             const tbody = document.getElementById('ticketTableBody');
@@ -772,11 +783,11 @@
                 const statusColor = ticket.status === 'Closed' ? '#7ED321' : (ticket.status === 'In Progress' ? '#4A90E2' : '#FF9800');
                 const row = `
                     <tr>
-                        <td>${ticket.code}</td>
-                        <td>${ticket.symptomp}</td>
-                        <td>${ticket.agent}</td>
-                        <td>${ticket.date}</td>
-                        <td><span style="color: ${statusColor}; font-weight: 600;">${ticket.status}</span></td>
+                        <td>${escapeHtml(ticket.code)}</td>
+                        <td>${escapeHtml(ticket.symptomp)}</td>
+                        <td>${escapeHtml(ticket.agent)}</td>
+                        <td>${escapeHtml(ticket.date)}</td>
+                        <td><span style="color: ${statusColor}; font-weight: 600;">${escapeHtml(ticket.status)}</span></td>
                     </tr>
                 `;
                 tbody.innerHTML += row;

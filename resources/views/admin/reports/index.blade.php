@@ -498,6 +498,17 @@
     </div>
     
     <x-slot name="additionalScripts">
+        // Helper to escape HTML to prevent XSS
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
         // [MODIFIKASI] Diubah untuk mendukung pencarian di baris tabel, bukan kartu grid
         // Search functionality
         document.getElementById('searchInput').addEventListener('keyup', function() {
@@ -541,15 +552,15 @@
                     
                     return `
                         <tr style="border-bottom: 1px solid #E5E7EB; transition: background 0.2s;" onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background=''">
-                            <td style="padding:10px 12px; font-weight: 700; color: #1a202c;">${ticketCode}</td>
-                            <td style="padding:10px 12px;">${ticket.namacust || '-'}</td>
+                            <td style="padding:10px 12px; font-weight: 700; color: #1a202c;">${escapeHtml(ticketCode)}</td>
+                            <td style="padding:10px 12px;">${escapeHtml(ticket.namacust || '-')}</td>
                             <td style="padding:10px 12px;">
-                                <span class="status-badge ${statusClass}">${ticket.status}</span>
+                                <span class="status-badge ${statusClass}">${escapeHtml(ticket.status)}</span>
                             </td>
                             <td style="padding:10px 12px;">
-                                <span class="condition-badge ${conditionClass}">${ticket.condition || 'Open'}</span>
+                                <span class="condition-badge ${conditionClass}">${escapeHtml(ticket.condition || 'Open')}</span>
                             </td>
-                            <td style="padding:10px 12px; color:#4a5568;">${dateStr}</td>
+                            <td style="padding:10px 12px; color:#4a5568;">${escapeHtml(dateStr)}</td>
                         </tr>
                     `;
                 }).join('') : `

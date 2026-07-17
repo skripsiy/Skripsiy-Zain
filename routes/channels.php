@@ -11,5 +11,5 @@ Broadcast::channel('agent.{id}', function ($user, $id) {
 });
 
 Broadcast::channel('team-leader', function ($user) {
-    return $user->role === 'team-leader';
+    return $user->role === 'team_leader';
 });

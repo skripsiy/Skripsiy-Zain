@@ -358,7 +358,7 @@
                 @endif
 
                 // Team Leader Listener
-                @if(auth()->check() && auth()->user()->role === 'team-leader')
+                @if(auth()->check() && auth()->user()->role === 'team_leader')
                     window.Echo.private('team-leader')
                         .listen('TicketDispatched', (e) => {
                             console.log('Ticket Dispatched:', e);
