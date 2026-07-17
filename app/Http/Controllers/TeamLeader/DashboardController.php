@@ -61,13 +61,14 @@ class DashboardController extends Controller
                 });
             }
 
-            // Fix P-2: DB Aggregation menggantikan pemrosesan di PHP-side collection
+            // ODS is defined as tickets that are actually resolved in the field (statusSC is 'closed')
             $statsRow = (clone $query)->selectRaw("
                 COUNT(*) as wo_available,
                 SUM(CASE WHEN LOWER(`condition`) = 'in progress' THEN 1 ELSE 0 END) as consume,
                 SUM(CASE WHEN LOWER(`condition`) = 'closed'      THEN 1 ELSE 0 END) as closed,
                 SUM(CASE WHEN LOWER(`condition`) = 'dispatched'  THEN 1 ELSE 0 END) as dispatched,
-                SUM(CASE WHEN LOWER(`condition`) = 'saltik'      THEN 1 ELSE 0 END) as saltik
+                SUM(CASE WHEN LOWER(`condition`) = 'saltik'      THEN 1 ELSE 0 END) as saltik,
+                SUM(CASE WHEN LOWER(statusSC) = 'closed'       THEN 1 ELSE 0 END) as ods
             ")->first();
 
             $stats = [
@@ -76,12 +77,12 @@ class DashboardController extends Controller
                 'closed'       => (int) $statsRow->closed,
                 'dispatched'   => (int) $statsRow->dispatched,
                 'saltik'       => (int) $statsRow->saltik,
-                'ods'          => (int) $statsRow->closed,
+                'ods'          => (int) $statsRow->ods,
             ];
 
             // Chart: Grouping di PHP side agar kompatibel MySQL dan SQLite (testing)
             $chartTickets = (clone $query)
-                ->select(['created_at', 'condition'])
+                ->select(['created_at', 'condition', 'statusSC'])
                 ->where('created_at', '>=', Carbon::now()->subDays(9)->startOfDay())
                 ->orderBy('created_at')
                 ->get();
@@ -102,7 +103,7 @@ class DashboardController extends Controller
 
                 $barChartConsume[]    = $dayRows->filter(fn($t) => strcasecmp($t->condition, 'In Progress') === 0)->count();
                 $barChartClosed[]     = $dayRows->filter(fn($t) => strcasecmp($t->condition, 'Closed') === 0)->count();
-                $barChartOds[]        = $dayRows->filter(fn($t) => strcasecmp($t->condition, 'Closed') === 0)->count();
+                $barChartOds[]        = $dayRows->filter(fn($t) => strcasecmp($t->statusSC, 'Closed') === 0)->count();
                 $barChartDispatched[] = $dayRows->filter(fn($t) => strcasecmp($t->condition, 'Dispatched') === 0)->count();
                 $barChartSaltik[]     = $dayRows->filter(fn($t) => strcasecmp($t->condition, 'Saltik') === 0)->count();
             }

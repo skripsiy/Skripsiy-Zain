@@ -13,17 +13,7 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-        // Fix S-1 & P-2: In-memory authentication untuk bypass otentikasi saat load test JMeter.
-        // Menggunakan setUser() (in-memory) menggantikan login() (session write) agar tidak ada file lock 
-        // dan meng-cache model user agar tidak memicu query database di setiap request.
-        if (!auth()->check()) {
-            $testAgent = Cache::rememberForever('jmeter_test_agent', function () {
-                return \App\Models\User::where('role', 'agent')->first();
-            });
-            if ($testAgent) {
-                auth()->setUser($testAgent);
-            }
-        }
+
 
         $timeFilter = $request->input('time_filter', 'today');
         $agentId    = auth()->id();
@@ -65,11 +55,13 @@ class DashboardController extends Controller
             }
 
             // Fix P-2: DB Aggregation untuk performa tinggi
+            // ODS is defined as tickets that are actually resolved in the field (statusSC is 'closed')
             $statsRow = (clone $query)->selectRaw("
                 COUNT(*) as wo_available,
                 SUM(CASE WHEN LOWER(`condition`) = 'in progress' THEN 1 ELSE 0 END) as consume,
                 SUM(CASE WHEN LOWER(`condition`) IN ('closed', 'saltik') THEN 1 ELSE 0 END) as closed,
-                SUM(CASE WHEN LOWER(`condition`) = 'dispatched' THEN 1 ELSE 0 END) as dispatched
+                SUM(CASE WHEN LOWER(`condition`) = 'dispatched' THEN 1 ELSE 0 END) as dispatched,
+                SUM(CASE WHEN LOWER(statusSC) = 'closed'       THEN 1 ELSE 0 END) as ods
             ")->first();
 
             $stats = [
@@ -77,12 +69,12 @@ class DashboardController extends Controller
                 'consume'      => (int) $statsRow->consume,
                 'closed'       => (int) $statsRow->closed,
                 'dispatched'   => (int) $statsRow->dispatched,
-                'ods'          => (int) $statsRow->closed, // ODS sama dengan closed
+                'ods'          => (int) $statsRow->ods,
             ];
 
             // Chart: Grouping di PHP side (DB-agnostic)
             $chartTickets = (clone $query)
-                ->select(['created_at', 'condition'])
+                ->select(['created_at', 'condition', 'statusSC'])
                 ->where('created_at', '>=', Carbon::now()->subDays(9)->startOfDay())
                 ->orderBy('created_at')
                 ->get();
@@ -102,7 +94,7 @@ class DashboardController extends Controller
 
                 $barChartConsume[]    = $dayRows->filter(fn($t) => strcasecmp($t->condition, 'In Progress') === 0)->count();
                 $barChartClosed[]     = $dayRows->filter(fn($t) => in_array(strtolower($t->condition), ['closed', 'saltik']))->count();
-                $barChartOds[]        = $dayRows->filter(fn($t) => in_array(strtolower($t->condition), ['closed', 'saltik']))->count();
+                $barChartOds[]        = $dayRows->filter(fn($t) => strcasecmp($t->statusSC, 'Closed') === 0)->count();
                 $barChartDispatched[] = $dayRows->filter(fn($t) => strcasecmp($t->condition, 'Dispatched') === 0)->count();
             }
 

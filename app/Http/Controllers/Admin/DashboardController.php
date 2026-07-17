@@ -37,7 +37,7 @@ class DashboardController extends Controller
                     break;
             }
 
-            // Fix P-2: Satu query aggregasi menggantikan ->get() + multiple ->filter()
+            // ODS is defined as tickets that are actually resolved in the field (statusSC is 'closed')
             $statsRow = (clone $query)->selectRaw("
                 COUNT(*) as wo_available,
                 SUM(CASE WHEN LOWER(`condition`) = 'in progress' THEN 1 ELSE 0 END) as consume,
@@ -55,7 +55,7 @@ class DashboardController extends Controller
             // Chart: Ambil data tiket untuk chart (limit 500, bukan semua)
             // Menggunakan PHP-side grouping agar kompatibel MySQL & SQLite
             $chartTickets = (clone $query)
-                ->select(['created_at', 'condition'])
+                ->select(['created_at', 'condition', 'statusSC'])
                 ->where('created_at', '>=', Carbon::now()->subDays(9)->startOfDay())
                 ->orderBy('created_at')
                 ->get();
@@ -75,7 +75,7 @@ class DashboardController extends Controller
 
                 $barChartConsume[] = $dayRows->filter(fn($t) => strcasecmp($t->condition, 'In Progress') === 0)->count();
                 $barChartClosed[] = $dayRows->filter(fn($t) => strcasecmp($t->condition, 'Closed') === 0)->count();
-                $barChartOds[] = $dayRows->filter(fn($t) => strcasecmp($t->condition, 'Closed') === 0)->count();
+                $barChartOds[] = $dayRows->filter(fn($t) => strcasecmp($t->statusSC, 'Closed') === 0)->count();
             }
 
             // Line Chart: group by hour (only today's tickets)

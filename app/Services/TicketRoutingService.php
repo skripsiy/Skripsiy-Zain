@@ -284,7 +284,12 @@ class TicketRoutingService
     {
         $teamLeaders = User::where('role', 'team_leader')
             ->where('status', 'active')
+            ->whereRaw('LOWER(campaign) = ?', [strtolower($division)])
             ->get();
+
+        if ($teamLeaders->isEmpty()) {
+            $teamLeaders = User::where('role', 'team_leader')->where('status', 'active')->get();
+        }
 
         foreach ($teamLeaders as $tl) {
             try {
