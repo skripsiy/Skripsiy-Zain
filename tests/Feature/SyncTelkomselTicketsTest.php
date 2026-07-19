@@ -100,10 +100,12 @@ class SyncTelkomselTicketsTest extends TestCase
     {
         $this->app['env'] = 'local';
 
-        // Add 'is_simulated' column dynamically to SQLite in-memory database
-        Schema::table('tickets', function (Blueprint $table) {
-            $table->boolean('is_simulated')->default(false);
-        });
+        // Add 'is_simulated' column dynamically to SQLite in-memory database if it doesn't exist
+        if (!Schema::hasColumn('tickets', 'is_simulated')) {
+            Schema::table('tickets', function (Blueprint $table) {
+                $table->boolean('is_simulated')->default(false);
+            });
+        }
 
         // 1. Ticket simulasi (should be touched/closed)
         $simulatedTicket = Ticket::create([

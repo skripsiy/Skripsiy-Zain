@@ -96,4 +96,8 @@ return [
         'Yes' => 'Yes',
         'No' => 'No',
     ],
+    'simulation_divisions' => [
+        'besfixed' => ['source_system' => 'INSERA', 'channel' => '19', 'pool_id' => 'new_site179 BESFIXED', 'jenisTicket' => 'INTERNET'],
+        'saltik'   => ['source_system' => 'DSC',    'channel' => '2',  'pool_id' => 'SALAM SIMPATIK',     'jenisTicket' => 'TELEPON'],
+    ],
 ];

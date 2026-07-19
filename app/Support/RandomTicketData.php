@@ -22,9 +22,6 @@ class RandomTicketData
         $jenisTicket = ['INTERNET', 'Gamas', 'IPTV', 'VOICE'];
         $contacts = ['Telepon', 'WhatsApp', 'Email', 'Walk-in', 'Telegram'];
         $eksalasiVia = ['Telegram', 'WhatsApp', 'Email'];
-        $channels = ['call_center', 'web_portal', 'mobile_app', 'walk_in'];
-        $sourceSystems = ['myindihome', 'our_center', 'crm_legacy'];
-        $divisionTargets = ['area', 'besfixed', 'saltik'];
         $namaDepan = [
             'Budi', 'Siti', 'Andi', 'Dewi', 'Rudi', 'Rina', 'Agus', 'Putri',
             'Hendra', 'Wati', 'Joko', 'Lina', 'Fajar', 'Mega', 'Doni', 'Yuni',
@@ -63,12 +60,36 @@ class RandomTicketData
         $priority = self::randomPriority();
         $urgencyLevel = self::mapPriorityToUrgency($priority);
 
-        $divisions = [
-            'besfixed' => ['source_system' => 'INSERA', 'channel' => '19', 'pool_id' => 'new_site179 BESFIXED',     'jenisTicket' => 'INTERNET'],
-            'saltik'   => ['source_system' => 'DSC',    'channel' => '2',  'pool_id' => 'SALAM SIMPATIK',        'jenisTicket' => 'TELEPON'],
-        ];
+        $divisions = config('tickets.simulation_divisions');
 
-        $pick = $divisions[array_rand($divisions)];
+        // Cek agen yang online hari ini
+        $onlineCampaigns = [];
+        try {
+            $onlineCampaigns = \App\Models\User::where('role', 'agent')
+                ->where('status', 'active')
+                ->whereHas('workSessions', function ($q) {
+                    $q->where('work_date', today())
+                      ->where('status', 'online');
+                })
+                ->pluck('campaign')
+                ->filter()
+                ->map(fn($c) => strtolower($c))
+                ->unique()
+                ->toArray();
+        } catch (\Exception $e) {
+            // Fallback jika terjadi error query/DB
+        }
+
+        // Filter divisi simulasi yang memiliki agen online
+        $availableDivisions = array_intersect(array_keys($divisions), $onlineCampaigns);
+
+        if (!empty($availableDivisions)) {
+            $chosenDivision = $availableDivisions[array_rand($availableDivisions)];
+        } else {
+            $chosenDivision = array_rand($divisions);
+        }
+
+        $pick = $divisions[$chosenDivision];
 
         $data = [
             'datereport' => now(),
