@@ -18,15 +18,18 @@ class ReportController extends Controller
     /**
      * Display user reports listing (Data Harian)
      */
-    public function index()
+    public function index(Request $request)
     {
-        $today = \Carbon\Carbon::today()->toDateString();
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
+        $from = $dateFrom ?: Carbon::today()->toDateString();
+        $to = $dateTo ?: Carbon::today()->toDateString();
 
-        // Get all users with their ticket counts for TODAY
+        // Inbox = tickets that entered the agent's queue today (activity range), while solved = resolved/closed tickets in the selected range.
         $users = User::select('users.*')
-            ->selectRaw('COUNT(DISTINCT CASE WHEN tickets.assigned_to_user_id = users.id AND DATE(tickets.datereport) = ? THEN tickets.idTicket END) as assigned_tickets', [$today])
-            ->selectRaw('COUNT(DISTINCT CASE WHEN tickets.solved_by_user_id = users.id AND DATE(tickets.datesolved) = ? THEN tickets.idTicket END) as solved_tickets', [$today])
-            ->selectRaw('COUNT(DISTINCT CASE WHEN tickets.assigned_to_user_id = users.id AND tickets.status = "QUEUED" THEN tickets.idTicket END) as inbox_tickets')
+            ->selectRaw("COUNT(DISTINCT CASE WHEN tickets.assigned_to_user_id = users.id AND tickets.condition NOT IN ('Dispatched', 'Closed') AND ((DATE(tickets.created_at) >= ? AND DATE(tickets.created_at) <= ?) OR (DATE(tickets.updated_at) >= ? AND DATE(tickets.updated_at) <= ?)) THEN tickets.idTicket END) as assigned_tickets", [$from, $to, $from, $to])
+            ->selectRaw("COUNT(DISTINCT CASE WHEN tickets.solved_by_user_id = users.id AND DATE(tickets.datesolved) >= ? AND DATE(tickets.datesolved) <= ? THEN tickets.idTicket END) as solved_tickets", [$from, $to])
+            ->selectRaw("COUNT(DISTINCT CASE WHEN tickets.assigned_to_user_id = users.id AND ((DATE(tickets.created_at) >= ? AND DATE(tickets.created_at) <= ?) OR (DATE(tickets.updated_at) >= ? AND DATE(tickets.updated_at) <= ?)) THEN tickets.idTicket END) as inbox_tickets", [$from, $to, $from, $to])
             ->leftJoin('tickets', function($join) {
                 $join->on('tickets.assigned_to_user_id', '=', 'users.id')
                      ->orOn('tickets.solved_by_user_id', '=', 'users.id');
@@ -41,34 +44,60 @@ class ReportController extends Controller
     /**
      * Get user ticket details (Data Harian)
      */
-    public function getUserTickets(User $user)
+    public function getUserTickets(User $user, Request $request)
     {
-        $today = \Carbon\Carbon::today()->toDateString();
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
+        $from = $dateFrom ?: Carbon::today()->toDateString();
+        $to = $dateTo ?: Carbon::today()->toDateString();
 
-        // Get tickets assigned to user TODAY
+        $activityRange = function ($query) use ($from, $to) {
+            $query->where(function ($range) use ($from, $to) {
+                $range->where(function ($createdRange) use ($from, $to) {
+                    $createdRange->whereDate('created_at', '>=', $from);
+                    $createdRange->whereDate('created_at', '<=', $to);
+                })->orWhere(function ($updatedRange) use ($from, $to) {
+                    $updatedRange->whereDate('updated_at', '>=', $from);
+                    $updatedRange->whereDate('updated_at', '<=', $to);
+                });
+            });
+        };
+
         $assignedTickets = Ticket::where('assigned_to_user_id', $user->id)
-            ->whereDate('datereport', $today)
-            ->orderBy('created_at', 'desc')
+            ->whereNotIn('condition', ['Dispatched', 'Closed'])
+            ->where(function ($q) use ($activityRange) {
+                $activityRange($q);
+            })
+            ->orderBy('updated_at', 'desc')
             ->get();
 
-        // Get tickets solved by user TODAY
+        $dispatchedTickets = Ticket::where('assigned_to_user_id', $user->id)
+            ->where('condition', 'Dispatched')
+            ->where(function ($q) use ($activityRange) {
+                $activityRange($q);
+            })
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
         $solvedTickets = Ticket::where('solved_by_user_id', $user->id)
-            ->whereDate('datesolved', $today)
-            ->orderBy('created_at', 'desc')
+            ->whereBetween('datesolved', [$from, $to])
+            ->orderBy('updated_at', 'desc')
             ->get();
 
-        // Get inbox tickets (queued tickets assigned to user) - Inbox biasanya semua yang belum selesai
         $inboxTickets = Ticket::where('assigned_to_user_id', $user->id)
-            ->where('status', 'QUEUED')
-            ->orderBy('created_at', 'desc')
+            ->where(function ($q) use ($activityRange) {
+                $activityRange($q);
+            })
+            ->orderBy('updated_at', 'desc')
             ->get();
 
-        // Count by status for TODAY
         $statusCounts = Ticket::where('assigned_to_user_id', $user->id)
-            ->whereDate('datereport', $today)
-            ->select('status', DB::raw('count(*) as count'))
-            ->groupBy('status')
-            ->pluck('count', 'status')
+            ->where(function ($q) use ($activityRange) {
+                $activityRange($q);
+            })
+            ->select('condition', DB::raw('count(*) as count'))
+            ->groupBy('condition')
+            ->pluck('count', 'condition')
             ->toArray();
 
         return response()->json([
@@ -76,10 +105,12 @@ class ReportController extends Controller
             'assigned_count' => $assignedTickets->count(),
             'solved_count' => $solvedTickets->count(),
             'inbox_count' => $inboxTickets->count(),
+            'dispatched_count' => $dispatchedTickets->count(),
             'status_counts' => $statusCounts,
             'assigned_tickets' => $assignedTickets,
             'solved_tickets' => $solvedTickets,
             'inbox_tickets' => $inboxTickets,
+            'dispatched_tickets' => $dispatchedTickets,
         ]);
     }
 
@@ -99,135 +130,35 @@ class ReportController extends Controller
         $ticketId  = $request->get('ticket_id');
         $keyword   = $request->get('keyword');
 
+        if (empty($dateFrom) && empty($dateTo)) {
+            $dateFrom = Carbon::today()->toDateString();
+            $dateTo = Carbon::today()->toDateString();
+        }
+
+        $filters = [
+            'ticket_id' => $ticketId,
+            'keyword' => $keyword,
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo,
+            'status' => $status,
+            'agent_id' => $agentId,
+        ];
+        $applyFilters = function ($query) use ($filters) {
+            $query->reportFilter($filters);
+        };
+
         // Query tiket
         $query = Ticket::query();
+        $applyFilters($query);
 
-        // Filter ticket ID
-        if ($ticketId) {
-            $query->where('idTicket', 'like', "%{$ticketId}%");
-        }
-
-        // Filter keyword (F-10)
-        if ($keyword) {
-            $query->where(function ($q) use ($keyword) {
-                foreach (['idTicket', 'idlaporan', 'detailticket', 'resume', 'description', 'noSC'] as $col) {
-                    $q->orWhere('tickets.' . $col, 'like', "%{$keyword}%");
-                }
-                $q->orWhereHas('customer', function ($subQuery) use ($keyword) {
-                    $subQuery->where('name', 'like', "%{$keyword}%")
-                             ->orWhere('phone_number', 'like', "%{$keyword}%");
-                });
-                $q->orWhereHas('escalations', function ($subQuery) use ($keyword) {
-                    $subQuery->where('escalated_to', 'like', "%{$keyword}%")
-                             ->orWhere('escalated_via', 'like', "%{$keyword}%")
-                             ->orWhere('contact', 'like', "%{$keyword}%")
-                             ->orWhere('status', 'like', "%{$keyword}%");
-                });
-                $q->orWhereHas('category', function ($subQuery) use ($keyword) {
-                    $subQuery->where('name', 'like', "%{$keyword}%")
-                             ->orWhereHas('parent', function ($p1) use ($keyword) {
-                                 $p1->where('name', 'like', "%{$keyword}%")
-                                    ->orWhereHas('parent', function ($p2) use ($keyword) {
-                                        $p2->where('name', 'like', "%{$keyword}%")
-                                           ->orWhereHas('parent', function ($p3) use ($keyword) {
-                                               $p3->where('name', 'like', "%{$keyword}%");
-                                           });
-                                    });
-                             });
-                });
-                $q->orWhereHas('witelRelation', function ($subQuery) use ($keyword) {
-                    $subQuery->where('name', 'like', "%{$keyword}%")
-                             ->orWhereHas('area', function ($a) use ($keyword) {
-                                 $a->where('name', 'like', "%{$keyword}%");
-                             });
-                });
-            });
-        }
-
-        // Filter tanggal masuk (datereport)
-        if ($dateFrom) {
-            $query->whereDate('datereport', '>=', $dateFrom);
-        }
-        if ($dateTo) {
-            $query->whereDate('datereport', '<=', $dateTo);
-        }
-
-        // Filter status
-        if ($status) {
-            if ($status === 'QUEUED') {
-                // QUEUED dan UNASSIGNED dianggap sama
-                $query->whereIn('condition', ['QUEUED', 'UNASSIGNED']);
-            } else {
-                $query->where('condition', $status);
-            }
-        }
-
-        // Filter agent
-        if ($agentId) {
-            $query->where(function ($q) use ($agentId) {
-                $q->where('assigned_to_user_id', $agentId)
-                  ->orWhere('solved_by_user_id', $agentId);
-            });
-        }
-
-        $tickets = $query->with(['assignedTo'])
-            ->orderBy('datereport', 'desc')
+        $tickets = $query->with(['assignedTo', 'solvedBy'])
+            ->orderBy('updated_at', 'desc')
             ->paginate(20)
             ->withQueryString();
 
         // Statistik ringkas dari hasil filter (tanpa paginate)
         $statsQuery = Ticket::query();
-        if ($ticketId)  $statsQuery->where('idTicket', 'like', "%{$ticketId}%");
-        if ($keyword) {
-            $statsQuery->where(function ($q) use ($keyword) {
-                foreach (['idTicket', 'idlaporan', 'detailticket', 'resume', 'description', 'noSC'] as $col) {
-                    $q->orWhere('tickets.' . $col, 'like', "%{$keyword}%");
-                }
-                $q->orWhereHas('customer', function ($subQuery) use ($keyword) {
-                    $subQuery->where('name', 'like', "%{$keyword}%")
-                             ->orWhere('phone_number', 'like', "%{$keyword}%");
-                });
-                $q->orWhereHas('escalations', function ($subQuery) use ($keyword) {
-                    $subQuery->where('escalated_to', 'like', "%{$keyword}%")
-                             ->orWhere('escalated_via', 'like', "%{$keyword}%")
-                             ->orWhere('contact', 'like', "%{$keyword}%")
-                             ->orWhere('status', 'like', "%{$keyword}%");
-                });
-                $q->orWhereHas('category', function ($subQuery) use ($keyword) {
-                    $subQuery->where('name', 'like', "%{$keyword}%")
-                             ->orWhereHas('parent', function ($p1) use ($keyword) {
-                                 $p1->where('name', 'like', "%{$keyword}%")
-                                    ->orWhereHas('parent', function ($p2) use ($keyword) {
-                                        $p2->where('name', 'like', "%{$keyword}%")
-                                           ->orWhereHas('parent', function ($p3) use ($keyword) {
-                                               $p3->where('name', 'like', "%{$keyword}%");
-                                           });
-                                    });
-                             });
-                });
-                $q->orWhereHas('witelRelation', function ($subQuery) use ($keyword) {
-                    $subQuery->where('name', 'like', "%{$keyword}%")
-                             ->orWhereHas('area', function ($a) use ($keyword) {
-                                 $a->where('name', 'like', "%{$keyword}%");
-                             });
-                });
-            });
-        }
-        if ($dateFrom)  $statsQuery->whereDate('datereport', '>=', $dateFrom);
-        if ($dateTo)    $statsQuery->whereDate('datereport', '<=', $dateTo);
-        if ($status) {
-            if ($status === 'QUEUED') {
-                $statsQuery->whereIn('condition', ['QUEUED', 'UNASSIGNED']);
-            } else {
-                $statsQuery->where('condition', $status);
-            }
-        }
-        if ($agentId) {
-            $statsQuery->where(function ($q) use ($agentId) {
-                $q->where('assigned_to_user_id', $agentId)
-                  ->orWhere('solved_by_user_id', $agentId);
-            });
-        }
+        $applyFilters($statsQuery);
 
         $statusCounts = (clone $statsQuery)
             ->select('condition', DB::raw('count(*) as total'))
@@ -274,7 +205,9 @@ class ReportController extends Controller
             'witel',
             'date_from',
             'date_to',
-            'ticket_id'
+            'ticket_id',
+            'agent_id',
+            'keyword',
         ]);
 
         return Excel::download(
@@ -288,10 +221,11 @@ class ReportController extends Controller
      */
     public function exportUserTickets(User $user, Request $request)
     {
-        $type = $request->get('type', 'assigned'); // 'assigned', 'solved', or 'inbox'
+        $type = $request->get('type', 'assigned'); // 'assigned', 'solved', 'inbox', or 'dispatched'
+        $filters = $request->only(['date_from', 'date_to']);
 
         return Excel::download(
-            new UserTicketsExport($user, $type),
+            new UserTicketsExport($user, $type, $filters),
             $user->name . '_' . $type . '_tickets_' . now()->format('Y-m-d_His') . '.xlsx'
         );
     }

@@ -19,12 +19,14 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 class UserTicketsExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithColumnWidths, WithTitle, ShouldAutoSize
 {
     protected $user;
-    protected $type; // 'assigned', 'solved', or 'inbox'
+    protected $type; // 'assigned', 'solved', 'inbox', or 'dispatched'
+    protected $filters;
 
-    public function __construct(User $user, $type = 'assigned')
+    public function __construct(User $user, $type = 'assigned', array $filters = [])
     {
         $this->user = $user;
         $this->type = $type;
+        $this->filters = $filters;
     }
 
     /**
@@ -34,20 +36,52 @@ class UserTicketsExport implements FromCollection, WithHeadings, WithMapping, Wi
     {
         $query = Ticket::query();
 
+        $rangeFilters = [
+            'date_from' => $this->filters['date_from'] ?? null,
+            'date_to' => $this->filters['date_to'] ?? null,
+        ];
+
         switch ($this->type) {
             case 'solved':
                 $query->where('solved_by_user_id', $this->user->id);
+                $query->whereBetween('datesolved', [$rangeFilters['date_from'] ?? null, $rangeFilters['date_to'] ?? null]);
                 break;
             case 'inbox':
-                $query->where('assigned_to_user_id', $this->user->id)->where('status', 'QUEUED');
+                $query->where('assigned_to_user_id', $this->user->id)
+                    ->where('condition', 'QUEUED');
+                break;
+            case 'dispatched':
+                $query->where('assigned_to_user_id', $this->user->id)
+                    ->where('condition', 'Dispatched');
                 break;
             case 'assigned':
             default:
-                $query->where('assigned_to_user_id', $this->user->id);
+                $query->where('assigned_to_user_id', $this->user->id)
+                    ->whereNotIn('condition', ['Dispatched', 'Closed']);
                 break;
         }
 
-        return $query->orderBy('datereport', 'desc')->get();
+        if (!empty($rangeFilters['date_from']) || !empty($rangeFilters['date_to'])) {
+            $query->where(function ($range) use ($rangeFilters) {
+                $range->where(function ($createdRange) use ($rangeFilters) {
+                    if (!empty($rangeFilters['date_from'])) {
+                        $createdRange->whereDate('created_at', '>=', $rangeFilters['date_from']);
+                    }
+                    if (!empty($rangeFilters['date_to'])) {
+                        $createdRange->whereDate('created_at', '<=', $rangeFilters['date_to']);
+                    }
+                })->orWhere(function ($updatedRange) use ($rangeFilters) {
+                    if (!empty($rangeFilters['date_from'])) {
+                        $updatedRange->whereDate('updated_at', '>=', $rangeFilters['date_from']);
+                    }
+                    if (!empty($rangeFilters['date_to'])) {
+                        $updatedRange->whereDate('updated_at', '<=', $rangeFilters['date_to']);
+                    }
+                });
+            });
+        }
+
+        return $query->orderBy('updated_at', 'desc')->get();
     }
 
     /**

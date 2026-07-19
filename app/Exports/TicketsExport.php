@@ -35,22 +35,10 @@ class TicketsExport implements FromCollection, WithHeadings, WithMapping, WithSt
         }
         $query = Ticket::query()->with(['assignedTo', 'solvedBy']);
 
-        // Apply filters if provided
-        if (!empty($this->filters['ticket_id'])) {
-            $query->where('idTicket', 'like', "%" . $this->filters['ticket_id'] . "%");
-        }
-
-        if (!empty($this->filters['user_id'])) {
-            $userId = $this->filters['user_id'];
-            $query->where(function($q) use ($userId) {
-                $q->where('assigned_to_user_id', $userId)
-                  ->orWhere('solved_by_user_id', $userId);
-            });
-        }
-
-        if (!empty($this->filters['status'])) {
-            $query->where('status', $this->filters['status']);
-        }
+        $filters = array_filter($this->filters, function ($value) {
+            return $value !== null && $value !== '';
+        });
+        $query->reportFilter($filters);
 
         if (!empty($this->filters['priority'])) {
             $query->where('reportedpriority', $this->filters['priority']);
@@ -64,15 +52,7 @@ class TicketsExport implements FromCollection, WithHeadings, WithMapping, WithSt
             $query->where('witel', $this->filters['witel']);
         }
 
-        if (!empty($this->filters['date_from'])) {
-            $query->whereDate('datereport', '>=', $this->filters['date_from']);
-        }
-
-        if (!empty($this->filters['date_to'])) {
-            $query->whereDate('datereport', '<=', $this->filters['date_to']);
-        }
-
-        return $query->orderBy('datereport', 'desc')->get();
+        return $query->orderBy('updated_at', 'desc')->get();
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -45,6 +46,101 @@ class Ticket extends Model
             ->logAll()
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
+    }
+
+    public function scopeReportFilter(Builder $query, array $filters = []): Builder
+    {
+        $ticketId = $filters['ticket_id'] ?? null;
+        $keyword = $filters['keyword'] ?? null;
+        $dateFrom = $filters['date_from'] ?? null;
+        $dateTo = $filters['date_to'] ?? null;
+        $status = $filters['status'] ?? null;
+        $agentId = $filters['agent_id'] ?? null;
+        $userId = $filters['user_id'] ?? null;
+
+        if ($ticketId) {
+            $query->where('idTicket', 'like', "%{$ticketId}%");
+        }
+
+        if ($keyword) {
+            $query->where(function ($q) use ($keyword) {
+                foreach (['idTicket', 'idlaporan', 'detailticket', 'resume', 'description', 'noSC'] as $col) {
+                    $q->orWhere('tickets.' . $col, 'like', "%{$keyword}%");
+                }
+                $q->orWhereHas('customer', function ($subQuery) use ($keyword) {
+                    $subQuery->where('name', 'like', "%{$keyword}%")
+                        ->orWhere('phone_number', 'like', "%{$keyword}%");
+                });
+                $q->orWhereHas('escalations', function ($subQuery) use ($keyword) {
+                    $subQuery->where('escalated_to', 'like', "%{$keyword}%")
+                        ->orWhere('escalated_via', 'like', "%{$keyword}%")
+                        ->orWhere('contact', 'like', "%{$keyword}%")
+                        ->orWhere('status', 'like', "%{$keyword}%");
+                });
+                $q->orWhereHas('category', function ($subQuery) use ($keyword) {
+                    $subQuery->where('name', 'like', "%{$keyword}%")
+                        ->orWhereHas('parent', function ($p1) use ($keyword) {
+                            $p1->where('name', 'like', "%{$keyword}%")
+                                ->orWhereHas('parent', function ($p2) use ($keyword) {
+                                    $p2->where('name', 'like', "%{$keyword}%")
+                                        ->orWhereHas('parent', function ($p3) use ($keyword) {
+                                            $p3->where('name', 'like', "%{$keyword}%");
+                                        });
+                                });
+                        });
+                });
+                $q->orWhereHas('witelRelation', function ($subQuery) use ($keyword) {
+                    $subQuery->where('name', 'like', "%{$keyword}%")
+                        ->orWhereHas('area', function ($a) use ($keyword) {
+                            $a->where('name', 'like', "%{$keyword}%");
+                        });
+                });
+            });
+        }
+
+        if ($dateFrom || $dateTo) {
+            $query->where(function ($range) use ($dateFrom, $dateTo) {
+                $range->where(function ($createdRange) use ($dateFrom, $dateTo) {
+                    if ($dateFrom) {
+                        $createdRange->whereDate('created_at', '>=', $dateFrom);
+                    }
+                    if ($dateTo) {
+                        $createdRange->whereDate('created_at', '<=', $dateTo);
+                    }
+                })->orWhere(function ($updatedRange) use ($dateFrom, $dateTo) {
+                    if ($dateFrom) {
+                        $updatedRange->whereDate('updated_at', '>=', $dateFrom);
+                    }
+                    if ($dateTo) {
+                        $updatedRange->whereDate('updated_at', '<=', $dateTo);
+                    }
+                });
+            });
+        }
+
+        if ($status) {
+            if ($status === 'QUEUED') {
+                $query->whereIn('condition', ['QUEUED', 'UNASSIGNED']);
+            } else {
+                $query->where('condition', $status);
+            }
+        }
+
+        if ($agentId) {
+            $query->where(function ($agentQuery) use ($agentId) {
+                $agentQuery->where('assigned_to_user_id', $agentId)
+                    ->orWhere('solved_by_user_id', $agentId);
+            });
+        }
+
+        if ($userId) {
+            $query->where(function ($userQuery) use ($userId) {
+                $userQuery->where('assigned_to_user_id', $userId)
+                    ->orWhere('solved_by_user_id', $userId);
+            });
+        }
+
+        return $query;
     }
 
     /**

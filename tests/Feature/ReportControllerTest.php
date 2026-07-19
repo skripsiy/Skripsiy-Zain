@@ -23,6 +23,43 @@ class ReportControllerTest extends TestCase
         $response->assertOk();
     }
 
+    public function test_index_page_summary_counts_follow_activity_dates()
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+        ]);
+
+        $agent = User::factory()->create([
+            'role' => 'agent',
+            'name' => 'Agent Summary',
+            'status' => 'active',
+        ]);
+
+        $ticket = Ticket::create([
+            'datereport' => now()->subDay(),
+            'jenisTicket' => 'INTERNET',
+            'notelpCust' => '081294135920',
+            'namacust' => 'Customer Summary',
+            'status' => 'ASSIGNED',
+            'condition' => 'ASSIGNED',
+            'assigned_to_user_id' => $agent->id,
+            'division_target' => 'besfixed',
+        ]);
+        $ticket->forceFill([
+            'created_at' => now(),
+            'updated_at' => now(),
+        ])->save();
+
+        $response = $this->actingAs($admin)
+            ->get(route('admin.reports.index'));
+
+        $response->assertOk();
+        $response->assertViewHas('users', function ($users) use ($agent) {
+            $user = $users->firstWhere('id', $agent->id);
+            return $user && $user->assigned_tickets == 1 && $user->inbox_tickets == 1 && $user->solved_tickets == 0;
+        });
+    }
+
     public function test_admin_can_view_tickets_report_page_and_apply_filters()
     {
         $admin = User::factory()->create([
@@ -41,7 +78,7 @@ class ReportControllerTest extends TestCase
             'status' => 'active',
         ]);
 
-        // 1. Create a ticket assigned to Agent A, reported 2 days ago
+        // 1. Create a ticket assigned to Agent A, with activity 2 days ago
         $ticketA = Ticket::create([
             'datereport' => now()->subDays(2),
             'jenisTicket' => 'INTERNET',
@@ -52,8 +89,12 @@ class ReportControllerTest extends TestCase
             'assigned_to_user_id' => $agent->id,
             'division_target' => 'besfixed',
         ]);
+        $ticketA->forceFill([
+            'created_at' => now()->subDays(3),
+            'updated_at' => now()->subDays(3),
+        ])->save();
 
-        // 2. Create a ticket assigned to Agent B, reported today
+        // 2. Create a ticket assigned to Agent B, with activity today
         $ticketB = Ticket::create([
             'datereport' => now(),
             'jenisTicket' => 'INTERNET',
@@ -63,9 +104,11 @@ class ReportControllerTest extends TestCase
             'condition' => 'Closed',
             'assigned_to_user_id' => $otherAgent->id,
             'division_target' => 'besfixed',
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
-        // --- Filter by Date (date_from / date_to) ---
+        // --- Filter by Date (activity dates: created_at / updated_at) ---
         $response = $this->actingAs($admin)
             ->get(route('admin.reports.tickets', [
                 'date_from' => now()->subDay()->toDateString(),
@@ -74,8 +117,8 @@ class ReportControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertViewHas('tickets', function ($tickets) use ($ticketA, $ticketB) {
-            return !$tickets->getCollection()->contains('idTicket', $ticketA->idTicket) &&
-                   $tickets->getCollection()->contains('idTicket', $ticketB->idTicket);
+            return $tickets->getCollection()->contains('idTicket', $ticketB->idTicket) &&
+                   !$tickets->getCollection()->contains('idTicket', $ticketA->idTicket);
         });
 
         // --- Filter by Status (condition) ---
@@ -94,6 +137,8 @@ class ReportControllerTest extends TestCase
         $response = $this->actingAs($admin)
             ->get(route('admin.reports.tickets', [
                 'agent_id' => $agent->id,
+                'date_from' => now()->subDays(10)->toDateString(),
+                'date_to' => now()->toDateString(),
             ]));
 
         $response->assertOk();
@@ -197,6 +242,64 @@ class ReportControllerTest extends TestCase
         });
     }
 
+    public function test_admin_reports_include_dispatched_ticket_in_list_when_filtering_by_activity_date()
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $agent = User::factory()->create(['role' => 'agent', 'name' => 'Agent Dispatched']);
+
+        $ticket = Ticket::create([
+            'datereport' => now()->subDay(),
+            'jenisTicket' => 'INTERNET',
+            'notelpCust' => '081294135919',
+            'namacust' => 'Customer Dispatched',
+            'status' => 'DISPATCHED',
+            'condition' => 'Dispatched',
+            'assigned_to_user_id' => $agent->id,
+            'division_target' => 'besfixed',
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->get(route('admin.reports.tickets', [
+                'status' => 'Dispatched',
+                'date_from' => now()->subDay()->toDateString(),
+                'date_to' => now()->toDateString(),
+            ]));
+
+        $response->assertOk();
+        $response->assertViewHas('tickets', function ($tickets) use ($ticket) {
+            return $tickets->getCollection()->contains('idTicket', $ticket->idTicket);
+        });
+    }
+
+    public function test_user_detail_endpoint_returns_dispatched_tickets_for_selected_range()
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $agent = User::factory()->create(['role' => 'agent', 'name' => 'Agent Detail']);
+
+        $dispatchedTicket = Ticket::create([
+            'datereport' => now()->subDays(2),
+            'jenisTicket' => 'INTERNET',
+            'notelpCust' => '081294135920',
+            'namacust' => 'Customer Detail',
+            'status' => 'DISPATCHED',
+            'condition' => 'Dispatched',
+            'assigned_to_user_id' => $agent->id,
+            'division_target' => 'besfixed',
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->get(route('admin.reports.user', ['user' => $agent->id]), [
+                'date_from' => now()->subDay()->toDateString(),
+                'date_to' => now()->toDateString(),
+            ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('dispatched_count', 1);
+        $response->assertJsonCount(1, 'dispatched_tickets');
+        $response->assertJsonPath('dispatched_tickets.0.idTicket', $dispatchedTicket->idTicket);
+    }
 
     public function test_admin_can_export_user_reports_to_excel()
     {

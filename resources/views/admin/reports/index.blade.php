@@ -542,25 +542,30 @@
                 (data.inbox_tickets || []).forEach(t => allTicketsMap[t.idTicket] = t);
                 (data.assigned_tickets || []).forEach(t => allTicketsMap[t.idTicket] = t);
                 (data.solved_tickets || []).forEach(t => allTicketsMap[t.idTicket] = t);
-                const combinedTickets = Object.values(allTicketsMap).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                (data.dispatched_tickets || []).forEach(t => allTicketsMap[t.idTicket] = t);
+                const combinedTickets = Object.values(allTicketsMap).sort((a, b) => {
+                    const aDate = new Date(a.updated_at || a.created_at || a.datereport || 0);
+                    const bDate = new Date(b.updated_at || b.created_at || b.datereport || 0);
+                    return bDate - aDate;
+                });
                 
                 const ticketsHtml = combinedTickets.length > 0 ? combinedTickets.map(ticket => {
                     const ticketCode = 'TK' + String(ticket.idTicket).padStart(6, '0');
-                    const dateStr = ticket.datereport ? ticket.datereport.substring(0, 10) : '-';
-                    const statusClass = 'status-' + ticket.status.toLowerCase().replace(' ', '-');
-                    const conditionClass = 'condition-' + (ticket.condition ? ticket.condition.toLowerCase().replace(' ', '-') : 'open');
+                    const dateStr = (ticket.updated_at || ticket.created_at || ticket.datereport || '').toString().substring(0, 10);
+                    const statusClass = 'status-' + String(ticket.status || 'open').toLowerCase().replace(/\s+/g, '-');
+                    const conditionClass = 'condition-' + (ticket.condition ? ticket.condition.toLowerCase().replace(/\s+/g, '-') : 'open');
                     
                     return `
                         <tr style="border-bottom: 1px solid #E5E7EB; transition: background 0.2s;" onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background=''">
                             <td style="padding:10px 12px; font-weight: 700; color: #1a202c;">${escapeHtml(ticketCode)}</td>
                             <td style="padding:10px 12px;">${escapeHtml(ticket.namacust || '-')}</td>
                             <td style="padding:10px 12px;">
-                                <span class="status-badge ${statusClass}">${escapeHtml(ticket.status)}</span>
+                                <span class="status-badge ${statusClass}">${escapeHtml(ticket.status || '-')}</span>
                             </td>
                             <td style="padding:10px 12px;">
                                 <span class="condition-badge ${conditionClass}">${escapeHtml(ticket.condition || 'Open')}</span>
                             </td>
-                            <td style="padding:10px 12px; color:#4a5568;">${escapeHtml(dateStr)}</td>
+                            <td style="padding:10px 12px; color:#4a5568;">${escapeHtml(dateStr || '-')}</td>
                         </tr>
                     `;
                 }).join('') : `
@@ -579,7 +584,7 @@
                     </div>
                     
                     <!-- 3 Ringkasan angka di atas tabel (Assigned, Solved, Inbox) -->
-                    <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+                    <div style="display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap;">
                         <div style="padding: 12px 24px; border: 1.5px solid #CBD5E1; border-radius: 8px; font-size: 14px; font-weight: 600; background: #F8FAFC; color: #1E293B;">
                             <span style="font-size: 20px; font-weight: 700; margin-right: 5px; color: #2C5F7C;">${data.assigned_count}</span> Assigned
                         </div>
@@ -588,6 +593,9 @@
                         </div>
                         <div style="padding: 12px 24px; border: 1.5px solid #CBD5E1; border-radius: 8px; font-size: 14px; font-weight: 600; background: #F8FAFC; color: #1E293B;">
                             <span style="font-size: 20px; font-weight: 700; margin-right: 5px; color: #F59E0B;">${data.inbox_count}</span> Inbox
+                        </div>
+                        <div style="padding: 12px 24px; border: 1.5px solid #CBD5E1; border-radius: 8px; font-size: 14px; font-weight: 600; background: #F8FAFC; color: #1E293B;">
+                            <span style="font-size: 20px; font-weight: 700; margin-right: 5px; color: #2563EB;">${data.dispatched_count || 0}</span> Dispatched
                         </div>
                     </div>
                     

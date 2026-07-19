@@ -376,8 +376,10 @@
                         <option value="QUEUED"      {{ $status === 'QUEUED'      ? 'selected' : '' }}>Queued</option>
                         <option value="ASSIGNED"    {{ $status === 'ASSIGNED'    ? 'selected' : '' }}>Assigned</option>
                         <option value="In Progress" {{ $status === 'In Progress' ? 'selected' : '' }}>In Progress</option>
+                        <option value="Open"        {{ $status === 'Open'        ? 'selected' : '' }}>Open</option>
                         <option value="Closed"      {{ $status === 'Closed'      ? 'selected' : '' }}>Closed</option>
                         <option value="Saltik"      {{ $status === 'Saltik'      ? 'selected' : '' }}>Saltik</option>
+                        <option value="Dispatched"  {{ $status === 'Dispatched'  ? 'selected' : '' }}>Dispatched</option>
                     </select>
                 </div>
                 <div class="filter-group">
