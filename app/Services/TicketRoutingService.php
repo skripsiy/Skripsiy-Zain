@@ -16,7 +16,6 @@ class TicketRoutingService
     // ─────────────────────────────────────────────
     const SLA_THRESHOLD = [
         'saltik'   => 11,   // rata-rata 10-12 menit
-        'area'     => 9,    // rata-rata 8-10 menit
         'besfixed' => 6,    // rata-rata 5-6 menit
     ];
 
@@ -60,6 +59,33 @@ class TicketRoutingService
      */
     public function determineDivision(Ticket $ticket): string
     {
+        $channel      = (string) ($ticket->channel ?? '');
+        $sourceSystem = strtoupper($ticket->source_system ?? '');
+        $poolId       = $ticket->pool_id ?? '';
+        $status       = $ticket->status ?? '';
+        $statusDsc    = $ticket->statusSC ?? '';   // gunakan statusSC sebagai status internal
+        $klasifikasi  = strtoupper($ticket->klasifikasi ?? '');
+        $topic        = strtoupper($ticket->topic ?? '');
+
+        // ─── SALTIK ───────────────────────────────────────────────
+        // Cek lebih dulu karena overlap channel dengan Besfixed
+        $isSaltikPoolId  = str_contains(strtoupper($poolId), 'SALAM SIMPATIK');
+        $isSaltikDscStat = $this->statusMatchesAny($status, self::DSC_SALTIK_STATUSES)
+                        || $this->statusMatchesAny($statusDsc, self::DSC_SALTIK_STATUSES);
+        $isSaltikInseraStat = $this->statusMatchesAny($status, self::INSERA_SALTIK_STATUSES);
+        $isSaltikDscWsa  = ($sourceSystem === 'DSC' && str_contains(strtoupper($klasifikasi), 'WSA'));
+        $isSaltikChannel = in_array($channel, self::INSERA_CHANNELS_SALTIK);
+
+        if (
+            $isSaltikPoolId
+            || $isSaltikDscWsa
+            || ($sourceSystem === 'DSC' && $isSaltikDscStat)
+            || ($sourceSystem === 'INSERA' && $isSaltikChannel && $isSaltikInseraStat)
+        ) {
+            return 'saltik';
+        }
+
+        // ─── Fallback (BESFIXED) ──────────────────────────────────
         return 'besfixed';
     }
 

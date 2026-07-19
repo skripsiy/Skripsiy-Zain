@@ -28,12 +28,9 @@ class ProfileController extends Controller
         $user = Auth::user();
 
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'campaign' => ['nullable', 'string', 'max:255'],
-            'site' => ['nullable', 'string', 'max:255'],
-            'username' => ['nullable', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:20'],
+            'username' => ['required', 'string', 'max:255', 'unique:users,username,' . $user->id],
+            'email'    => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'phone'    => ['nullable', 'string', 'max:20'],
         ]);
 
         $user->update($validated);

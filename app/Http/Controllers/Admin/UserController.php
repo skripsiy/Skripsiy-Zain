@@ -35,11 +35,22 @@ class UserController extends Controller
             'username' => 'required|string|max:255|unique:users',
             'password' => 'required|string|min:8',
             'role' => 'required|in:admin,team_leader,agent',
-            'campaign' => 'nullable|string|max:255',
+            'campaign' => [
+                'nullable',
+                Rule::requiredIf(fn() => in_array($request->role, ['agent', 'team_leader'])),
+                Rule::in(array_keys(config('divisions'))),
+            ],
             'area' => 'nullable|string|max:255',
             'site' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:20',
         ]);
+
+        if (in_array($validated['role'], ['agent', 'team_leader'])) {
+            $validated['area'] = strtoupper($validated['campaign']);
+        } else {
+            $validated['area'] = null;
+            $validated['campaign'] = null;
+        }
 
         User::create($validated);
 
@@ -56,11 +67,22 @@ class UserController extends Controller
 
         $validated = $request->validate([
             'role' => 'required|in:admin,team_leader,agent',
-            'campaign' => 'nullable|string|max:255',
+            'campaign' => [
+                'nullable',
+                Rule::requiredIf(fn() => in_array($request->role, ['agent', 'team_leader'])),
+                Rule::in(array_keys(config('divisions'))),
+            ],
             'site' => 'nullable|string|max:255',
             'area' => 'nullable|string|max:255',
             'status' => 'required|in:active,inactive,suspend',
         ]);
+
+        if (in_array($validated['role'], ['agent', 'team_leader'])) {
+            $validated['area'] = strtoupper($validated['campaign']);
+        } else {
+            $validated['area'] = null;
+            $validated['campaign'] = null;
+        }
 
         $user->update($validated);
 

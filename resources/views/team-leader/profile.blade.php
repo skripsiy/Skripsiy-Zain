@@ -259,12 +259,32 @@
                     @csrf
                     @method('PATCH')
                     <div class="stack">
-                        <input class="input" type="text" name="name" placeholder="Name" value="{{ old('name', Auth::user()->name) }}" required>
-                        <input class="input" type="text" name="campaign" placeholder="Campaign" value="{{ old('campaign', Auth::user()->campaign) }}">
-                        <input class="input" type="text" name="site" placeholder="Site" value="{{ old('site', Auth::user()->site) }}">
-                        <input class="input" type="text" name="username" placeholder="Username" value="{{ old('username', Auth::user()->username) }}">
-                        <input class="input" type="email" name="email" placeholder="Email" value="{{ old('email', Auth::user()->email) }}" required>
-                        <input class="input" type="text" name="phone" placeholder="Phone Number" value="{{ old('phone', Auth::user()->phone) }}">
+                        <div style="margin-bottom: 10px;">
+                            <label style="font-size: 11px; color: #6b7280; display: block; margin-bottom: 2px; font-weight: 500;">Name (Read-only)</label>
+                            <input class="input" type="text" value="{{ Auth::user()->name }}" disabled style="opacity: 0.65; cursor: not-allowed; background: #e5e7eb;">
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <label style="font-size: 11px; color: #6b7280; display: block; margin-bottom: 2px; font-weight: 500;">Campaign/Division (Read-only)</label>
+                            <input class="input" type="text" value="{{ Auth::user()->campaign ?? '-' }}" disabled style="opacity: 0.65; cursor: not-allowed; background: #e5e7eb;">
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <label style="font-size: 11px; color: #6b7280; display: block; margin-bottom: 2px; font-weight: 500;">Site (Read-only)</label>
+                            <input class="input" type="text" value="{{ Auth::user()->site ?? '-' }}" disabled style="opacity: 0.65; cursor: not-allowed; background: #e5e7eb;">
+                            <small style="color: #6b7280; font-size: 11px; margin-top: 2px; display: block;">Hubungi admin untuk mengubah data ini</small>
+                        </div>
+                        
+                        <div style="margin-bottom: 10px;">
+                            <label style="font-size: 11px; color: #6b7280; display: block; margin-bottom: 2px; font-weight: 500;">Username</label>
+                            <input class="input" type="text" name="username" placeholder="Username" value="{{ old('username', Auth::user()->username) }}" required>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <label style="font-size: 11px; color: #6b7280; display: block; margin-bottom: 2px; font-weight: 500;">Email</label>
+                            <input class="input" type="email" name="email" placeholder="Email" value="{{ old('email', Auth::user()->email) }}" required>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <label style="font-size: 11px; color: #6b7280; display: block; margin-bottom: 2px; font-weight: 500;">Phone Number</label>
+                            <input class="input" type="text" name="phone" placeholder="Phone Number" value="{{ old('phone', Auth::user()->phone) }}">
+                        </div>
                     </div>
                 </form>
                 <div class="actions">

@@ -429,10 +429,10 @@
                 <div class="form-group">
                     <label class="form-label">Campaign</label>
                     <select name="campaign" class="form-select">
-                        <option value="">Select Campaign</option>
-                        <option value="besfixed">Besfixed</option>
-                        <option value="saltik">Saltik</option>
-                        <option value="C4">C4</option>
+                        <option value="">- Pilih Divisi -</option>
+                        @foreach (config('divisions') as $code => $label)
+                            <option value="{{ $code }}" @selected(old('campaign') === $code)>{{ $label }}</option>
+                        @endforeach
                     </select>
                 </div>
                 <div class="form-group">
@@ -486,10 +486,10 @@
                 <div class="form-group">
                     <label class="form-label">Campaign</label>
                     <select name="campaign" id="editCampaign" class="form-select">
-                        <option value="">Select Campaign</option>
-                        <option value="besfixed">Besfixed</option>
-                        <option value="saltik">Saltik</option>
-                        <option value="C4">C4</option>
+                        <option value="">- Pilih Divisi -</option>
+                        @foreach (config('divisions') as $code => $label)
+                            <option value="{{ $code }}">{{ $label }}</option>
+                        @endforeach
                     </select>
                 </div>
                 <div class="form-group">

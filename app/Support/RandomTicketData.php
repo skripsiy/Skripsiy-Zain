@@ -63,9 +63,16 @@ class RandomTicketData
         $priority = self::randomPriority();
         $urgencyLevel = self::mapPriorityToUrgency($priority);
 
+        $divisions = [
+            'besfixed' => ['source_system' => 'INSERA', 'channel' => '19', 'pool_id' => 'new_site179 BESFIXED',     'jenisTicket' => 'INTERNET'],
+            'saltik'   => ['source_system' => 'DSC',    'channel' => '2',  'pool_id' => 'SALAM SIMPATIK',        'jenisTicket' => 'TELEPON'],
+        ];
+
+        $pick = $divisions[array_rand($divisions)];
+
         $data = [
             'datereport' => now(),
-            'jenisTicket' => $jenisTicket[array_rand($jenisTicket)],
+            'jenisTicket' => $pick['jenisTicket'],
             'notelpCust' => '08' . rand(11, 99) . rand(10000000, 99999999),
             'namacust' => $namaCustomer,
             'idlaporan' => rand(500000, 999999),
@@ -74,13 +81,13 @@ class RandomTicketData
             'topic' => $topics[array_rand($topics)],
             'noSC' => 'SC' . rand(1000000, 9999999),
             'statusSC' => 'Open',
+            'status' => 'New',
             'contact' => $contacts[array_rand($contacts)],
             'reportedpriority' => $priority,
             'eksalasiVia' => $eksalasiVia[array_rand($eksalasiVia)],
-            'channel' => $channels[array_rand($channels)],
-            'source_system' => $sourceSystems[array_rand($sourceSystems)],
-            'divisions_target' => $divisionTargets[array_rand($divisionTargets)],
-            'urgency_level' => $urgencyLevel,
+            'channel' => $pick['channel'],
+            'source_system' => $pick['source_system'],
+            'pool_id' => $pick['pool_id'],
             'is_simulated' => 1,
         ];
 

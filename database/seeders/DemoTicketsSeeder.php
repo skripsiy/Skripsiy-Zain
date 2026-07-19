@@ -310,9 +310,7 @@ class DemoTicketsSeeder extends Seeder
             $ticket->save();
         }
 
-        // 2. Jalankan Tiket Closed dengan BYPASS observer
-        $dispatcher = Ticket::getEventDispatcher();
-        Ticket::unsetEventDispatcher();
+        // 2. Jalankan Tiket Closed
         foreach ($closedTickets as $data) {
             Ticket::create(array_merge([
                 'jenisTicket' => 'INTERNET',
@@ -325,7 +323,6 @@ class DemoTicketsSeeder extends Seeder
                 'resume' => 'Demo Area: Laporan ' . $data['namacust'],
             ], $data));
         }
-        Ticket::setEventDispatcher($dispatcher);
     }
 
     private function seedBesfixedTickets($agents)
@@ -520,9 +517,7 @@ class DemoTicketsSeeder extends Seeder
             $ticket->save();
         }
 
-        // 2. Jalankan Tiket Closed dengan BYPASS observer
-        $dispatcher = Ticket::getEventDispatcher();
-        Ticket::unsetEventDispatcher();
+        // 2. Jalankan Tiket Closed
         foreach ($closedTickets as $data) {
             Ticket::create(array_merge([
                 'jenisTicket' => 'INTERNET',
@@ -535,7 +530,6 @@ class DemoTicketsSeeder extends Seeder
                 'resume' => 'Demo Besfixed: Laporan ' . $data['namacust'],
             ], $data));
         }
-        Ticket::setEventDispatcher($dispatcher);
     }
 
     private function seedSaltikTickets($agents)
@@ -690,9 +684,7 @@ class DemoTicketsSeeder extends Seeder
             $ticket->save();
         }
 
-        // 2. Jalankan Tiket Closed dengan BYPASS observer
-        $dispatcher = Ticket::getEventDispatcher();
-        Ticket::unsetEventDispatcher();
+        // 2. Jalankan Tiket Closed
         foreach ($closedTickets as $data) {
             Ticket::create(array_merge([
                 'jenisTicket' => 'TELEPON',
@@ -705,7 +697,6 @@ class DemoTicketsSeeder extends Seeder
                 'resume' => 'Demo Saltik: Laporan ' . $data['namacust'],
             ], $data));
         }
-        Ticket::setEventDispatcher($dispatcher);
     }
 
     private function seedFallbackRoutingTickets()

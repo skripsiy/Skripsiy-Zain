@@ -14,24 +14,7 @@ class DivisionUsersSeeder extends Seeder
      */
     public function run(): void
     {
-        // ─── AREA ────────────────────────────────────────────────────
-        $this->createTeamLeader(
-            name:     'TL Area',
-            email:    'tl.area@xena.com',
-            username: 'tl_area',
-            campaign: 'area',
-        );
 
-        $areaAgents = [
-            ['Budi Santoso',    'budi.area@xena.com',    'budi_area'],
-            ['Dewi Rahayu',     'dewi.area@xena.com',    'dewi_area'],
-            ['Farhan Hidayat',  'farhan.area@xena.com',  'farhan_area'],
-            ['Gita Permata',    'gita.area@xena.com',    'gita_area'],
-            ['Hendra Wijaya',   'hendra.area@xena.com',  'hendra_area'],
-        ];
-        foreach ($areaAgents as [$name, $email, $username]) {
-            $this->createAgent($name, $email, $username, 'area');
-        }
 
         // ─── BESFIXED ────────────────────────────────────────────────
         $this->createTeamLeader(
@@ -75,10 +58,9 @@ class DivisionUsersSeeder extends Seeder
         $this->command->table(
             ['Role', 'Divisi', 'Jumlah'],
             [
-                ['Team Leader', 'Area',     '1'],
                 ['Team Leader', 'Besfixed', '1'],
                 ['Team Leader', 'Saltik',   '1'],
-                ['Agent',       'Besfixed', '15'],
+                ['Agent',       'Besfixed & Saltik', '10'],
             ]
         );
         $this->command->info('Password semua user: password123');

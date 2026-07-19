@@ -55,6 +55,7 @@ class AdminUserManagementTest extends TestCase
         $response = $this->actingAs($admin)
             ->patch(route('admin.users.updateRole', $agent), [
                 'role' => 'team_leader',
+                'campaign' => 'besfixed',
                 'status' => 'active', // status is required in updateRole
             ]);
 

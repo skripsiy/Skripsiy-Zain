@@ -17,14 +17,6 @@ class InjectDemoTicketsSeeder extends Seeder
         $this->command->info('📥 Preparing large-scale live injection (15 tickets per division)...');
 
         $divisionsConfig = [
-            'area' => [
-                'count' => 15,
-                'source_system' => 'INSERA',
-                'channel' => '21',
-                'pool_id' => 'Network Service Desk',
-                'priorities' => ['Low', 'Emergency'],
-                'jenis' => 'INTERNET',
-            ],
             'besfixed' => [
                 'count' => 15,
                 'source_system' => 'INSERA',
