@@ -49,8 +49,8 @@ class TicketDetailController extends Controller
                 'noSC'          => $validated['noSC'],
                 'statusSC'      => $validated['statusSC'] ?? null,
                 'validateClose' => $validated['validateClose'],
-                'reasonnoODS'   => $validated['reasonnoODS'],
-                'description'   => $validated['description'],
+                'reasonnoODS'   => $validated['reasonnoODS'] ?? null,
+                'description'   => $validated['description'] ?? null,
                 'status'        => 'DISPATCHED',
                 'condition'     => 'Dispatched',
             ]);

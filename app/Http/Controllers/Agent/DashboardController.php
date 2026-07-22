@@ -20,9 +20,9 @@ class DashboardController extends Controller
 
         // Fix P-2: Cache stats dashboard agent selama 60 detik
         // Menggunakan key dinamis per user agent agar tidak saling tertimpa
-        $cacheKey = "agent_dashboard_stats_{$agentId}_{$timeFilter}";
+        $cacheKey = "agent_dashboard_stats_{$agentId}_{$timeFilter}_" . Carbon::now()->toDateString();
 
-        [$stats, $chartData, $tickets] = Cache::remember($cacheKey, 60, function () use ($timeFilter, $agentId) {
+        [$stats, $chartData, $tickets] = Cache::remember($cacheKey, 10, function () use ($timeFilter, $agentId) {
             $now   = Carbon::now();
             $query = Ticket::where('assigned_to_user_id', $agentId);
 
@@ -49,7 +49,9 @@ class DashboardController extends Controller
                 default:
                     $query->where(function ($q) use ($now) {
                         $q->whereDate('created_at', $now->today())
-                          ->orWhereDate('updated_at', $now->today());
+                          ->orWhereDate('updated_at', $now->today())
+                          ->orWhereDate('datereport', $now->today())
+                          ->orWhereDate('datesolved', $now->today());
                     });
                     break;
             }
@@ -58,10 +60,10 @@ class DashboardController extends Controller
             // ODS is defined as tickets that are actually resolved in the field (statusSC is 'closed')
             $statsRow = (clone $query)->selectRaw("
                 COUNT(*) as wo_available,
-                SUM(CASE WHEN LOWER(`condition`) = 'in progress' THEN 1 ELSE 0 END) as consume,
-                SUM(CASE WHEN LOWER(`condition`) IN ('closed', 'saltik') THEN 1 ELSE 0 END) as closed,
-                SUM(CASE WHEN LOWER(`condition`) = 'dispatched' THEN 1 ELSE 0 END) as dispatched,
-                SUM(CASE WHEN LOWER(statusSC) = 'closed'       THEN 1 ELSE 0 END) as ods
+                SUM(CASE WHEN LOWER(COALESCE(`condition`, status)) IN ('in progress', 'in-progress', 'assigned') THEN 1 ELSE 0 END) as consume,
+                SUM(CASE WHEN LOWER(COALESCE(`condition`, status)) IN ('closed', 'saltik') THEN 1 ELSE 0 END) as closed,
+                SUM(CASE WHEN LOWER(COALESCE(`condition`, status)) IN ('dispatched', 'dispatched') THEN 1 ELSE 0 END) as dispatched,
+                SUM(CASE WHEN LOWER(statusSC) = 'closed' THEN 1 ELSE 0 END) as ods
             ")->first();
 
             $stats = [

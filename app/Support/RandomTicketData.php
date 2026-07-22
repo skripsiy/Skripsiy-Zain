@@ -23,14 +23,52 @@ class RandomTicketData
         $contacts = ['Telepon', 'WhatsApp', 'Email', 'Walk-in', 'Telegram'];
         $eksalasiVia = ['Telegram', 'WhatsApp', 'Email'];
         $namaDepan = [
-            'Budi', 'Siti', 'Andi', 'Dewi', 'Rudi', 'Rina', 'Agus', 'Putri',
-            'Hendra', 'Wati', 'Joko', 'Lina', 'Fajar', 'Mega', 'Doni', 'Yuni',
-            'Arif', 'Tina', 'Bayu', 'Sri', 'Rizky', 'Nurul', 'Dimas', 'Ayu',
+            'Budi',
+            'Siti',
+            'Andi',
+            'Dewi',
+            'Rudi',
+            'Rina',
+            'Agus',
+            'Putri',
+            'Hendra',
+            'Wati',
+            'Joko',
+            'Lina',
+            'Fajar',
+            'Mega',
+            'Doni',
+            'Yuni',
+            'Arif',
+            'Tina',
+            'Bayu',
+            'Sri',
+            'Rizky',
+            'Nurul',
+            'Dimas',
+            'Ayu',
         ];
         $namaBelakang = [
-            'Santoso', 'Wijaya', 'Pratama', 'Sari', 'Hidayat', 'Kusuma', 'Hartono',
-            'Rahayu', 'Putra', 'Lestari', 'Setiawan', 'Handoko', 'Wibowo', 'Permata',
-            'Nugraha', 'Susanto', 'Suryadi', 'Purnama', 'Gunawan', 'Maulana',
+            'Santoso',
+            'Wijaya',
+            'Pratama',
+            'Sari',
+            'Hidayat',
+            'Kusuma',
+            'Hartono',
+            'Rahayu',
+            'Putra',
+            'Lestari',
+            'Setiawan',
+            'Handoko',
+            'Wibowo',
+            'Permata',
+            'Nugraha',
+            'Susanto',
+            'Suryadi',
+            'Purnama',
+            'Gunawan',
+            'Maulana',
         ];
         $detailTemplates = [
             'Pelanggan melaporkan koneksi internet tidak bisa digunakan sejak pagi.',
@@ -69,7 +107,7 @@ class RandomTicketData
                 ->where('status', 'active')
                 ->whereHas('workSessions', function ($q) {
                     $q->where('work_date', today())
-                      ->where('status', 'online');
+                        ->where('status', 'online');
                 })
                 ->pluck('campaign')
                 ->filter()
@@ -111,6 +149,47 @@ class RandomTicketData
             'pool_id' => $pick['pool_id'],
             'is_simulated' => 1,
         ];
+
+        // Jika divisi simulasi adalah SALTIK, lengkapi semua isian tiket
+        if (strtolower($chosenDivision) === 'saltik') {
+            $topicChoice = rand(0, 1) === 0 ? 'Phone Issue' : 'Internet Issue';
+            $topicDetails = config("tickets.topicDetail.{$topicChoice}", []);
+            $topicDetailKey = !empty($topicDetails) ? array_rand($topicDetails) : null;
+
+            $reasonnoODSList = config('tickets.reasonnoODS', []);
+            $reasonnoODSVal = !empty($reasonnoODSList) ? array_rand($reasonnoODSList) : null;
+
+            $responBEList = config('tickets.responBE', []);
+            $responBEVal = !empty($responBEList) ? array_rand($responBEList) : null;
+
+            $noSCList = config('tickets.noSC', []);
+            $noSCVal = !empty($noSCList) ? array_rand($noSCList) : 'SC' . rand(1000000, 9999999);
+
+            $saltikFields = [
+                'klasifikasi' => ['Technical', 'Non-Technical'][rand(0, 1)],
+                'topic' => $topicChoice,
+                'topicDetail' => $topicDetailKey,
+                'noSC' => $noSCVal,
+                'statusSC' => ['Open', 'Closed'][rand(0, 1)],
+                'validateClose' => 'Yes',
+                'reasonnoODS' => $reasonnoODSVal,
+                'eksalasiTicket' => ['Yes', 'No'][rand(0, 1)],
+                'eksalasiVia' => $eksalasiVia[array_rand($eksalasiVia)],
+                'PIC' => 'SALTIK',
+                'contact' => $contacts[array_rand($contacts)],
+                'responBE' => $responBEVal,
+                'description' => 'Pemeriksaan tiket selesai. Semua data tiket telah terisi lengkap.',
+                'hasil_pengecekan' => 'Sinyal dan koneksi jaringan sudah diverifikasi normal. Data ODS dan SC sesuai.',
+                'resolved_by_agent' => 'Succes Resolved',
+                'regional' => 'REGIONAL ' . rand(1, 7),
+                'witel' => 'WITEL ' . ['JAKARTA', 'BANDUNG', 'SURABAYA', 'MEDAN', 'SEMARANG', 'DENPASAR'][rand(0, 5)],
+                'gamas' => '0',
+                'lapul' => rand(0, 2),
+                'gaul' => rand(0, 1),
+            ];
+
+            $data = array_merge($data, $saltikFields);
+        }
 
         return array_merge($data, $overrides);
     }

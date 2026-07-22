@@ -43,13 +43,13 @@ class DispatchTicketRequest extends FormRequest
             'noSC'           => 'required|string|max:100',
             'statusSC'       => 'nullable|string|max:50',
             'validateClose'  => 'required|string|max:255',
-            'reasonnoODS'    => 'required|string|max:1000',
+            'reasonnoODS'    => 'nullable|string|max:1000',
             'eksalasiTicket' => 'required|string|max:255',
             'eksalasiVia'    => 'required|string|max:255',
             'PIC'            => ['required', Rule::in($validTeams)],
             'contact'        => 'required|string|max:50',
             'responBE'       => 'required|string|max:2000',
-            'description'    => 'required|string|max:5000',
+            'description'    => 'nullable|string|max:5000',
             'attachment'     => 'nullable|file|mimes:pdf,png,jpg,jpeg|max:10240',
         ];
     }

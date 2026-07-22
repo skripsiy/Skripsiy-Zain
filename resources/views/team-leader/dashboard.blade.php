@@ -426,18 +426,12 @@
             <!-- Average Handling Time -->
             <div class="stat-card">
                 <h3>Average Handling Time</h3>
-                <div class="stat-number">12.5</div>
-                <div style="margin-top: 20px;">
-                    <div class="stat-item">
-                        <span class="stat-label">All Consume</span>
-                    </div>
-                    <div class="stat-number">15.2</div>
-                </div>
+                <div class="stat-number">{{ $aht['period'] }}</div>
                 <div style="margin-top: 20px;">
                     <div class="stat-item">
                         <span class="stat-label">AHT Last ticket</span>
                     </div>
-                    <div class="stat-number">8.7</div>
+                    <div class="stat-number">{{ $aht['last'] }}</div>
                 </div>
             </div>
 
@@ -447,12 +441,12 @@
                 <div class="stat-item">
                     <span class="stat-label">Online Time</span>
                 </div>
-                <div class="stat-number">7.5h</div>
+                <div class="stat-number">{{ $workStats['online_hours'] }}h</div>
                 <div style="margin-top: 20px;">
                     <div class="stat-item">
                         <span class="stat-label">AUX Time</span>
                     </div>
-                    <div class="stat-number">0.5h</div>
+                    <div class="stat-number">{{ $workStats['aux_hours'] }}h</div>
                 </div>
             </div>
 
@@ -547,27 +541,27 @@
                 <h3 class="card-title">Grafik Achievement</h3>
                 <div class="achievement-bars">
                     <div class="bar-wrapper">
-                        <div class="bar" style="background: #4CAF50; height: 100%;"></div>
+                        <div class="bar" style="background: #4CAF50; height: 0%;"></div>
                         <span class="bar-label">C4 Area 1</span>
                     </div>
                     <div class="bar-wrapper">
-                        <div class="bar" style="background: #4CAF50; height: 100%;"></div>
+                        <div class="bar" style="background: #4CAF50; height: 0%;"></div>
                         <span class="bar-label">C4 Area 2</span>
                     </div>
                     <div class="bar-wrapper">
-                        <div class="bar" style="background: #4CAF50; height: 100%;"></div>
+                        <div class="bar" style="background: #4CAF50; height: 0%;"></div>
                         <span class="bar-label">C4 Area 3</span>
                     </div>
                     <div class="bar-wrapper">
-                        <div class="bar" style="background: #4CAF50; height: 100%;"></div>
+                        <div class="bar" style="background: #4CAF50; height: 0%;"></div>
                         <span class="bar-label">C4 Area 4</span>
                     </div>
                     <div class="bar-wrapper">
-                        <div class="bar" style="background: #F44336; height: 80%;"></div>
+                        <div class="bar" style="background: #F44336; height: {{ $achievement['besfixed_pct'] }}%;" title="{{ $achievement['besfixed_count'] }} Tiket ({{ $achievement['besfixed_pct'] }}%)"></div>
                         <span class="bar-label">BESFIXED</span>
                     </div>
                     <div class="bar-wrapper">
-                        <div class="bar" style="background: #FFEB3B; height: 100%;"></div>
+                        <div class="bar" style="background: #FFEB3B; height: {{ $achievement['saltik_pct'] }}%;" title="{{ $achievement['saltik_count'] }} Tiket ({{ $achievement['saltik_pct'] }}%)"></div>
                         <span class="bar-label">SALTIK</span>
                     </div>
                 </div>
@@ -791,10 +785,10 @@
         new Chart(todayCtx, {
         type: 'doughnut',
         data: {
-        labels: ['WO Available', 'Consume', 'ODS', 'Dispatched', 'Closed'],
+        labels: ['Consume', 'ODS', 'Dispatched', 'Closed'],
         datasets: [{
-        data: [{{ $stats['wo_available'] }}, {{ $stats['consume'] }}, {{ $stats['ods'] }}, {{ $stats['dispatched'] }}, {{ $stats['closed'] }}],
-        backgroundColor: ['#000000', '#4A90E2', '#7ED321', '#FF9800', '#D0021B'],
+        data: {!! json_encode([$stats['consume'], $stats['ods'], $stats['dispatched'], $stats['closed']]) !!},
+        backgroundColor: ['#4A90E2', '#7ED321', '#FF9800', '#D0021B'],
         borderWidth: 0
         }]
         },

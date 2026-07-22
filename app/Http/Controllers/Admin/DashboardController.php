@@ -15,9 +15,9 @@ class DashboardController extends Controller
         $timeFilter = $request->input('time_filter', 'today');
 
 
-        $cacheKey = "admin_dashboard_stats_{$timeFilter}";
+        $cacheKey = "admin_dashboard_stats_{$timeFilter}_" . Carbon::now()->toDateString();
 
-        [$stats, $chartData, $tickets] = Cache::remember($cacheKey, 60, function () use ($timeFilter) {
+        [$stats, $chartData, $tickets] = Cache::remember($cacheKey, 10, function () use ($timeFilter) {
             $now = Carbon::now();
             $query = Ticket::query();
 
@@ -33,23 +33,30 @@ class DashboardController extends Controller
                     break;
                 case 'today':
                 default:
-                    $query->whereDate('created_at', $now->copy()->toDateString());
+                    $query->where(function ($q) use ($now) {
+                        $q->whereDate('created_at', $now->toDateString())
+                          ->orWhereDate('updated_at', $now->toDateString())
+                          ->orWhereDate('datereport', $now->toDateString())
+                          ->orWhereDate('datesolved', $now->toDateString());
+                    });
                     break;
             }
 
             // ODS is defined as tickets that are actually resolved in the field (statusSC is 'closed')
             $statsRow = (clone $query)->selectRaw("
                 COUNT(*) as wo_available,
-                SUM(CASE WHEN LOWER(`condition`) = 'in progress' THEN 1 ELSE 0 END) as consume,
-                SUM(CASE WHEN LOWER(`condition`) = 'closed'      THEN 1 ELSE 0 END) as closed,
-                SUM(CASE WHEN LOWER(statusSC) = 'closed'       THEN 1 ELSE 0 END) as ods
+                SUM(CASE WHEN LOWER(COALESCE(`condition`, status)) IN ('in progress', 'in-progress', 'assigned') THEN 1 ELSE 0 END) as consume,
+                SUM(CASE WHEN LOWER(COALESCE(`condition`, status)) IN ('closed', 'saltik') THEN 1 ELSE 0 END) as closed,
+                SUM(CASE WHEN LOWER(COALESCE(`condition`, status)) IN ('dispatched', 'dispatched') THEN 1 ELSE 0 END) as dispatched,
+                SUM(CASE WHEN LOWER(statusSC) = 'closed' THEN 1 ELSE 0 END) as ods
             ")->first();
 
             $stats = [
                 'wo_available' => (int) $statsRow->wo_available,
-                'consume' => (int) $statsRow->consume,
-                'ods' => (int) $statsRow->ods,
-                'closed' => (int) $statsRow->closed,
+                'consume'      => (int) $statsRow->consume,
+                'ods'          => (int) $statsRow->ods,
+                'dispatched'   => (int) $statsRow->dispatched,
+                'closed'       => (int) $statsRow->closed,
             ];
 
             // Chart: Ambil data tiket untuk chart (limit 500, bukan semua)

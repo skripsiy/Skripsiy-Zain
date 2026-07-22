@@ -175,6 +175,17 @@
             font-size: 12px;
             background: #F3F4F6;
             color: #374151;
+            width: 100%;
+        }
+        .form-input {
+            padding: 8px 10px;
+            border: 1px solid #D1D5DB;
+            border-radius: 6px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 12px;
+            background: #F3F4F6;
+            color: #374151;
+            width: 100%;
         }
         .form-textarea {
             padding: 10px; border: 1px solid #D1D5DB; border-radius: 6px;
@@ -406,14 +417,23 @@
                  ================================================== --}}
             <div class="two-col-layout">
 
-                {{-- ── LEFT: form fields (read-only for TL) + TL actions ── --}}
+                {{-- ── LEFT: form fields + TL actions ── --}}
                 <div class="content-card">
-                    <div class="card-title">Ticket Content (Read-only)</div>
+                    <div class="card-title">Ticket Content</div>
 
-                    {{-- *** Form 1: field viewer — fields are disabled for TL (unchanged) *** --}}
+                    {{-- *** Form 1: field viewer — fields are disabled for TL if locked or assigned to agent *** --}}
                     @php
-                        $isDisabled = in_array($ticket->condition, ['Closed', 'Dispatched', 'EXPIRED', 'Saltik']) ? 'disabled' : '';
+                        $isAssignedToAgent = !empty($ticket->assigned_to_user_id);
+                        $isLockedCondition = in_array($ticket->condition, ['Closed', 'Dispatched', 'EXPIRED', 'Saltik']);
+                        $isDisabled = ($isLockedCondition || $isAssignedToAgent) ? 'disabled' : '';
                     @endphp
+
+                    @if($isAssignedToAgent && !$isLockedCondition)
+                    <div class="alert" style="background:#E0F2FE;color:#0369A1;border:1px solid #38BDF8;display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        <span>Tiket ini sudah di-assign ke Agent <strong>{{ $ticket->assignedTo?->name ?? 'Agent' }}</strong> dan telah masuk ke dalam loker workspace Agent. Form editan terkunci.</span>
+                    </div>
+                    @endif
 
                     @if($errors->any())
                     <div class="alert" style="background:#FEE2E2;color:#991B1B;border:1px solid #EF4444;margin-bottom:14px;font-size:13px;">
@@ -449,6 +469,10 @@
                             </div>
                         </div>
 
+
+
+                    {{-- *** Form 2: TL status actions — logic/guards unchanged *** --}}
+                    <form method="POST" action="{{ route('team-leader.ticket.status', $ticket->idTicket) }}">
                         {{-- Attach button — updated for design consistency --}}
                         <div style="display:flex;justify-content:flex-end;">
                             <label class="btn btn-submit" style="display: inline-flex; align-items: center; gap: 6px; margin: 0; background: #1F4A5E; color: white; {{ $isDisabled ? 'opacity: 0.5; cursor: not-allowed; pointer-events: none;' : 'cursor: pointer;' }}">
@@ -458,12 +482,9 @@
                             </label>
                         </div>
                     </form>
-
-                    {{-- *** Form 2: TL status actions — logic/guards unchanged *** --}}
-                    <form method="POST" action="{{ route('team-leader.ticket.status', $ticket->idTicket) }}">
                         @csrf
                         <div class="quick-actions-section">
-                            <div class="quick-actions-title">Quick Actions (Team Leader)</div>
+                            <div class="quick-actions-title">Quick Actions</div>
                             <div class="quick-actions-row">
                                 <button type="submit" name="action" value="closed"
                                     class="btn btn-closed"
@@ -474,11 +495,6 @@
                                     class="btn btn-saltik"
                                     {{ $isDisabled }}>
                                     SALTIK
-                                </button>
-                                <button type="submit" name="action" value="expired"
-                                    class="btn btn-expired"
-                                    {{ $isDisabled }}>
-                                    EXPIRED
                                 </button>
                                 <button type="submit" form="dispatch-form"
                                     class="btn btn-dispatch"
@@ -543,9 +559,6 @@
             
             const eksalasiTicketSelect = document.querySelector('select[name="eksalasiTicket"]');
             const eksalasiViaSelect = document.querySelector('select[name="eksalasiVia"]');
-            
-            const statusScSelect = document.querySelector('select[name="statusSC"]');
-            const reasonNoOdsSelect = document.querySelector('select[name="reasonnoODS"]');
 
             const teams = {
                 'technical': @json(config('teams.technical')) || {},
@@ -626,29 +639,15 @@
                 }
             }
 
-            // 4. Status Call -> Reason Not ODS
-            function updateOdsOptions() {
-                if (!statusScSelect || !reasonNoOdsSelect) return;
-
-                if (statusScSelect.value === 'Open') {
-                    reasonNoOdsSelect.disabled = false;
-                } else {
-                    reasonNoOdsSelect.disabled = true;
-                    reasonNoOdsSelect.value = '';
-                }
-            }
-
             // Event Listeners
             if (klasifikasiSelect) klasifikasiSelect.addEventListener('change', updatePicOptions);
             if (topicSelect) topicSelect.addEventListener('change', updateTopicOptions);
             if (eksalasiTicketSelect) eksalasiTicketSelect.addEventListener('change', updateEksalasiOptions);
-            if (statusScSelect) statusScSelect.addEventListener('change', updateOdsOptions);
 
             // Initial load execution
             updatePicOptions();
             updateTopicOptions();
             updateEksalasiOptions();
-            updateOdsOptions();
 
             // Enable fields before submit to ensure disabled values are sent
             form.addEventListener('submit', function () {

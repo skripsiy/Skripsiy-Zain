@@ -572,12 +572,6 @@
                                 </button>
                                 <button type="submit"
                                     formaction="{{ route('agent.ticket.status', $ticket->idTicket) }}"
-                                    name="action" value="expired"
-                                    class="btn btn-expired" {{ !$canEdit ? 'disabled' : '' }}>
-                                    EXPIRED
-                                </button>
-                                <button type="submit"
-                                    formaction="{{ route('agent.ticket.status', $ticket->idTicket) }}"
                                     name="action" value="dispatch"
                                     class="btn btn-dispatch"
                                     id="btnDispatch" {{ !$canEdit ? 'disabled' : '' }}>

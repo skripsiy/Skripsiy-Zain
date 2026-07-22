@@ -54,7 +54,7 @@ class TicketDetailController extends Controller
         
         $activities = $ticket->activities()->latest()->get();
         
-        return view('agent.ticket-detail-v2', compact('ticket', 'canEdit', 'activities'));
+        return view('agent.ticket-detail', compact('ticket', 'canEdit', 'activities'));
     }
 
     public function update(Request $request, $id)

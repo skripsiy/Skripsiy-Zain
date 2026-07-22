@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\TeamLeader;
 
 use App\Http\Controllers\Controller;
+use App\Models\AgentWorkSession;
 use App\Models\Ticket;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -16,9 +18,11 @@ class DashboardController extends Controller
         $timeFilter = $request->input('time_filter', 'today');
         $search     = $request->input('search');
 
-        $cacheKey = 'tl_dashboard_stats_' . md5($timeFilter . '_' . $search);
+        $agentIds = User::where('role', 'agent')->pluck('id');
 
-        [$stats, $chartData, $tickets] = Cache::remember($cacheKey, 60, function () use ($timeFilter, $search) {
+        $cacheKey = 'tl_dashboard_stats_' . md5($timeFilter . '_' . $search . '_' . Carbon::now()->toDateString());
+
+        [$stats, $chartData, $tickets, $aht, $achievement] = Cache::remember($cacheKey, 10, function () use ($timeFilter, $search, $agentIds) {
             $query = Ticket::query();
             $now   = Carbon::now();
 
@@ -34,7 +38,12 @@ class DashboardController extends Controller
                     break;
                 case 'today':
                 default:
-                    $query->whereDate('created_at', $now->copy()->toDateString());
+                    $query->where(function ($q) use ($now) {
+                        $q->whereDate('tickets.created_at', $now->toDateString())
+                          ->orWhereDate('tickets.updated_at', $now->toDateString())
+                          ->orWhereDate('tickets.datereport', $now->toDateString())
+                          ->orWhereDate('tickets.datesolved', $now->toDateString());
+                    });
                     break;
             }
 
@@ -64,11 +73,13 @@ class DashboardController extends Controller
             // ODS is defined as tickets that are actually resolved in the field (statusSC is 'closed')
             $statsRow = (clone $query)->selectRaw("
                 COUNT(*) as wo_available,
-                SUM(CASE WHEN LOWER(`condition`) = 'in progress' THEN 1 ELSE 0 END) as consume,
-                SUM(CASE WHEN LOWER(`condition`) = 'closed'      THEN 1 ELSE 0 END) as closed,
-                SUM(CASE WHEN LOWER(`condition`) = 'dispatched'  THEN 1 ELSE 0 END) as dispatched,
-                SUM(CASE WHEN LOWER(`condition`) = 'saltik'      THEN 1 ELSE 0 END) as saltik,
-                SUM(CASE WHEN LOWER(statusSC) = 'closed'       THEN 1 ELSE 0 END) as ods
+                SUM(CASE WHEN LOWER(COALESCE(`condition`, status)) IN ('in progress', 'in-progress', 'assigned') THEN 1 ELSE 0 END) as consume,
+                SUM(CASE WHEN LOWER(COALESCE(`condition`, status)) IN ('closed', 'closed') THEN 1 ELSE 0 END) as closed,
+                SUM(CASE WHEN LOWER(COALESCE(`condition`, status)) IN ('dispatched', 'dispatched') THEN 1 ELSE 0 END) as dispatched,
+                SUM(CASE WHEN LOWER(COALESCE(`condition`, status)) = 'saltik' THEN 1 ELSE 0 END) as saltik,
+                SUM(CASE WHEN LOWER(statusSC) = 'closed' THEN 1 ELSE 0 END) as ods,
+                SUM(CASE WHEN LOWER(COALESCE(`condition`, status)) IN ('in progress', 'in-progress', 'assigned') AND (LOWER(division_target) = 'besfixed' OR division_target IS NULL) THEN 1 ELSE 0 END) as besfixed_consume,
+                SUM(CASE WHEN LOWER(COALESCE(`condition`, status)) = 'saltik' OR (LOWER(COALESCE(`condition`, status)) IN ('in progress', 'in-progress', 'assigned') AND LOWER(division_target) = 'saltik') THEN 1 ELSE 0 END) as saltik_consume
             ")->first();
 
             $stats = [
@@ -78,6 +89,38 @@ class DashboardController extends Controller
                 'dispatched'   => (int) $statsRow->dispatched,
                 'saltik'       => (int) $statsRow->saltik,
                 'ods'          => (int) $statsRow->ods,
+            ];
+
+            $totalConsume  = (int) $statsRow->consume;
+            $besfixedCount = (int) $statsRow->besfixed_consume;
+            $saltikCount   = (int) $statsRow->saltik_consume;
+
+            $achievement = [
+                'besfixed_count' => $besfixedCount,
+                'besfixed_pct'   => $totalConsume > 0 ? min(100, round(($besfixedCount / $totalConsume) * 100)) : 0,
+                'saltik_count'   => $saltikCount,
+                'saltik_pct'     => $totalConsume > 0 ? min(100, round(($saltikCount / $totalConsume) * 100)) : 0,
+            ];
+
+            // AHT (menit) dari datereport -> datesolved, tiket yang di-solve para agent
+            $ahtBase = Ticket::whereIn('solved_by_user_id', $agentIds)
+                ->whereNotNull('datereport')->whereNotNull('datesolved');
+            $diffExpr = DB::getDriverName() === 'sqlite'
+                ? "(julianday(datesolved) - julianday(datereport)) * 24 * 60"
+                : "TIMESTAMPDIFF(MINUTE, datereport, datesolved)";
+            $ahtPeriod = (clone $ahtBase);
+            switch ($timeFilter) {
+                case 'week':    $ahtPeriod->where('datesolved', '>=', Carbon::now()->startOfWeek()); break;
+                case 'month':   $ahtPeriod->where('datesolved', '>=', Carbon::now()->startOfMonth()); break;
+                case 'quarter': $ahtPeriod->where('datesolved', '>=', Carbon::now()->startOfQuarter()); break;
+                default:        $ahtPeriod->whereDate('datesolved', Carbon::today()); break;
+            }
+            $lastSolved = (clone $ahtBase)->orderByDesc('datesolved')->first();
+            $aht = [
+                'period' => round((float) ((clone $ahtPeriod)->selectRaw("AVG($diffExpr) as v")->value('v') ?? 0), 1),
+                'last'   => $lastSolved
+                    ? round(Carbon::parse($lastSolved->datereport)->diffInMinutes(Carbon::parse($lastSolved->datesolved)), 1)
+                    : 0,
             ];
 
             // Chart: Grouping di PHP side agar kompatibel MySQL dan SQLite (testing)
@@ -140,9 +183,26 @@ class DashboardController extends Controller
                 ->limit(50)
                 ->get();
 
-            return [$stats, $chartData, $tickets];
+            return [$stats, $chartData, $tickets, $aht, $achievement];
         });
 
-        return view('team-leader.dashboard', compact('tickets', 'stats', 'timeFilter', 'chartData'));
+        // Total AUX/Online (jam) - AGREGAT sesi kerja seluruh agent HARI INI (di luar cache)
+        $sessions = AgentWorkSession::whereIn('user_id', $agentIds)
+            ->where('work_date', today())->get();
+        $onlineSeconds = 0; $auxSeconds = 0;
+        foreach ($sessions as $s) {
+            $online = $s->total_online_seconds ?? 0;
+            if ($s->status === 'online' && $s->current_session_start) {
+                $online += Carbon::parse($s->current_session_start)->diffInSeconds(now());
+            }
+            $onlineSeconds += $online;
+            $auxSeconds    += $s->total_aux_seconds ?? 0;
+        }
+        $workStats = [
+            'online_hours' => round($onlineSeconds / 3600, 1),
+            'aux_hours'    => round($auxSeconds / 3600, 1),
+        ];
+
+        return view('team-leader.dashboard', compact('tickets', 'stats', 'timeFilter', 'chartData', 'aht', 'workStats', 'achievement'));
     }
 }

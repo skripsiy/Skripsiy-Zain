@@ -58,6 +58,8 @@ class TicketController extends Controller
                 $query->whereIn('condition', ['Closed', 'Saltik', 'Dispatched', 'DISPATCHED', 'ASSIGNED', 'In Progress'])
                       ->where(function ($q) {
                           $q->whereDate('updated_at', today())
+                            ->orWhereDate('created_at', today())
+                            ->orWhereDate('datereport', today())
                             ->orWhereDate('datesolved', today());
                       });
             } else {
@@ -94,18 +96,23 @@ class TicketController extends Controller
 
         // ── Statistik agent ──
         // Fix P-2: Gunakan 1 query DB aggregation untuk mengambil seluruh data statistik sekaligus
-        // (Sebelumnya memicu 5 query COUNT terpisah)
         $statsRow = Ticket::where(function ($q) {
             $q->where('assigned_to_user_id', auth()->id())
               ->orWhere('solved_by_user_id', auth()->id());
         })
+        ->where(function ($q) {
+            $q->whereDate('created_at', today())
+              ->orWhereDate('updated_at', today())
+              ->orWhereDate('datereport', today())
+              ->orWhereDate('datesolved', today());
+        })
         ->selectRaw("
             COUNT(*) as total,
-            SUM(CASE WHEN solved_by_user_id = ? THEN 1 ELSE 0 END) as consumed,
-            SUM(CASE WHEN assigned_to_user_id = ? AND LOWER(`condition`) IN ('queued', 'assigned', 'open') THEN 1 ELSE 0 END) as submitted,
-            SUM(CASE WHEN solved_by_user_id = ? AND LOWER(`condition`) IN ('closed', 'saltik') THEN 1 ELSE 0 END) as closed,
-            SUM(CASE WHEN assigned_to_user_id = ? AND LOWER(`condition`) IN ('dispatched') THEN 1 ELSE 0 END) as dispatched
-        ", [auth()->id(), auth()->id(), auth()->id(), auth()->id()])
+            SUM(CASE WHEN LOWER(COALESCE(`condition`, status)) IN ('in progress', 'in-progress', 'assigned') THEN 1 ELSE 0 END) as consumed,
+            SUM(CASE WHEN assigned_to_user_id = ? AND LOWER(COALESCE(`condition`, status)) IN ('queued', 'assigned', 'open', 'new') THEN 1 ELSE 0 END) as submitted,
+            SUM(CASE WHEN LOWER(COALESCE(`condition`, status)) IN ('closed', 'saltik') THEN 1 ELSE 0 END) as closed,
+            SUM(CASE WHEN LOWER(COALESCE(`condition`, status)) IN ('dispatched', 'dispatched') THEN 1 ELSE 0 END) as dispatched
+        ", [auth()->id()])
         ->first();
 
         $totalTickets      = (int) ($statsRow->total ?? 0);

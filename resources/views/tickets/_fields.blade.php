@@ -35,7 +35,7 @@
     </div>
     <div class="form-group">
         <label class="form-label">Reason Not ODS</label>
-        <select name="reasonnoODS" class="form-select" {{ $fieldDisabled }} {{ (old('statusSC', $ticket->statusSC) !== 'Open') ? 'disabled' : '' }}>
+        <select name="reasonnoODS" class="form-select" {{ $fieldDisabled }}>
             <option value="">Select</option>
             @foreach (config('tickets.reasonnoODS') as $key => $val)
                 <option value="{{ $key }}" @selected(old('reasonnoODS', $ticket->reasonnoODS) === $key)>{{ $val }}</option>
