@@ -27,3 +27,5 @@ Thumbs.db
 /test_*.php
 /replace.php
 /*.sql
+*.py
+
